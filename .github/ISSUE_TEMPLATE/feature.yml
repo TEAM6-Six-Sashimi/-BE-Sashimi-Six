@@ -1,5 +1,5 @@
 name: "Feature"
-description: "간단 기능 구현 이슈 템플릿"
+description: "기능 구현 이슈 템플릿"
 title: "[FEATURE] "
 labels: ["feature"]
 assignees: []
