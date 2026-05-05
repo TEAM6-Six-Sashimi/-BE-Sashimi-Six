@@ -27,9 +27,7 @@ body:
         - 지석범
         - 김채린
         - 박정민
-        - 윤영지
         - 정유지
-        - 김가영
     validations:
       required: true
 
@@ -89,27 +87,9 @@ body:
       required: true
 
   - type: textarea
-    id: kim-gayoung-task
-    attributes:
-      label: 김가영
-      placeholder: |
-        - 오늘 해야 할 일을 작성해주세요.
-    validations:
-      required: true
-
-  - type: textarea
     id: jeong-yuji-task
     attributes:
       label: 정유지
-      placeholder: |
-        - 오늘 해야 할 일을 작성해주세요.
-    validations:
-      required: true
-
-  - type: textarea
-    id: yoon-youngji-task
-    attributes:
-      label: 윤영지
       placeholder: |
         - 오늘 해야 할 일을 작성해주세요.
     validations:
