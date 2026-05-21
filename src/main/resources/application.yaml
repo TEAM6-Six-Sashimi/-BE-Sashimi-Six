@@ -20,6 +20,8 @@ spring:
         format_sql: true
     show-sql: true
 
-logging:
-  level:
-    org.springframework.jdbc.datasource.init: DEBUG
+jwt:
+  secret: this-is-sashimi-lms-jwt-secret-key-for-hs256-authentication
+  access-token-validity-in-milliseconds: 3600000
+  refresh-token-validity-in-milliseconds: 1209600000
+
