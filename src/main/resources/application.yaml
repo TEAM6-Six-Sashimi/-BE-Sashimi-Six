@@ -19,3 +19,7 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+
+logging:
+  level:
+    org.springframework.jdbc.datasource.init: DEBUG
