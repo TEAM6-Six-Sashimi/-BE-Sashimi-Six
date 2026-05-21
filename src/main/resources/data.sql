@@ -1,12 +1,12 @@
 INSERT INTO users
-(email, password, name, phone, role, status, email_verified, referral_code)
+(login_id, email, password, name, phone, role, status, email_verified, referral_code)
 VALUES
-    ('admin@test.com', '$2a$10$admin', '관리재', '010-0000-0000', 'ADMIN', 'ACTIVE', TRUE, 'ADMIN001'),
-    ('instructor1@test.com', '$2a$10$instructor', '김강사', '010-1111-1111', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS001'),
-    ('instructor2@test.com', '$2a$10$instructor', '이강사', '010-2222-2222', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS002'),
-    ('student1@test.com', '$2a$10$student', '박학생', '010-3333-3333', 'STUDENT', 'ACTIVE', TRUE, 'STD001'),
-    ('student2@test.com', '$2a$10$student', '최학생', '010-4444-4444', 'STUDENT', 'ACTIVE', TRUE, 'STD002'),
-    ('student3@test.com', '$2a$10$student', '정학생', '010-5555-5555', 'STUDENT', 'ACTIVE', TRUE, 'STD003');
+    ('admin01', 'admin@test.com', '$2a$10$admin', '관리재', '010-0000-0000', 'ADMIN', 'ACTIVE', TRUE, 'ADMIN001'),
+    ('instructor01', 'instructor1@test.com', '$2a$10$instructor', '김강사', '010-1111-1111', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS001'),
+    ('instructor02', 'instructor2@test.com', '$2a$10$instructor', '이강사', '010-2222-2222', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS002'),
+    ('student01', 'student1@test.com', '$2a$10$student', '박학생', '010-3333-3333', 'STUDENT', 'ACTIVE', TRUE, 'STD001'),
+    ('student02', 'student2@test.com', '$2a$10$student', '최학생', '010-4444-4444', 'STUDENT', 'ACTIVE', TRUE, 'STD002'),
+    ('student03', 'student3@test.com', '$2a$10$student', '정학생', '010-5555-5555', 'STUDENT', 'ACTIVE', TRUE, 'STD003');
 
 INSERT INTO categories
 (name, type, sort_order, is_active)
