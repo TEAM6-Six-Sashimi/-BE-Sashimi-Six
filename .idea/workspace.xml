@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5d203f4e-d0aa-4ab7-b4e4-5908f691ccff" name="변경" comment="" />
+    <list default="true" id="5d203f4e-d0aa-4ab7-b4e4-5908f691ccff" name="변경" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -67,6 +70,11 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Lecture\sixshashimi-project\Sashimi-Six" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="LmsApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="lms.main" />
@@ -91,7 +99,8 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1779092132724</updated>
-      <workItem from="1779092133934" duration="1646000" />
+      <workItem from="1779092133934" duration="2227000" />
+      <workItem from="1779237708941" duration="283000" />
     </task>
     <servers />
   </component>

@@ -1,4 +1,4 @@
-package com.sashimi.lms;
+package com.sashimi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
