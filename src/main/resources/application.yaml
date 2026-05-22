@@ -7,6 +7,7 @@ spring:
 
   sql:
     init:
+      ## 개발 시 never / PR 시 always
       mode: always
       schema-locations: classpath:schema.sql
       data-locations: classpath:data.sql
@@ -19,3 +20,12 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+
+  profiles:
+    active: local
+
+## 확인해서 수정
+openai:
+  api-key: ${OPENAI_API_KEY}
+  model: gpt-5-mini
+  timeout-seconds: 30
