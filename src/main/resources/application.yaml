@@ -24,8 +24,13 @@ spring:
   profiles:
     active: local
 
-## 확인해서 수정
+## key 확인 후 수정 예정
 openai:
   api-key: ${OPENAI_API_KEY}
   model: gpt-5-mini
   timeout-seconds: 30
+jwt:
+  secret: this-is-sashimi-lms-jwt-secret-key-for-hs256-authentication
+  access-token-validity-in-milliseconds: 3600000
+  refresh-token-validity-in-milliseconds: 1209600000
+
