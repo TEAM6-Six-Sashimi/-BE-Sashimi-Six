@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sashimi.cart.application.command.UpdateCartItemSelectionCommand;
 import com.sashimi.cart.application.command.UpdateCartItemsSelectionCommand;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 @Transactional
@@ -53,7 +54,11 @@ public class CartCommandService implements CartCommandUseCase {
                 courseInfo.price()
         );
 
-        return cartItemRepository.save(cartItem).getId();
+        try {
+            return cartItemRepository.save(cartItem).getId();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("이미 장바구니에 담긴 강의입니다.");
+        }
     }
 
     @Override
