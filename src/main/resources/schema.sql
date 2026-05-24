@@ -7,18 +7,38 @@ USE sixsashimi_db;
 -- =========================
 CREATE TABLE users (
                        user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+
+                       login_id VARCHAR(20) NOT NULL UNIQUE,
+
                        email VARCHAR(255) NOT NULL UNIQUE,
                        password VARCHAR(255) NOT NULL,
                        name VARCHAR(100) NOT NULL,
                        phone VARCHAR(20),
+
                        role ENUM('STUDENT', 'INSTRUCTOR', 'ADMIN') NOT NULL DEFAULT 'STUDENT',
                        status ENUM('ACTIVE', 'INACTIVE', 'DELETED', 'SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
+
                        email_verified BOOLEAN NOT NULL DEFAULT FALSE,
                        profile_image VARCHAR(500),
                        referral_code VARCHAR(50) UNIQUE,
+
                        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                        updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
                        deleted_at DATETIME NULL
+);
+
+CREATE TABLE refresh_tokens (
+                                refresh_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                user_id BIGINT NOT NULL,
+                                token VARCHAR(512) NOT NULL UNIQUE,
+                                expiry_date DATETIME NOT NULL,
+                                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+                                CONSTRAINT fk_refresh_tokens_user
+                                    FOREIGN KEY (user_id) REFERENCES users(user_id),
+
+                                CONSTRAINT uq_refresh_tokens_user
+                                    UNIQUE (user_id)
 );
 
 -- =========================

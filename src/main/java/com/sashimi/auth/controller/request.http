@@ -1,0 +1,55 @@
+### 아이디 중복 확인
+GET http://localhost:8080/api/auth/login-id/check?loginId=user123
+Accept: application/json
+
+
+### 회원가입
+POST http://localhost:8080/api/auth/signup
+Content-Type: application/json
+Accept: application/json
+
+{
+  "loginId": "user123",
+  "password": "Password123!",
+  "passwordConfirm": "Password123!",
+  "email": "user123@test.com",
+  "name": "홍길동"
+}
+
+
+### 로그인
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "loginId": "user123",
+  "password": "Password123!"
+}
+### 토큰 재발급
+POST http://localhost:8080/api/auth/reissue
+Content-Type: application/json
+Accept: application/json
+
+{
+"refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzc5MzcxNzg0LCJleHAiOjE3ODA1ODEzODR9.QPYv2Kg1iibSh3BZPzKX5O5DRQ6yBvc_VgzFmQrfsB7AH_rlOnMSQFzdAQsO1DgD"
+}
+
+
+### 로그아웃
+POST http://localhost:8080/api/auth/logout
+Content-Type: application/json
+Accept: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzc5MzcxODE0LCJleHAiOjE3ODA1ODE0MTR9.1lwyNqFWu7MR8XibcyWPKgFyz4clt2znPAyRwSiqJR2FWaD2WHeq3JlbBSCnC0th"
+}
+
+### 관리자 API - 토큰 없음이면 401 정상
+GET http://localhost:8080/api/admin/test
+Accept: application/json
+
+### 관리자 API - 학생 토큰이면 403 정상
+GET http://localhost:8080/api/admin/test
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCxGQUNUT1JfUEFTU1dPUkQiLCJpYXQiOjE3NzkzNzI0OTQsImV4cCI6MTc3OTM3NjA5NH0.nP8EFRM1mdVMfrVamw429-BOfWkuimYxX3pRXOesDEYNl_-xhREXr55C934VBUnw
+Accept: application/json
