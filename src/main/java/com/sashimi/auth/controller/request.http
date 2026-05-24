@@ -1,10 +1,10 @@
 ### 아이디 중복 확인
-GET http://localhost:8080/api/auth/login-id/check?loginId=user123
+GET http://localhost:8080/auth/login-id/check?loginId=user123
 Accept: application/json
 
 
 ### 회원가입
-POST http://localhost:8080/api/auth/signup
+POST http://localhost:8080/auth/signup
 Content-Type: application/json
 Accept: application/json
 
@@ -18,38 +18,38 @@ Accept: application/json
 
 
 ### 로그인
-POST http://localhost:8080/api/auth/login
+POST http://localhost:8080/auth/login
 Content-Type: application/json
 Accept: application/json
 
 {
   "loginId": "user123",
-  "password": "Password123!"
+  "password": "NewPassword123!"
 }
 ### 토큰 재발급
-POST http://localhost:8080/api/auth/reissue
+POST http://localhost:8080/auth/reissue
 Content-Type: application/json
 Accept: application/json
 
 {
-"refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzc5MzcxNzg0LCJleHAiOjE3ODA1ODEzODR9.QPYv2Kg1iibSh3BZPzKX5O5DRQ6yBvc_VgzFmQrfsB7AH_rlOnMSQFzdAQsO1DgD"
+"refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzc5NjE5MTI5LCJleHAiOjE3ODA4Mjg3Mjl9.t4_xINpGOcrN9HPGRrxf-YLuqdi1f1MxWHzvDPlQF8t4ViS1Ae7JwG4QXc-AVaCq"
 }
 
 
 ### 로그아웃
-POST http://localhost:8080/api/auth/logout
+POST http://localhost:8080/auth/logout
 Content-Type: application/json
 Accept: application/json
 
 {
-  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzc5MzcxODE0LCJleHAiOjE3ODA1ODE0MTR9.1lwyNqFWu7MR8XibcyWPKgFyz4clt2znPAyRwSiqJR2FWaD2WHeq3JlbBSCnC0th"
+  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzc5NjE5MTg4LCJleHAiOjE3ODA4Mjg3ODh9.l9l6dJ1tJxVTlL7hIZV7MnbTpoUPGq3u3Xs-VizfekddSjl0K12_lYxVkooDhU3Z"
 }
 
 ### 관리자 API - 토큰 없음이면 401 정상
-GET http://localhost:8080/api/admin/test
+GET http://localhost:8080/admin/test
 Accept: application/json
 
 ### 관리자 API - 학생 토큰이면 403 정상
-GET http://localhost:8080/api/admin/test
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCxGQUNUT1JfUEFTU1dPUkQiLCJpYXQiOjE3NzkzNzI0OTQsImV4cCI6MTc3OTM3NjA5NH0.nP8EFRM1mdVMfrVamw429-BOfWkuimYxX3pRXOesDEYNl_-xhREXr55C934VBUnw
+GET http://localhost:8080/admin/test
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTYxOTQ4NCwiZXhwIjoxNzc5NjIzMDg0fQ.KT3YFOcmvS2GwVIdrZNsmUH_mS7sm0nccjKCaXrN3KN-rNN0HjjpWjHzv5BkbpnW
 Accept: application/json

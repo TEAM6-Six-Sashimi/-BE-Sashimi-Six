@@ -1,6 +1,5 @@
 package com.sashimi.token.entity;
 
-import com.sashimi.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -19,19 +18,17 @@ public class RefreshToken {
     @Column(name = "refresh_token_id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
-    private User user;
+    @Column(name = "user_id", nullable = false, unique = true)
+    private Long userId;
 
     @Column(nullable = false, unique = true, length = 512)
     private String token;
 
-
     @Column(name = "expiry_date", nullable = false)
     private LocalDateTime expiryDate;
 
-    public RefreshToken(User user, String token, LocalDateTime expiryDate) {
-        this.user = user;
+    public RefreshToken(Long userId, String token, LocalDateTime expiryDate) {
+        this.userId = userId;
         this.token = token;
         this.expiryDate = expiryDate;
     }

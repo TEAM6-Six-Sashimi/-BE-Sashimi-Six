@@ -1,21 +1,24 @@
-package com.sashimi.user.repository;
+package com.sashimi.user.domain.repository;
 
-import com.sashimi.user.entity.User;
-import com.sashimi.user.model.UserStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.model.UserStatus;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository {
+
+    Optional<User> findById(Long id);
 
     Optional<User> findByLoginId(String loginId);
+
+    Optional<User> findByEmail(String email);
 
     boolean existsByLoginId(String loginId);
 
     boolean existsByEmail(String email);
 
-    Optional<User> findByEmail(String email);
+    User save(User user);
 
     void deleteByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime);
 }

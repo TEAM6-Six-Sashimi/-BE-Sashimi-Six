@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/sixsashimi_db?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: sashimi
+    password: sashimi
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  sql:
+    init:
+      ## 개발 시 never / PR 시 always
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
+
+  profiles:
+    active: local
+
+## key 확인 후 수정 예정
+openai:
+  api-key: ${OPENAI_API_KEY}
+  model: gpt-5-mini
+  timeout-seconds: 30
+jwt:
+  secret: this-is-sashimi-lms-jwt-secret-key-for-hs256-authentication
+  access-token-validity-in-milliseconds: 3600000
+  refresh-token-validity-in-milliseconds: 1209600000
+
