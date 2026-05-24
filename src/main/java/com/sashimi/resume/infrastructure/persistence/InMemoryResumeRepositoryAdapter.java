@@ -4,9 +4,8 @@ import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.repository.ResumeRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 개발 초기 단계에서 사용하는 임시 이력서 저장소 Adapter.
@@ -17,6 +16,8 @@ import java.util.Optional;
 public class InMemoryResumeRepositoryAdapter implements ResumeRepository {
 
     private final Map<Long, Resume> resumes = new HashMap<>();
+    private final AtomicLong sequence = new AtomicLong(2);
+
 
     public InMemoryResumeRepositoryAdapter() {
         // Postman 테스트용 샘플 이력서
@@ -35,4 +36,26 @@ public class InMemoryResumeRepositoryAdapter implements ResumeRepository {
         return Optional.ofNullable(resumes.get(resumeId))
                 .filter(resume -> resume.userId().equals(userId));
     }
+
+    @Override
+    public Resume save(Resume resume) {
+        Long resumeId = resume.resumeId() == null ? sequence.getAndIncrement() : resume.resumeId();
+        Resume savedResume = resume.withId(resumeId);
+        resumes.put(resumeId, savedResume);
+        return savedResume;
+    }
+
+    @Override
+    public List<Resume> findAllByUserId(Long userId) {
+        return resumes.values().stream()
+                .filter(resume -> resume.userId().equals(userId))
+                .sorted(Comparator.comparing(Resume::createdAt).reversed())
+                .toList();
+    }
+
+    @Override
+    public void delete(Resume resume) {
+        resumes.remove(resume.resumeId());
+    }
+
 }

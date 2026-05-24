@@ -2,6 +2,7 @@ package com.sashimi.resume.domain.repository;
 
 import com.sashimi.resume.domain.model.Resume;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -11,8 +12,13 @@ import java.util.Optional;
  */
 public interface ResumeRepository {
 
+    Resume save(Resume resume);
+
+    List<Resume> findAllByUserId(Long userId);
     /**
      * 특정 사용자가 작성한 특정 이력서를 조회한다.
      */
     Optional<Resume> findByIdAndUserId(Long resumeId, Long userId);
+
+    void delete(Resume resume);
 }
