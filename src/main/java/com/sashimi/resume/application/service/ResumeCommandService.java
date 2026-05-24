@@ -4,9 +4,13 @@ package com.sashimi.resume.application.service;
 import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.ai.domain.model.AiPromptType;
 import com.sashimi.ai.domain.repository.AiPromptRepository;
+import com.sashimi.resume.application.command.CreateResumeCommand;
+import com.sashimi.resume.application.command.DeleteResumeCommand;
 import com.sashimi.resume.application.command.ReviewResumeCommand;
+import com.sashimi.resume.application.command.UpdateResumeCommand;
 import com.sashimi.resume.application.port.ResumeAiReviewPort;
 import com.sashimi.resume.application.port.ResumeAiReviewResult;
+import com.sashimi.resume.application.usecase.ResumeCommandUseCase;
 import com.sashimi.resume.application.usecase.ReviewResumeUseCase;
 import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.model.ResumeEvaluation;
@@ -16,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class ResumeCommandService implements ReviewResumeUseCase {
+public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeUseCase {
 
     private final ResumeRepository resumeRepository;
     private final ResumeEvaluationRepository resumeEvaluationRepository;
@@ -64,4 +68,44 @@ public class ResumeCommandService implements ReviewResumeUseCase {
         // 5. 평가 결과를 AI_RESUME_EVALUATIONS 테이블에 저장한다.
         return resumeEvaluationRepository.save(evaluation);
     }
+
+    @Override
+    @Transactional
+    public Resume create(CreateResumeCommand command) {
+        Resume resume = Resume.create(
+                command.userId(),
+                command.title(),
+                command.templateType(),
+                command.content(),
+                command.defaultResume()
+        );
+
+        return resumeRepository.save(resume);
+    }
+
+    @Override
+    @Transactional
+    public Resume update(UpdateResumeCommand command) {
+        Resume resume = resumeRepository.findByIdAndUserId(command.resumeId(), command.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Resume not found."));
+
+        Resume updatedResume = resume.update(
+                command.title(),
+                command.templateType(),
+                command.content(),
+                command.defaultResume()
+        );
+
+        return resumeRepository.save(updatedResume);
+    }
+
+    @Override
+    @Transactional
+    public void delete(DeleteResumeCommand command) {
+        Resume resume = resumeRepository.findByIdAndUserId(command.resumeId(), command.userId())
+                .orElseThrow(() -> new IllegalArgumentException("Resume not found."));
+
+        resumeRepository.delete(resume);
+    }
+
 }

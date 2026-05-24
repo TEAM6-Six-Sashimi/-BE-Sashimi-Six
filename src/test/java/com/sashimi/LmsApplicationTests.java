@@ -1,4 +1,4 @@
-package com.sashimi.lms;
+package com.sashimi;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
