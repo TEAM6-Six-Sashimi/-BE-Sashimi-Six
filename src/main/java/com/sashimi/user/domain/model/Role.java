@@ -1,4 +1,4 @@
-package com.sashimi.user.model;
+package com.sashimi.user.domain.model;
 
 public enum Role {
     STUDENT,

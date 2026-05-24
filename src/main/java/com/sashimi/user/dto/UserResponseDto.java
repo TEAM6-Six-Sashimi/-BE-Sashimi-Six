@@ -1,8 +1,8 @@
 package com.sashimi.user.dto;
 
-import com.sashimi.user.entity.User;
-import com.sashimi.user.model.Role;
-import com.sashimi.user.model.UserStatus;
+import com.sashimi.user.domain.model.Role;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.model.UserStatus;
 import lombok.Builder;
 import lombok.Getter;
 

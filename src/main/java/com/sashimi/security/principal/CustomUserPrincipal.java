@@ -1,7 +1,7 @@
 package com.sashimi.security.principal;
 
-import com.sashimi.user.entity.User;
-import com.sashimi.user.model.UserStatus;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.model.UserStatus;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -55,11 +55,16 @@ public class CustomUserPrincipal implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return enabled;
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 }
