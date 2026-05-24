@@ -12,8 +12,8 @@ Accept: application/json
   "loginId": "user123",
   "password": "Password123!",
   "passwordConfirm": "Password123!",
-  "email": "user123@test.com",
-  "name": "홍길동"
+  "email": "barkmin9@naver.com",
+  "name": "박민서"
 }
 
 
@@ -24,7 +24,7 @@ Accept: application/json
 
 {
   "loginId": "user123",
-  "password": "NewPassword123!"
+  "password": "Password123!"
 }
 ### 토큰 재발급
 POST http://localhost:8080/auth/reissue

@@ -1,0 +1,21 @@
+### 이메일 인증 코드 요청 - 회원가입
+POST http://localhost:8080/verifications/email/request
+Content-Type: application/json
+Accept: application/json
+
+{
+  "targetEmail": "barkmin9@naver.com",
+  "purpose": "SIGNUP"
+}
+
+
+### 이메일 인증 코드 확인 - 회원가입
+POST http://localhost:8080/verifications/email/confirm
+Content-Type: application/json
+Accept: application/json
+
+{
+  "targetEmail": "barkmin9@naver.com",
+  "purpose": "SIGNUP",
+  "code": "2GEZF0BV"
+}
