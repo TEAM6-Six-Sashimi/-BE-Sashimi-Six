@@ -6,6 +6,7 @@ import java.util.List;
 public interface CartQueryUseCase {
 
     CartView getCart(Long userId);
+    CartView getCheckoutCart(Long userId);
 
     record CartView(
             List<CartItemView> items,

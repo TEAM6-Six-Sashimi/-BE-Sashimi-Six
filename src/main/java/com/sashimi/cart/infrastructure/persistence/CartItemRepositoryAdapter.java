@@ -68,4 +68,14 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
                 entity.getCreatedAt()
         );
     }
+
+    @Override
+    public List<CartItem> findAllSelectedByUserId(Long userId) {
+        return repository.findAllByUserIdAndSelectedTrueOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    
 }
