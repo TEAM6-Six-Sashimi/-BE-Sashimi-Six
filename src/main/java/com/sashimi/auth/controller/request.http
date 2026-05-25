@@ -13,7 +13,7 @@ Accept: application/json
   "password": "Password123!",
   "passwordConfirm": "Password123!",
   "email": "user123@test.com",
-  "name": "홍길동"
+  "name": "박민서"
 }
 
 

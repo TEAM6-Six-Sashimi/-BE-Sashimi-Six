@@ -141,6 +141,7 @@ VALUES
     (5000, 5),
     (0, 6);
 
+-- 더미 데이터
 INSERT INTO instructor_profiles
 (bio, career, certifications, portfolio_url, approval_status, approved_at, user_id)
 VALUES
