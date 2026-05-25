@@ -27,6 +27,7 @@ public enum ErrorCode {
     INVALID_CURRENT_PASSWORD(400, "USER_003", "현재 비밀번호가 일치하지 않습니다."),
     SAME_AS_OLD_PASSWORD(400, "USER_004", "새 비밀번호는 현재 비밀번호와 달라야 합니다."),
     INACTIVE_USER(403, "USER_005", "비활성화된 회원입니다."),
+    INVALID_REFERRAL_CODE(400, "USER_006", "유효하지 않은 추천인 코드입니다."),
     USER_NOT_FOUND(404, "USER_404", "사용자를 찾을 수 없습니다."),
 
     EMAIL_VERIFICATION_NOT_FOUND(404, "VERIFICATION_001", "이메일 인증 요청을 찾을 수 없습니다."),
