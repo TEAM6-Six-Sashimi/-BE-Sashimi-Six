@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.auth.dto.PasswordResetRequestDto;
+import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
+import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
 
 @RestController
 @RequestMapping("/auth")
@@ -50,18 +52,16 @@ public class AuthController {
     }
 
     @PostMapping("/password-reset/request")
-    public ResponseEntity<Void> requestPasswordReset(
+    public ResponseEntity<PasswordResetRequestResponseDto> requestPasswordReset(
             @RequestBody @Valid PasswordResetRequestDto request
     ) {
-        authService.requestPasswordReset(request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(authService.requestPasswordReset(request));
     }
 
     @PostMapping("/password-reset/confirm")
-    public ResponseEntity<Void> resetPassword(
+    public ResponseEntity<PasswordResetConfirmResponseDto> resetPassword(
             @RequestBody @Valid PasswordResetConfirmRequestDto request
     ) {
-        authService.resetPassword(request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(authService.resetPassword(request));
     }
 }

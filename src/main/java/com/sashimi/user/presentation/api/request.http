@@ -20,7 +20,7 @@ Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPT
 PATCH http://localhost:8080/users/me/password
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTYyMzc0NywiZXhwIjoxNzc5NjI3MzQ3fQ.d0NyvKvCeEaTW8zQIxppCcaBBG87C-xwWuh5LvO8DxirdlF9FSbhep69Dp-bgRK6
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcyMzc1MywiZXhwIjoxNzc5NzI3MzUzfQ.sln0BrQ3pjr5c0b1CVpgSvS8bRcVoGM3C4DN-eERhcQBp5xVRhjvFDtNUqWFm9QL
 
 {
   "currentPassword": "Password123!",
@@ -34,7 +34,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "barkmin9@naver.com"
+  "email": "bark9@test.com"
 }
 
 ### 비밀번호 찾기 - 새 비밀번호 설정
@@ -43,13 +43,13 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "barkmin9@naver.com",
-  "code": "DB0VDZN8",
+  "email": "bark9@test.com",
+  "code": "K3CR20O7",
   "newPassword": "Reset123!",
   "newPasswordConfirm": "Reset123!"
 }
 
-###
+### 바꾼걸로 로그인 해보기
 POST http://localhost:8080/auth/login
 Content-Type: application/json
 
@@ -63,8 +63,8 @@ Content-Type: application/json
 DELETE http://localhost:8080/users/me
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcwMzI5MywiZXhwIjoxNzc5NzA2ODkzfQ.K2GwHrzYmyV8gqRRuWwYf1Q2xp8Mn7S-s-nDDRNRipRzHmWrl3azC_P9MgpslO-U
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcyMTY2OSwiZXhwIjoxNzc5NzI1MjY5fQ.baXXO4LHQLAYv08FjVHSwp2ejEn2d1Cq9gdnA9Qb_SrLwDvwjXZLG2-gZWJ8CKId
 
 {
-  "currentPassword": "Password123!"
+  "currentPassword": "Reset123!"
 }

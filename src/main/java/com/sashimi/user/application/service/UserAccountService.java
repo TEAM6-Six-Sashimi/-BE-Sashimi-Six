@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.sashimi.user.application.result.ChangePasswordResult;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +43,7 @@ public class UserAccountService implements UserCommandUseCase {
     }
 
     @Override
-    public void changePassword(ChangePasswordCommand command) {
+    public ChangePasswordResult changePassword(ChangePasswordCommand command) {
         User user = getActiveUser(command.getUserId());
         verifyCurrentPassword(user, command.getCurrentPassword());
 
@@ -54,6 +55,8 @@ public class UserAccountService implements UserCommandUseCase {
         userRepository.save(user);
 
         refreshService.deleteByUser(user);
+
+        return new ChangePasswordResult(true, true);
     }
 
     private User getActiveUser(Long userId) {
