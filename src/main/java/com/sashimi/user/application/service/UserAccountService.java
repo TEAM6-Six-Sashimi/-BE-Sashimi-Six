@@ -6,6 +6,7 @@ import com.sashimi.token.service.RefreshService;
 import com.sashimi.user.application.command.ChangePasswordCommand;
 import com.sashimi.user.application.command.UpdateMyInfoCommand;
 import com.sashimi.user.application.command.WithdrawUserCommand;
+import com.sashimi.user.application.result.WithdrawUserResult;
 import com.sashimi.user.application.usecase.UserCommandUseCase;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
@@ -55,17 +56,6 @@ public class UserAccountService implements UserCommandUseCase {
         refreshService.deleteByUser(user);
     }
 
-    @Override
-    public void withdraw(WithdrawUserCommand command) {
-        User user = getActiveUser(command.getUserId());
-        verifyCurrentPassword(user, command.getCurrentPassword());
-
-        user.deactivate();
-        userRepository.save(user);
-
-        refreshService.deleteByUser(user);
-    }
-
     private User getActiveUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -81,5 +71,18 @@ public class UserAccountService implements UserCommandUseCase {
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_CURRENT_PASSWORD);
         }
+    }
+
+    @Override
+    public WithdrawUserResult withdraw(WithdrawUserCommand command) {
+        User user = getActiveUser(command.getUserId());
+        verifyCurrentPassword(user, command.getCurrentPassword());
+
+        user.deactivate();
+        User savedUser = userRepository.save(user);
+
+        refreshService.deleteByUser(savedUser);
+
+        return new WithdrawUserResult(savedUser.getStatus());
     }
 }

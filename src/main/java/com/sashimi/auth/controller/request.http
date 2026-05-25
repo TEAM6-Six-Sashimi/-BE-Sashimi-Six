@@ -12,8 +12,9 @@ Accept: application/json
   "loginId": "user123",
   "password": "Password123!",
   "passwordConfirm": "Password123!",
-  "email": "barkmin9@naver.com",
-  "name": "박민서"
+  "email": "bark9@test.com",
+  "name": "박민서",
+  "referralCode": "STD001"
 }
 
 

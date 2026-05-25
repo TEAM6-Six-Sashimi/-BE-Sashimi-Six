@@ -1,12 +1,14 @@
 package com.sashimi.user.presentation.api;
 
 import com.sashimi.security.principal.CustomUserPrincipal;
+import com.sashimi.user.application.result.WithdrawUserResult;
 import com.sashimi.user.application.usecase.UserCommandUseCase;
 import com.sashimi.user.application.usecase.UserQueryUseCase;
 import com.sashimi.user.dto.UserResponseDto;
 import com.sashimi.user.presentation.api.request.ChangePasswordRequest;
 import com.sashimi.user.presentation.api.request.UpdateMyInfoRequest;
 import com.sashimi.user.presentation.api.request.WithdrawUserRequest;
+import com.sashimi.user.presentation.api.response.WithdrawUserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -46,15 +48,15 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
-    public ResponseEntity<Void> withdraw(
+    public ResponseEntity<WithdrawUserResponse> withdraw(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody @Valid WithdrawUserRequest request
     ) {
-        userCommandUseCase.withdraw(
+        WithdrawUserResult result = userCommandUseCase.withdraw(
                 request.toCommand(principal.getId())
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new WithdrawUserResponse(result.status()));
     }
 
     @GetMapping("/me")

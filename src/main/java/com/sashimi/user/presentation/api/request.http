@@ -2,14 +2,19 @@
 PATCH http://localhost:8080/users/me
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTYyMTk1NiwiZXhwIjoxNzc5NjI1NTU2fQ.99PR4voPvQrx1lAs38OXj1sdmCL9nWIvfDt0UnIc1VOrYLFrs6l8vJH7ahXoLMcQ
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcwNDUyNywiZXhwIjoxNzc5NzA4MTI3fQ.KYy4UfL28RgeEaAtzkMQ1UAdEtA0NqX9GxHNLMS1WajKatd3MpjmLWC-5wbgJ_01
 
 {
   "currentPassword": "Password123!",
   "name": "박민서",
-  "email": "updated-user123@test.com"
+  "email": "bark9@test.com"
 }
 
+### 내 추천인 코드 확인
+GET http://localhost:8080/users/me
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcwNDUyNywiZXhwIjoxNzc5NzA4MTI3fQ.KYy4UfL28RgeEaAtzkMQ1UAdEtA0NqX9GxHNLMS1WajKatd3MpjmLWC-5wbgJ_01
 
 ### 비밀번호 수정
 PATCH http://localhost:8080/users/me/password
@@ -58,8 +63,8 @@ Content-Type: application/json
 DELETE http://localhost:8080/users/me
 Content-Type: application/json
 Accept: application/json
-Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTYyMzg4MiwiZXhwIjoxNzc5NjI3NDgyfQ.cYixlDDkrLIGAtDHx9Nqj2UBwzBlL3aTfljeRBchXK2vlavCYgR6aJQ2l1J20bEd
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcwMzI5MywiZXhwIjoxNzc5NzA2ODkzfQ.K2GwHrzYmyV8gqRRuWwYf1Q2xp8Mn7S-s-nDDRNRipRzHmWrl3azC_P9MgpslO-U
 
 {
-  "currentPassword": "NewPassword123!"
+  "currentPassword": "Password123!"
 }
