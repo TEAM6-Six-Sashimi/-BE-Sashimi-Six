@@ -1,4 +1,8 @@
 package com.sashimi.user.application.usecase;
 
-public class UserQueryUseCase {
+import com.sashimi.user.dto.UserResponseDto;
+
+public interface UserQueryUseCase {
+
+    UserResponseDto getMyInfo(Long userId);
 }

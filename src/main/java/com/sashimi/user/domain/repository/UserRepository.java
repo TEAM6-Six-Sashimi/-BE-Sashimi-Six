@@ -21,4 +21,7 @@ public interface UserRepository {
     User save(User user);
 
     void deleteByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime);
+
+    Optional<User> findByReferralCode(String referralCode);
+    boolean existsByReferralCode(String referralCode);
 }

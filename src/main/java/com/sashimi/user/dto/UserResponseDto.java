@@ -17,6 +17,7 @@ public class UserResponseDto {
     private Role role;
     private UserStatus status;
     private boolean emailVerified;
+    private String referralCode;
 
     public static UserResponseDto from(User user) {
         return UserResponseDto.builder()
@@ -27,6 +28,7 @@ public class UserResponseDto {
                 .role(user.getRole())
                 .status(user.getStatus())
                 .emailVerified(user.isEmailVerified())
+                .referralCode(user.getReferralCode())
                 .build();
     }
 }

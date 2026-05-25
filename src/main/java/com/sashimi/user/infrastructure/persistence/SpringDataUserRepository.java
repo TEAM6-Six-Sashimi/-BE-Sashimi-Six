@@ -12,9 +12,13 @@ public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, L
 
     Optional<UserJpaEntity> findByEmail(String email);
 
+    Optional<UserJpaEntity> findByReferralCode(String referralCode);
+
     boolean existsByLoginId(String loginId);
 
     boolean existsByEmail(String email);
 
     void deleteByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime);
+
+    boolean existsByReferralCode(String referralCode);
 }
