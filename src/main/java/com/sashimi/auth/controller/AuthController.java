@@ -13,9 +13,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
+import com.sashimi.auth.dto.PasswordResetRequestDto;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
@@ -44,6 +46,22 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@RequestBody @Valid LogoutRequestDto request) {
         authService.logout(request.getRefreshToken());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<Void> requestPasswordReset(
+            @RequestBody @Valid PasswordResetRequestDto request
+    ) {
+        authService.requestPasswordReset(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<Void> resetPassword(
+            @RequestBody @Valid PasswordResetConfirmRequestDto request
+    ) {
+        authService.resetPassword(request);
         return ResponseEntity.noContent().build();
     }
 }

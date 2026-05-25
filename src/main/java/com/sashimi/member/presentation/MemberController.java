@@ -31,15 +31,15 @@ public class MemberController {
 
     // 강사 승인 (관리자)
     @PatchMapping("/instructor-applications/{applicationId}/approve")
-    public ResponseEntity<Void> approveInstructor(@PathVariable Long applicationId) {
+    public ResponseEntity<ApiResponse<Void>> approveInstructor(@PathVariable Long applicationId) {
         memberCommandUseCase.approveInstructor(applicationId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.of("강사 요청을 승인했습니다."));
     }
 
     // 강사 반려 (관리자)
     @PatchMapping("/instructor-applications/{applicationId}/reject")
-    public ResponseEntity<Void> rejectInstructor(@PathVariable Long applicationId) {
+    public ResponseEntity<ApiResponse<Void>> rejectInstructor(@PathVariable Long applicationId) {
         memberCommandUseCase.rejectInstructor(applicationId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.of("강사 요청을 반려했습니다."));
     }
 }

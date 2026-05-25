@@ -1,0 +1,65 @@
+### 내 정보 수정
+PATCH http://localhost:8080/users/me
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTYyMTk1NiwiZXhwIjoxNzc5NjI1NTU2fQ.99PR4voPvQrx1lAs38OXj1sdmCL9nWIvfDt0UnIc1VOrYLFrs6l8vJH7ahXoLMcQ
+
+{
+  "currentPassword": "Password123!",
+  "name": "박민서",
+  "email": "updated-user123@test.com"
+}
+
+
+### 비밀번호 수정
+PATCH http://localhost:8080/users/me/password
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTYyMzc0NywiZXhwIjoxNzc5NjI3MzQ3fQ.d0NyvKvCeEaTW8zQIxppCcaBBG87C-xwWuh5LvO8DxirdlF9FSbhep69Dp-bgRK6
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "NewPassword123!",
+  "newPasswordConfirm": "NewPassword123!"
+}
+
+### 비밀번호 찾기 - 인증 코드 요청
+POST http://localhost:8080/auth/password-reset/request
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "barkmin9@naver.com"
+}
+
+### 비밀번호 찾기 - 새 비밀번호 설정
+POST http://localhost:8080/auth/password-reset/confirm
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "barkmin9@naver.com",
+  "code": "DB0VDZN8",
+  "newPassword": "Reset123!",
+  "newPasswordConfirm": "Reset123!"
+}
+
+###
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+"loginId": "user123",
+"password": "Reset123!"
+}
+
+
+### 회원 탈퇴
+DELETE http://localhost:8080/users/me
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTYyMzg4MiwiZXhwIjoxNzc5NjI3NDgyfQ.cYixlDDkrLIGAtDHx9Nqj2UBwzBlL3aTfljeRBchXK2vlavCYgR6aJQ2l1J20bEd
+
+{
+  "currentPassword": "NewPassword123!"
+}

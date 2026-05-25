@@ -1,5 +1,7 @@
 package com.sashimi.member.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -31,11 +33,17 @@ public class InstructorApplication {
     }
 
     public void approve() {
+        if (this.approvalStatus != ApprovalStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS);
+        }
         this.approvalStatus = ApprovalStatus.APPROVED;
         this.approvedAt = LocalDateTime.now();
     }
 
     public void reject() {
+        if (this.approvalStatus != ApprovalStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS);
+        }
         this.approvalStatus = ApprovalStatus.REJECTED;
         this.updatedAt = LocalDateTime.now();
     }

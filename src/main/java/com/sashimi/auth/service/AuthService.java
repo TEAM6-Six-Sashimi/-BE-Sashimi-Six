@@ -1,17 +1,18 @@
 package com.sashimi.auth.service;
 
 import com.sashimi.auth.dto.LoginRequestDto;
+import com.sashimi.auth.dto.PasswordResetRequestDto;
 import com.sashimi.auth.dto.TokenResponseDto;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.security.jwt.JwtTokenProvider;
 import com.sashimi.token.entity.RefreshToken;
 import com.sashimi.token.service.RefreshService;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.repository.UserRepository;
 import com.sashimi.user.dto.LoginIdCheckResponseDto;
 import com.sashimi.user.dto.SignupRequestDto;
 import com.sashimi.user.dto.UserResponseDto;
-import com.sashimi.user.entity.User;
-import com.sashimi.user.model.Role;
-import com.sashimi.user.model.UserStatus;
-import com.sashimi.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,6 +20,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.sashimi.verification.application.usecase.EmailVerificationUseCase;
+import com.sashimi.verification.domain.model.VerificationPurpose;
+import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
+import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
+import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
+import com.sashimi.credit.application.service.CreditService;
+
+
+import java.security.SecureRandom;
+import java.util.Locale;
 
 import java.time.LocalDateTime;
 
@@ -32,28 +43,137 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
     private final RefreshService refreshService;
+    private final EmailVerificationUseCase emailVerificationUseCase;
+    private final CreditService creditService;
+
+    private static final String REFERRAL_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int REFERRAL_CODE_LENGTH = 8;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     public UserResponseDto register(SignupRequestDto request) {
         if (userRepository.existsByLoginId(request.getLoginId())) {
-            throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
+            throw new BusinessException(ErrorCode.DUPLICATE_LOGIN_ID);
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
-        User user = User.builder()
-                .loginId(request.getLoginId())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail())
-                .name(request.getName())
-                .role(Role.STUDENT)
-                .status(UserStatus.ACTIVE)
-                .emailVerified(true) // 7단계 이메일 인증 붙이면 검증 결과로 바꿀 예정
-                .referralCode(request.getReferralCode())
-                .build();
+        emailVerificationUseCase.validateVerifiedEmail(
+                request.getEmail(),
+                VerificationPurpose.SIGNUP
+        );
 
-        return UserResponseDto.from(userRepository.save(user));
+        User referrer = null;
+        String inputReferralCode = normalizeReferralCode(request.getReferralCode());
+
+        if (inputReferralCode != null) {
+            referrer = userRepository.findByReferralCode(inputReferralCode)
+                    .filter(User::isActive)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFERRAL_CODE));
+        }
+
+        String generatedReferralCode = generateUniqueReferralCode();
+
+        User user = User.createStudent(
+                request.getName(),
+                request.getLoginId(),
+                passwordEncoder.encode(request.getPassword()),
+                request.getEmail(),
+                generatedReferralCode
+        );
+
+        User savedUser = userRepository.save(user);
+
+        if (referrer == null) {
+            creditService.createInitialCredit(savedUser.getId());
+        } else {
+            creditService.grantReferralSignupRewards(savedUser.getId(), referrer.getId());
+        }
+
+        return UserResponseDto.from(savedUser);
+    }
+
+    private String generateUniqueReferralCode() {
+        String referralCode;
+
+        do {
+            referralCode = generateReferralCode();
+        } while (userRepository.existsByReferralCode(referralCode));
+
+        return referralCode;
+    }
+
+    private String generateReferralCode() {
+        StringBuilder code = new StringBuilder();
+
+        for (int i = 0; i < REFERRAL_CODE_LENGTH; i++) {
+            int index = RANDOM.nextInt(REFERRAL_CODE_CHARS.length());
+            code.append(REFERRAL_CODE_CHARS.charAt(index));
+        }
+
+        return code.toString();
+    }
+
+    private String normalizeReferralCode(String referralCode) {
+        if (referralCode == null || referralCode.isBlank()) {
+            return null;
+        }
+
+        return referralCode.trim().toUpperCase(Locale.ROOT);
+    }
+
+
+
+    public void requestPasswordReset(PasswordResetRequestDto request) {
+        String email = normalizeEmail(request.getEmail());
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.INACTIVE_USER);
+        }
+
+        emailVerificationUseCase.requestEmailVerification(
+                new RequestEmailVerificationCommand(
+                        email,
+                        VerificationPurpose.PASSWORD_RESET,
+                        user.getId()
+                )
+        );
+    }
+
+    public void resetPassword(PasswordResetConfirmRequestDto request) {
+        String email = normalizeEmail(request.getEmail());
+
+        emailVerificationUseCase.confirmEmailVerification(
+                new ConfirmEmailVerificationCommand(
+                        email,
+                        VerificationPurpose.PASSWORD_RESET,
+                        request.getCode()
+                )
+        );
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.INACTIVE_USER);
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new BusinessException(ErrorCode.SAME_AS_OLD_PASSWORD);
+        }
+
+        user.changePassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        refreshService.deleteByUser(user);
+    }
+
+    private String normalizeEmail(String email) {
+        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     public TokenResponseDto login(LoginRequestDto request) {
@@ -65,7 +185,7 @@ public class AuthService {
         );
 
         User user = userRepository.findByLoginId(authentication.getName())
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
 
@@ -79,7 +199,9 @@ public class AuthService {
 
     public TokenResponseDto reissue(String refreshTokenValue) {
         RefreshToken refreshToken = refreshService.findValidRefreshToken(refreshTokenValue);
-        User user = refreshToken.getUser();
+
+        User user = userRepository.findById(refreshToken.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 user.getLoginId(),
@@ -99,7 +221,11 @@ public class AuthService {
 
     public void logout(String refreshTokenValue) {
         RefreshToken refreshToken = refreshService.findValidRefreshToken(refreshTokenValue);
-        refreshService.deleteByUser(refreshToken.getUser());
+
+        User user = userRepository.findById(refreshToken.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        refreshService.deleteByUser(user);
     }
 
     @Transactional(readOnly = true)

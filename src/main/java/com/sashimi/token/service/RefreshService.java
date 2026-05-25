@@ -2,10 +2,12 @@ package com.sashimi.token.service;
 
 import com.sashimi.token.entity.RefreshToken;
 import com.sashimi.token.repository.RefreshTokenRepository;
-import com.sashimi.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.user.domain.model.User;
 
 import java.time.LocalDateTime;
 
@@ -17,29 +19,29 @@ public class RefreshService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     public RefreshToken saveOrUpdate(User user, String token, LocalDateTime expiryDate) {
-        return refreshTokenRepository.findByUser(user)
+        return refreshTokenRepository.findByUserId(user.getId())
                 .map(refreshToken -> {
                     refreshToken.updateToken(token, expiryDate);
                     return refreshToken;
                 })
                 .orElseGet(() -> refreshTokenRepository.save(
-                        new RefreshToken(user, token, expiryDate)
+                        new RefreshToken(user.getId(), token, expiryDate)
                 ));
     }
 
     @Transactional(readOnly = true)
     public RefreshToken findValidRefreshToken(String token) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 refresh token입니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
 
         if (refreshToken.isExpired()) {
-            throw new IllegalArgumentException("만료된 refresh token입니다.");
+            throw new BusinessException(ErrorCode.EXPIRED_REFRESH_TOKEN);
         }
 
         return refreshToken;
     }
 
     public void deleteByUser(User user) {
-        refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.deleteByUserId(user.getId());
     }
 }
