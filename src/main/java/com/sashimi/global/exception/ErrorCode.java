@@ -35,7 +35,13 @@ public enum ErrorCode {
     EMAIL_VERIFICATION_EXPIRED(400, "VERIFICATION_003", "이메일 인증 코드가 만료되었습니다."),
     INVALID_EMAIL_VERIFICATION_CODE(400, "VERIFICATION_004", "이메일 인증 코드가 일치하지 않습니다."),
     EMAIL_NOT_VERIFIED(400, "VERIFICATION_005", "이메일 인증이 완료되지 않았습니다."),
-    EMAIL_SEND_FAILED(500, "VERIFICATION_006", "이메일 발송에 실패했습니다.");
+    EMAIL_SEND_FAILED(500, "VERIFICATION_006", "이메일 발송에 실패했습니다."),
+
+    COURSE_NOT_FOUND(404, "COURSE_404", "강의를 찾을 수 없습니다."),
+    COURSE_NOT_MODIFIABLE(400, "COURSE_001", "수정할 수 없는 상태의 강의입니다."),
+    COURSE_NOT_DELETABLE(400, "COURSE_002", "삭제할 수 없는 상태의 강의입니다."),
+    COURSE_NOT_PENDING(400, "COURSE_003", "승인 대기 상태가 아닌 강의입니다."),
+    COURSE_FORBIDDEN(403, "COURSE_004", "해당 강의에 대한 권한이 없습니다.");
 
 
     private final int status;
