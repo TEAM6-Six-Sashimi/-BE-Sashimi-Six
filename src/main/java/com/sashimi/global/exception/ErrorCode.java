@@ -27,7 +27,15 @@ public enum ErrorCode {
     INVALID_CURRENT_PASSWORD(400, "USER_003", "현재 비밀번호가 일치하지 않습니다."),
     SAME_AS_OLD_PASSWORD(400, "USER_004", "새 비밀번호는 현재 비밀번호와 달라야 합니다."),
     INACTIVE_USER(403, "USER_005", "비활성화된 회원입니다."),
-    USER_NOT_FOUND(404, "USER_404", "사용자를 찾을 수 없습니다.");
+    USER_NOT_FOUND(404, "USER_404", "사용자를 찾을 수 없습니다."),
+
+    EMAIL_VERIFICATION_NOT_FOUND(404, "VERIFICATION_001", "이메일 인증 요청을 찾을 수 없습니다."),
+    EMAIL_VERIFICATION_RESEND_TOO_SOON(429, "VERIFICATION_002", "이메일 인증 코드는 60초 후 다시 요청할 수 있습니다."),
+    EMAIL_VERIFICATION_EXPIRED(400, "VERIFICATION_003", "이메일 인증 코드가 만료되었습니다."),
+    INVALID_EMAIL_VERIFICATION_CODE(400, "VERIFICATION_004", "이메일 인증 코드가 일치하지 않습니다."),
+    EMAIL_NOT_VERIFIED(400, "VERIFICATION_005", "이메일 인증이 완료되지 않았습니다."),
+    EMAIL_SEND_FAILED(500, "VERIFICATION_006", "이메일 발송에 실패했습니다.");
+
 
     private final int status;
     private final String code;

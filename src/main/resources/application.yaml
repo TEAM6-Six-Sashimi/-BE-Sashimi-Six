@@ -34,3 +34,29 @@ jwt:
   access-token-validity-in-milliseconds: 3600000
   refresh-token-validity-in-milliseconds: 1209600000
 
+---
+spring:
+  config:
+    activate:
+      on-profile: mailgun
+
+  mail:
+    host: smtp.mailgun.org
+    port: 587
+    username: ${MAILGUN_SMTP_USERNAME}
+    password: ${MAILGUN_SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+app:
+  mail:
+    from: ${MAIL_FROM}
+
