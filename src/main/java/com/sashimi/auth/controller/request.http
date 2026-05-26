@@ -24,8 +24,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "loginId": "user123",
-  "password": "Password123!"
+  "loginId": "student01",
+  "password": "student"
 }
 ### 토큰 재발급
 POST http://localhost:8080/auth/reissue

@@ -34,7 +34,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "bark9@test.com"
+  "email": "student1@test.com"
 }
 
 ### 비밀번호 찾기 - 새 비밀번호 설정
@@ -43,10 +43,10 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "email": "bark9@test.com",
-  "code": "K3CR20O7",
-  "newPassword": "Reset123!",
-  "newPasswordConfirm": "Reset123!"
+  "email": "student1@test.com",
+  "code": "64Z7FJA9",
+  "newPassword": "student123!",
+  "newPasswordConfirm": "student123!"
 }
 
 ### 바꾼걸로 로그인 해보기

@@ -1,7 +1,7 @@
 package com.sashimi.user.presentation.api;
 
 import com.sashimi.security.principal.CustomUserPrincipal;
-import com.sashimi.user.application.result.WithdrawUserResult;
+import com.sashimi.user.presentation.api.response.WithdrawUserResult;
 import com.sashimi.user.application.usecase.UserCommandUseCase;
 import com.sashimi.user.application.usecase.UserQueryUseCase;
 import com.sashimi.user.dto.UserResponseDto;
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.sashimi.user.application.result.ChangePasswordResult;
+import com.sashimi.user.presentation.api.response.ChangePasswordResult;
 import com.sashimi.user.presentation.api.response.ChangePasswordResponse;
 
 @RestController

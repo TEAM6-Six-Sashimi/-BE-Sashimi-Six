@@ -5,6 +5,8 @@ import com.sashimi.cart.application.port.CoursePort;
 import com.sashimi.cart.application.usecase.CartQueryUseCase;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +39,7 @@ public class CartQueryService implements CartQueryUseCase {
         List<CartItem> cartItems = cartItemRepository.findAllSelectedByUserId(userId);
 
         if (cartItems.isEmpty()) {
-            throw new IllegalArgumentException("결제할 강의를 선택해주세요.");
+            throw new BusinessException(ErrorCode.CART_EMPTY_SELECTION);
         }
 
         return toCartView(cartItems);
