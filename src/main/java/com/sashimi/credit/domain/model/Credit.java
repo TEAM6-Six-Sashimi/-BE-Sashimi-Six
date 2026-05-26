@@ -20,7 +20,7 @@ public class Credit {
 
     public void add(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("크레딧 지급 금액은 0보다 커야 합니다.");
+            throw new IllegalArgumentException("크레딧 충전 금액은 0보다 커야 합니다.");
         }
 
         this.balance = this.balance.add(amount);
