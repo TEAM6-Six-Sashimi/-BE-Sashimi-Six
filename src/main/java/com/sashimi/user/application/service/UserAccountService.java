@@ -6,7 +6,7 @@ import com.sashimi.token.service.RefreshService;
 import com.sashimi.user.application.command.ChangePasswordCommand;
 import com.sashimi.user.application.command.UpdateMyInfoCommand;
 import com.sashimi.user.application.command.WithdrawUserCommand;
-import com.sashimi.user.application.result.WithdrawUserResult;
+import com.sashimi.user.presentation.api.response.WithdrawUserResult;
 import com.sashimi.user.application.usecase.UserCommandUseCase;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.sashimi.user.application.result.ChangePasswordResult;
+import com.sashimi.user.presentation.api.response.ChangePasswordResult;
 
 @Service
 @RequiredArgsConstructor

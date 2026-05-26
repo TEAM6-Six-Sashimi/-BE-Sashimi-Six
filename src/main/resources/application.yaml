@@ -31,7 +31,7 @@ openai:
   timeout-seconds: 30
 jwt:
   secret: this-is-sashimi-lms-jwt-secret-key-for-hs256-authentication
-  access-token-validity-in-milliseconds: 3600000
+  access-token-validity-in-milliseconds: 10800000
   refresh-token-validity-in-milliseconds: 1209600000
 
 ---

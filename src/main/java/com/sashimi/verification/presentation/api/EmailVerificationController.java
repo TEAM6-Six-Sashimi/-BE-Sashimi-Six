@@ -9,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.sashimi.verification.application.result.EmailVerificationConfirmResult;
-import com.sashimi.verification.application.result.EmailVerificationRequestResult;
+import com.sashimi.verification.presentation.api.response.EmailVerificationConfirmResult;
+import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResult;
 import com.sashimi.verification.presentation.api.response.EmailVerificationConfirmResponse;
 import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResponse;
 

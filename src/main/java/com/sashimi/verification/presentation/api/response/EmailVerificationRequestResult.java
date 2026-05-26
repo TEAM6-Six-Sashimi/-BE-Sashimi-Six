@@ -1,4 +1,4 @@
-package com.sashimi.verification.application.result;
+package com.sashimi.verification.presentation.api.response;
 
 import com.sashimi.verification.domain.model.VerificationPurpose;
 

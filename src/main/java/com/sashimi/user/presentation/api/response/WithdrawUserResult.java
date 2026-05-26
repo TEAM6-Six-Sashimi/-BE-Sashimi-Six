@@ -1,4 +1,4 @@
-package com.sashimi.user.application.result;
+package com.sashimi.user.presentation.api.response;
 
 import com.sashimi.user.domain.model.UserStatus;
 
