@@ -1,5 +1,7 @@
 package com.sashimi.auth.service;
 
+import com.sashimi.auth.application.policy.SignupEligibility;
+import com.sashimi.auth.application.policy.SignupEligibilityPolicy;
 import com.sashimi.auth.dto.LoginRequestDto;
 import com.sashimi.auth.dto.PasswordResetRequestDto;
 import com.sashimi.auth.dto.TokenResponseDto;
@@ -8,12 +10,14 @@ import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.security.jwt.JwtTokenProvider;
 import com.sashimi.token.entity.RefreshToken;
 import com.sashimi.token.service.RefreshService;
+import com.sashimi.user.application.event.UserPasswordChangedEvent;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import com.sashimi.user.dto.LoginIdCheckResponseDto;
 import com.sashimi.user.dto.SignupRequestDto;
 import com.sashimi.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -48,33 +52,15 @@ public class AuthService {
     private final RefreshService refreshService;
     private final EmailVerificationUseCase emailVerificationUseCase;
     private final CreditService creditService;
+    private final ApplicationEventPublisher eventPublisher;
+    private final SignupEligibilityPolicy signupEligibilityPolicy;
 
     private static final String REFERRAL_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int REFERRAL_CODE_LENGTH = 8;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     public UserResponseDto register(SignupRequestDto request) {
-        if (userRepository.existsByLoginId(request.getLoginId())) {
-            throw new BusinessException(ErrorCode.DUPLICATE_LOGIN_ID);
-        }
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
-        }
-
-        emailVerificationUseCase.validateVerifiedEmail(
-                request.getEmail(),
-                VerificationPurpose.SIGNUP
-        );
-
-        User referrer = null;
-        String inputReferralCode = normalizeReferralCode(request.getReferralCode());
-
-        if (inputReferralCode != null) {
-            referrer = userRepository.findByReferralCode(inputReferralCode)
-                    .filter(User::isActive)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFERRAL_CODE));
-        }
+        SignupEligibility eligibility = signupEligibilityPolicy.validate(request);
 
         String generatedReferralCode = generateUniqueReferralCode();
 
@@ -88,10 +74,13 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        if (referrer == null) {
+        if (!eligibility.hasReferrer()) {
             creditService.createInitialCredit(savedUser.getId());
         } else {
-            creditService.grantReferralSignupRewards(savedUser.getId(), referrer.getId());
+            creditService.grantReferralSignupRewards(
+                    savedUser.getId(),
+                    eligibility.referrer().getId()
+            );
         }
 
         return UserResponseDto.from(savedUser);
@@ -118,13 +107,6 @@ public class AuthService {
         return code.toString();
     }
 
-    private String normalizeReferralCode(String referralCode) {
-        if (referralCode == null || referralCode.isBlank()) {
-            return null;
-        }
-
-        return referralCode.trim().toUpperCase(Locale.ROOT);
-    }
 
 
 
@@ -177,9 +159,15 @@ public class AuthService {
         }
 
         user.changePassword(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        refreshService.deleteByUser(user);
+        eventPublisher.publishEvent(
+                new UserPasswordChangedEvent(
+                        savedUser.getId(),
+                        savedUser.getEmail(),
+                        LocalDateTime.now()
+                )
+        );
 
         return new PasswordResetConfirmResponseDto(true, true);
     }
