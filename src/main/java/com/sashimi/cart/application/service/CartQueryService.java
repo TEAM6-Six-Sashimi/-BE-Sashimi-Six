@@ -29,7 +29,21 @@ public class CartQueryService implements CartQueryUseCase {
     @Override
     public CartView getCart(Long userId) {
         List<CartItem> cartItems = cartItemRepository.findAllByUserId(userId);
+        return toCartView(cartItems);
+    }
 
+    @Override
+    public CartView getCheckoutCart(Long userId) {
+        List<CartItem> cartItems = cartItemRepository.findAllSelectedByUserId(userId);
+
+        if (cartItems.isEmpty()) {
+            throw new IllegalArgumentException("결제할 강의를 선택해주세요.");
+        }
+
+        return toCartView(cartItems);
+    }
+
+    private CartView toCartView(List<CartItem> cartItems) {
         List<CartItemView> itemViews = cartItems.stream()
                 .map(this::toView)
                 .toList();
@@ -43,7 +57,12 @@ public class CartQueryService implements CartQueryUseCase {
                 .filter(CartItemView::selected)
                 .count();
 
-        return new CartView(itemViews, totalPrice, itemViews.size(), selectedItemCount);
+        return new CartView(
+                itemViews,
+                totalPrice,
+                itemViews.size(),
+                selectedItemCount
+        );
     }
 
     private CartItemView toView(CartItem cartItem) {
