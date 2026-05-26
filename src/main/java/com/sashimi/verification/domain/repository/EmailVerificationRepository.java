@@ -18,4 +18,6 @@ public interface EmailVerificationRepository {
             String targetEmail,
             VerificationPurpose purpose
     );
+
+    void deleteAllByUserId(Long userId);
 }

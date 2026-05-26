@@ -16,4 +16,6 @@ public interface SpringDataCartItemRepository extends JpaRepository<CartItemJpaE
     List<CartItemJpaEntity> findAllByUserIdAndSelectedTrueOrderByCreatedAtDesc(Long userId);
 
     void deleteAllByUserIdAndSelectedTrue(Long userId);
+
+    void deleteAllByUserId(Long userId);
 }

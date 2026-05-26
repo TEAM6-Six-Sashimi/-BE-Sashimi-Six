@@ -64,4 +64,18 @@ public class User {
     public boolean isEmailVerified() { return emailVerified; }
     public String getReferralCode() { return referralCode; }
     public LocalDateTime getDeactivatedAt() { return deactivatedAt; }
+
+    public void withdraw(String maskedLoginId, String maskedEmail, String encodedPassword) {
+        this.status = UserStatus.DELETED;
+        if (this.deactivatedAt == null) {
+            this.deactivatedAt = LocalDateTime.now();
+        }
+        this.name = "탈퇴회원";
+        this.loginId = maskedLoginId;
+        this.email = maskedEmail;
+        this.password = encodedPassword;
+        this.emailVerified = false;
+        this.referralCode = null;
+    }
 }
+
