@@ -25,8 +25,13 @@ import com.sashimi.verification.domain.model.VerificationPurpose;
 import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
 import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
+import com.sashimi.credit.application.service.CreditService;
+import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
+import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
+import com.sashimi.verification.application.result.EmailVerificationRequestResult;
 
 
+import java.security.SecureRandom;
 import java.util.Locale;
 
 import java.time.LocalDateTime;
@@ -42,6 +47,11 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RefreshService refreshService;
     private final EmailVerificationUseCase emailVerificationUseCase;
+    private final CreditService creditService;
+
+    private static final String REFERRAL_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int REFERRAL_CODE_LENGTH = 8;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     public UserResponseDto register(SignupRequestDto request) {
         if (userRepository.existsByLoginId(request.getLoginId())) {
@@ -57,20 +67,68 @@ public class AuthService {
                 VerificationPurpose.SIGNUP
         );
 
+        User referrer = null;
+        String inputReferralCode = normalizeReferralCode(request.getReferralCode());
+
+        if (inputReferralCode != null) {
+            referrer = userRepository.findByReferralCode(inputReferralCode)
+                    .filter(User::isActive)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFERRAL_CODE));
+        }
+
+        String generatedReferralCode = generateUniqueReferralCode();
+
         User user = User.createStudent(
                 request.getName(),
                 request.getLoginId(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getEmail(),
-                request.getReferralCode()
+                generatedReferralCode
         );
 
         User savedUser = userRepository.save(user);
 
+        if (referrer == null) {
+            creditService.createInitialCredit(savedUser.getId());
+        } else {
+            creditService.grantReferralSignupRewards(savedUser.getId(), referrer.getId());
+        }
+
         return UserResponseDto.from(savedUser);
     }
 
-    public void requestPasswordReset(PasswordResetRequestDto request) {
+    private String generateUniqueReferralCode() {
+        String referralCode;
+
+        do {
+            referralCode = generateReferralCode();
+        } while (userRepository.existsByReferralCode(referralCode));
+
+        return referralCode;
+    }
+
+    private String generateReferralCode() {
+        StringBuilder code = new StringBuilder();
+
+        for (int i = 0; i < REFERRAL_CODE_LENGTH; i++) {
+            int index = RANDOM.nextInt(REFERRAL_CODE_CHARS.length());
+            code.append(REFERRAL_CODE_CHARS.charAt(index));
+        }
+
+        return code.toString();
+    }
+
+    private String normalizeReferralCode(String referralCode) {
+        if (referralCode == null || referralCode.isBlank()) {
+            return null;
+        }
+
+        return referralCode.trim().toUpperCase(Locale.ROOT);
+    }
+
+
+
+    public PasswordResetRequestResponseDto requestPasswordReset(PasswordResetRequestDto request) {
         String email = normalizeEmail(request.getEmail());
 
         User user = userRepository.findByEmail(email)
@@ -80,16 +138,23 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INACTIVE_USER);
         }
 
-        emailVerificationUseCase.requestEmailVerification(
+        EmailVerificationRequestResult result = emailVerificationUseCase.requestEmailVerification(
                 new RequestEmailVerificationCommand(
                         email,
                         VerificationPurpose.PASSWORD_RESET,
                         user.getId()
                 )
         );
+
+        return new PasswordResetRequestResponseDto(
+                result.targetEmail(),
+                result.purpose(),
+                result.expiresInSeconds(),
+                result.resendAvailableInSeconds()
+        );
     }
 
-    public void resetPassword(PasswordResetConfirmRequestDto request) {
+    public PasswordResetConfirmResponseDto resetPassword(PasswordResetConfirmRequestDto request) {
         String email = normalizeEmail(request.getEmail());
 
         emailVerificationUseCase.confirmEmailVerification(
@@ -115,6 +180,8 @@ public class AuthService {
         userRepository.save(user);
 
         refreshService.deleteByUser(user);
+
+        return new PasswordResetConfirmResponseDto(true, true);
     }
 
     private String normalizeEmail(String email) {

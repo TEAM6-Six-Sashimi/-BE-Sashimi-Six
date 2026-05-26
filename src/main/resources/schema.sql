@@ -83,6 +83,7 @@ CREATE TABLE courses (
 -- =========================
 CREATE TABLE course_sessions (
                                  session_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                 session_uid      VARCHAR(36)     NOT NULL,
                                  title VARCHAR(255) NOT NULL,
                                  video_url VARCHAR(500),
                                  duration_seconds INT NOT NULL DEFAULT 0,
@@ -320,6 +321,7 @@ CREATE TABLE credits (
 -- =========================
 -- 19. INSTRUCTOR_PROFILES
 -- =========================
+-- 테이블 생성
 CREATE TABLE instructor_profiles (
                                      instructor_profile_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                      bio TEXT,
@@ -328,6 +330,8 @@ CREATE TABLE instructor_profiles (
                                      portfolio_url VARCHAR(500),
                                      approval_status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
                                      approved_at DATETIME NULL,
+                                     created_at DATETIME DEFAULT NOW(),
+                                     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
                                      user_id BIGINT NOT NULL UNIQUE,
                                      CONSTRAINT fk_instructor_profiles_user FOREIGN KEY (user_id) REFERENCES users(user_id)
 );

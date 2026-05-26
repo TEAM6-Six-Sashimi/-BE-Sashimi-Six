@@ -41,6 +41,11 @@ public class UserRepositoryAdapter implements UserRepository {
     }
 
     @Override
+    public boolean existsByReferralCode(String referralCode) {
+        return springDataUserRepository.existsByReferralCode(referralCode);
+    }
+
+    @Override
     public User save(User user) {
         return springDataUserRepository.save(UserJpaEntity.from(user)).toDomain();
     }
@@ -48,5 +53,11 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public void deleteByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime) {
         springDataUserRepository.deleteByStatusAndDeactivatedAtBefore(status, dateTime);
+    }
+
+    @Override
+    public Optional<User> findByReferralCode(String referralCode) {
+        return springDataUserRepository.findByReferralCode(referralCode)
+                .map(UserJpaEntity::toDomain);
     }
 }

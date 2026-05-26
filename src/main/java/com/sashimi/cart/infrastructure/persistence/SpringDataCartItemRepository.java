@@ -12,4 +12,8 @@ public interface SpringDataCartItemRepository extends JpaRepository<CartItemJpaE
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
     Optional<CartItemJpaEntity> findByIdAndUserId(Long id, Long userId);
+
+    List<CartItemJpaEntity> findAllByUserIdAndSelectedTrueOrderByCreatedAtDesc(Long userId);
+
+    void deleteAllByUserIdAndSelectedTrue(Long userId);
 }
