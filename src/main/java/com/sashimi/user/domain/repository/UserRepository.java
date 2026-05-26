@@ -4,6 +4,7 @@ import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.model.UserStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository {
@@ -20,8 +21,9 @@ public interface UserRepository {
 
     User save(User user);
 
-    void deleteByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime);
 
     Optional<User> findByReferralCode(String referralCode);
     boolean existsByReferralCode(String referralCode);
+
+    List<User> findAllByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime);
 }
