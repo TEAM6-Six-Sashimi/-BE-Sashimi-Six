@@ -35,7 +35,13 @@ public enum ErrorCode {
     EMAIL_VERIFICATION_EXPIRED(400, "VERIFICATION_003", "이메일 인증 코드가 만료되었습니다."),
     INVALID_EMAIL_VERIFICATION_CODE(400, "VERIFICATION_004", "이메일 인증 코드가 일치하지 않습니다."),
     EMAIL_NOT_VERIFIED(400, "VERIFICATION_005", "이메일 인증이 완료되지 않았습니다."),
-    EMAIL_SEND_FAILED(500, "VERIFICATION_006", "이메일 발송에 실패했습니다.");
+    EMAIL_SEND_FAILED(500, "VERIFICATION_006", "이메일 발송에 실패했습니다."),
+
+    INVALID_INPUT(400, "MEMBER_001", "입력값이 올바르지 않습니다."),
+    ALREADY_APPLIED(400, "MEMBER_002","이미 강사 신청이 진행 중입니다."),
+    APPLICATION_NOT_FOUND(404,"MEMBER_003", "신청을 찾을 수 없습니다."),
+    INVALID_APPLICATION_STATUS(400, "MEMBER_004", "처리할 수 없는 신청 상태입니다.");
+
 
 
     private final int status;
