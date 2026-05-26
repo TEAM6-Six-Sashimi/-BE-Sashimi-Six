@@ -28,7 +28,7 @@ import com.sashimi.verification.application.command.RequestEmailVerificationComm
 import com.sashimi.credit.application.service.CreditService;
 import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
 import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
-import com.sashimi.verification.application.result.EmailVerificationRequestResult;
+import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResult;
 
 
 import java.security.SecureRandom;
