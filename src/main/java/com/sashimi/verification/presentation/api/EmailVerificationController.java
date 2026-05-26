@@ -9,6 +9,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.sashimi.verification.presentation.api.response.EmailVerificationConfirmResult;
+import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResult;
+import com.sashimi.verification.presentation.api.response.EmailVerificationConfirmResponse;
+import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResponse;
 
 @RestController
 @RequestMapping("/verifications/email")
@@ -18,25 +22,35 @@ public class EmailVerificationController {
     private final EmailVerificationUseCase emailVerificationUseCase;
 
     @PostMapping("/request")
-    public ResponseEntity<Void> requestEmailVerification(
+    public ResponseEntity<EmailVerificationRequestResponse> requestEmailVerification(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody @Valid EmailVerificationRequest request
     ) {
         Long userId = principal == null ? null : principal.getId();
 
-        emailVerificationUseCase.requestEmailVerification(
+        EmailVerificationRequestResult result = emailVerificationUseCase.requestEmailVerification(
                 request.toCommand(userId)
         );
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new EmailVerificationRequestResponse(
+                result.targetEmail(),
+                result.purpose(),
+                result.expiresInSeconds(),
+                result.resendAvailableInSeconds()
+        ));
     }
 
     @PostMapping("/confirm")
-    public ResponseEntity<Void> confirmEmailVerification(
+    public ResponseEntity<EmailVerificationConfirmResponse> confirmEmailVerification(
             @RequestBody @Valid ConfirmEmailVerificationRequest request
     ) {
-        emailVerificationUseCase.confirmEmailVerification(request.toCommand());
+        EmailVerificationConfirmResult result =
+                emailVerificationUseCase.confirmEmailVerification(request.toCommand());
 
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new EmailVerificationConfirmResponse(
+                result.targetEmail(),
+                result.purpose(),
+                result.verified()
+        ));
     }
 }

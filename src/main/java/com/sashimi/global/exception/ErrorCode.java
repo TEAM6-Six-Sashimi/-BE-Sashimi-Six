@@ -37,6 +37,27 @@ public enum ErrorCode {
     EMAIL_NOT_VERIFIED(400, "VERIFICATION_005", "이메일 인증이 완료되지 않았습니다."),
     EMAIL_SEND_FAILED(500, "VERIFICATION_006", "이메일 발송에 실패했습니다."),
 
+
+    COURSE_NOT_FOUND(404, "COURSE_404", "강의를 찾을 수 없습니다."),
+    COURSE_NOT_MODIFIABLE(400, "COURSE_001", "수정할 수 없는 상태의 강의입니다."),
+    COURSE_NOT_DELETABLE(400, "COURSE_002", "삭제할 수 없는 상태의 강의입니다."),
+    COURSE_NOT_PENDING(400, "COURSE_003", "승인 대기 상태가 아닌 강의입니다."),
+    COURSE_FORBIDDEN(403, "COURSE_004", "해당 강의에 대한 권한이 없습니다."),
+    COURSE_NOT_PURCHASABLE(400, "COURSE_005", "구매할 수 없는 강의입니다."),
+
+    CART_ITEM_NOT_FOUND(404, "CART_001", "장바구니 항목을 찾을 수 없습니다."),
+    CART_ITEM_ALREADY_EXISTS(409, "CART_002", "이미 장바구니에 담긴 강의입니다."),
+    CART_EMPTY_SELECTION(400, "CART_003", "결제할 강의를 선택해주세요."),
+    CART_INVALID_SELECTION(400, "CART_004", "장바구니 선택 정보가 올바르지 않습니다."),
+
+    ENROLLMENT_ALREADY_EXISTS(409, "ENROLLMENT_001", "이미 수강 중인 강의입니다."),
+    ENROLLMENT_CREATE_FAILED(500, "ENROLLMENT_002", "수강 등록에 실패했습니다."),
+
+    PAYMENT_ORDER_NOT_FOUND(404, "PAYMENT_001", "주문을 찾을 수 없습니다."),
+    PAYMENT_EMPTY_COURSE(400, "PAYMENT_002", "결제할 강의가 없습니다."),
+
+    CREDIT_INVALID_AMOUNT(400, "CREDIT_001", "크레딧 금액이 올바르지 않습니다."),
+
     INVALID_INPUT(400, "MEMBER_001", "입력값이 올바르지 않습니다."),
     ALREADY_APPLIED(400, "MEMBER_002","이미 강사 신청이 진행 중입니다."),
     APPLICATION_NOT_FOUND(404,"MEMBER_003", "신청을 찾을 수 없습니다."),

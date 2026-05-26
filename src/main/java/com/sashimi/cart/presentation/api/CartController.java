@@ -10,9 +10,13 @@ import com.sashimi.cart.presentation.api.request.AddCartItemRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemSelectionRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemsSelectionRequest;
 import com.sashimi.cart.presentation.api.response.CartResponse;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.sashimi.security.principal.CustomUserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/cart")
@@ -31,19 +35,19 @@ public class CartController {
 
     @GetMapping
     public ResponseEntity<CartResponse> getCart(
-            @RequestHeader("X-USER-ID") Long userId
+            @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        CartQueryUseCase.CartView cartView = cartQueryUseCase.getCart(userId);
+        CartQueryUseCase.CartView cartView = cartQueryUseCase.getCart(principal.getId());
         return ResponseEntity.ok(CartResponse.from(cartView));
     }
 
     @PostMapping
     public ResponseEntity<Long> addCartItem(
-            @RequestHeader("X-USER-ID") Long userId,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody AddCartItemRequest request
     ) {
         Long cartItemId = cartCommandUseCase.addCartItem(
-                new AddCartItemCommand(userId, request.courseId())
+                new AddCartItemCommand(principal.getId(), request.courseId())
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(cartItemId);
@@ -51,11 +55,11 @@ public class CartController {
 
     @DeleteMapping("/{cartItemId}")
     public ResponseEntity<Void> deleteCartItem(
-            @RequestHeader("X-USER-ID") Long userId,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long cartItemId
     ) {
         cartCommandUseCase.deleteCartItem(
-                new DeleteCartItemCommand(userId, cartItemId)
+                new DeleteCartItemCommand(principal.getId(), cartItemId)
         );
 
         return ResponseEntity.noContent().build();
@@ -63,16 +67,16 @@ public class CartController {
 
     @PatchMapping("/{cartItemId}/selected")
     public ResponseEntity<Void> updateCartItemSelection(
-            @RequestHeader("X-USER-ID") Long userId,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long cartItemId,
             @RequestBody UpdateCartItemSelectionRequest request
     ) {
         if (request.selected() == null) {
-            throw new IllegalArgumentException("Selected is required.");
+            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
         }
 
         cartCommandUseCase.updateCartItemSelection(
-                new UpdateCartItemSelectionCommand(userId, cartItemId, request.selected())
+                new UpdateCartItemSelectionCommand(principal.getId(), cartItemId, request.selected())
         );
 
         return ResponseEntity.noContent().build();
@@ -80,18 +84,29 @@ public class CartController {
 
     @PatchMapping("/selected")
     public ResponseEntity<Void> updateCartItemsSelection(
-            @RequestHeader("X-USER-ID") Long userId,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody UpdateCartItemsSelectionRequest request
     ) {
         if (request.selected() == null) {
-            throw new IllegalArgumentException("Selected is required.");
+            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
         }
 
         cartCommandUseCase.updateCartItemsSelection(
-                new UpdateCartItemsSelectionCommand(userId, request.cartItemIds(), request.selected())
+                new UpdateCartItemsSelectionCommand(principal.getId(), request.cartItemIds(), request.selected())
         );
 
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<CartResponse> checkout(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        CartQueryUseCase.CartView cartView =
+                cartQueryUseCase.getCheckoutCart(principal.getId());
+
+        return ResponseEntity.ok(CartResponse.from(cartView));
+    }
+
 
 }

@@ -11,9 +11,13 @@ public interface CartItemRepository {
 
     List<CartItem> findAllByUserId(Long userId);
 
+    List<CartItem> findAllSelectedByUserId(Long userId);
+
     boolean existsByUserIdAndCourseId(Long userId, Long courseId);
 
     Optional<CartItem> findByIdAndUserId(Long cartItemId, Long userId);
 
     void delete(CartItem cartItem);
+
+    void deleteAllSelectedByUserId(Long userId);
 }

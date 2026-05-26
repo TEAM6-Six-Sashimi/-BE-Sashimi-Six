@@ -5,6 +5,8 @@ import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
 import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
 import com.sashimi.verification.application.port.EmailSender;
+import com.sashimi.verification.presentation.api.response.EmailVerificationConfirmResult;
+import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResult;
 import com.sashimi.verification.application.usecase.EmailVerificationUseCase;
 import com.sashimi.verification.domain.model.EmailVerification;
 import com.sashimi.verification.domain.model.VerificationPurpose;
@@ -29,7 +31,7 @@ public class EmailVerificationService implements EmailVerificationUseCase {
     private final EmailSender emailSender;
 
     @Override
-    public void requestEmailVerification(RequestEmailVerificationCommand command) {
+    public EmailVerificationRequestResult requestEmailVerification(RequestEmailVerificationCommand command) {
         String targetEmail = normalizeEmail(command.getTargetEmail());
         LocalDateTime now = LocalDateTime.now();
 
@@ -56,10 +58,16 @@ public class EmailVerificationService implements EmailVerificationUseCase {
                 createSubject(command.getPurpose()),
                 createContent(code)
         );
+
+        return new EmailVerificationRequestResult(
+                targetEmail,
+                command.getPurpose(),
+                EXPIRE_MINUTES * 60,
+                RESEND_INTERVAL_SECONDS);
     }
 
     @Override
-    public void confirmEmailVerification(ConfirmEmailVerificationCommand command) {
+    public EmailVerificationConfirmResult confirmEmailVerification(ConfirmEmailVerificationCommand command) {
         String targetEmail = normalizeEmail(command.getTargetEmail());
         LocalDateTime now = LocalDateTime.now();
 
@@ -79,6 +87,12 @@ public class EmailVerificationService implements EmailVerificationUseCase {
             emailVerification.verify(now);
             emailVerificationRepository.save(emailVerification);
         }
+
+        return new EmailVerificationConfirmResult(
+                targetEmail,
+                command.getPurpose(),
+                true
+        );
     }
 
     @Override

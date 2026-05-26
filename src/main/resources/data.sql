@@ -4,18 +4,22 @@ VALUES
     ('admin01', 'admin@test.com', '$2a$10$admin', '관리재', '010-0000-0000', 'ADMIN', 'ACTIVE', TRUE, 'ADMIN001'),
     ('instructor01', 'instructor1@test.com', '$2a$10$instructor', '김강사', '010-1111-1111', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS001'),
     ('instructor02', 'instructor2@test.com', '$2a$10$instructor', '이강사', '010-2222-2222', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS002'),
-    ('student01', 'student1@test.com', '$2a$10$student', '박학생', '010-3333-3333', 'STUDENT', 'ACTIVE', TRUE, 'STD001'),
+    ('student01', 'student1@test.com', '$2a$10$vYwWcwkU/lHpqmL3WERfgOi0yx/OxCkfbtGQHJjIj8IpfTdGptORi', '박학생', '010-3333-3333', 'STUDENT', 'ACTIVE', TRUE, 'STD001'),
     ('student02', 'student2@test.com', '$2a$10$student', '최학생', '010-4444-4444', 'STUDENT', 'ACTIVE', TRUE, 'STD002'),
     ('student03', 'student3@test.com', '$2a$10$student', '정학생', '010-5555-5555', 'STUDENT', 'ACTIVE', TRUE, 'STD003');
 
 INSERT INTO categories
-(name, type, sort_order, is_active)
+(name, sub_category, sort_order, is_active)
 VALUES
-    ('백엔드', 'COURSE', 1, TRUE),
-    ('프론트엔드', 'COURSE', 2, TRUE),
-    ('데이터분석', 'COURSE', 3, TRUE),
-    ('AI/머신러닝', 'COURSE', 4, TRUE),
-    ('자격증', 'CERTIFICATION', 5, TRUE);
+    ('ai', 'ChatGPT 활용', 1, TRUE),
+    ('ai', '프롬프트 엔지니어링', 2, TRUE),
+    ('건강 자격증', '요가 지도사', 3, TRUE),
+    ('건강 자격증', '퍼스널트레이너', 4, TRUE),
+    ('라이프', '요리', 5, TRUE),
+    ('마케팅', 'SNS 마케팅', 6, TRUE),
+    ('외국어', '영어', 7, TRUE),
+    ('재테크', '주식', 8, TRUE),
+    ('취미,문화', '그림', 9, TRUE);
 
 INSERT INTO courses
 (title, description, price, difficulty, thumbnail, total_duration, status, rating_avg, review_count, student_count, approved_at, category_id, instructor_id)
@@ -26,20 +30,20 @@ VALUES
     ('Python 데이터분석', 'Pandas와 Matplotlib을 활용한 데이터분석 강의입니다.', 49000, 'BEGINNER', '/images/python-data.png', 9000, 'APPROVED', 0.0, 0, 0, NOW(), 3, 3);
 
 INSERT INTO course_sessions
-(title, video_url, duration_seconds, session_order, is_preview, course_id)
+(session_uid, title, video_url, duration_seconds, session_order, is_preview, course_id)
 VALUES
-    ('Spring Boot 소개', '/videos/spring/01.mp4', 1200, 1, TRUE, 1),
-    ('프로젝트 생성과 구조 이해', '/videos/spring/02.mp4', 1800, 2, FALSE, 1),
-    ('Controller와 REST API', '/videos/spring/03.mp4', 2400, 3, FALSE, 1),
+    (UUID(), 'Spring Boot 소개', '/videos/spring/01.mp4', 1200, 1, TRUE, 1),
+    (UUID(), '프로젝트 생성과 구조 이해', '/videos/spring/02.mp4', 1800, 2, FALSE, 1),
+    (UUID(), 'Controller와 REST API', '/videos/spring/03.mp4', 2400, 3, FALSE, 1),
 
-    ('JPA 소개', '/videos/jpa/01.mp4', 1500, 1, TRUE, 2),
-    ('Entity 매핑', '/videos/jpa/02.mp4', 2700, 2, FALSE, 2),
+    (UUID(), 'JPA 소개', '/videos/jpa/01.mp4', 1500, 1, TRUE, 2),
+    (UUID(), 'Entity 매핑', '/videos/jpa/02.mp4', 2700, 2, FALSE, 2),
 
-    ('React 컴포넌트 이해', '/videos/react/01.mp4', 1600, 1, TRUE, 3),
-    ('State와 Props', '/videos/react/02.mp4', 2200, 2, FALSE, 3),
+    (UUID(), 'React 컴포넌트 이해', '/videos/react/01.mp4', 1600, 1, TRUE, 3),
+    (UUID(), 'State와 Props', '/videos/react/02.mp4', 2200, 2, FALSE, 3),
 
-    ('Pandas 기본', '/videos/data/01.mp4', 1800, 1, TRUE, 4),
-    ('데이터 시각화', '/videos/data/02.mp4', 2100, 2, FALSE, 4);
+    (UUID(), 'Pandas 기본', '/videos/data/01.mp4', 1800, 1, TRUE, 4),
+    (UUID(), '데이터 시각화', '/videos/data/02.mp4', 2100, 2, FALSE, 4);
 
 INSERT INTO cart_items
 (price, selected, user_id, course_id)

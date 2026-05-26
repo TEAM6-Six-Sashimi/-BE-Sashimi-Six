@@ -1,5 +1,8 @@
 package com.sashimi.credit.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.math.BigDecimal;
 
 public class Credit {
@@ -9,9 +12,19 @@ public class Credit {
     private BigDecimal balance;
 
     public Credit(Long id, Long userId, BigDecimal balance) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        BigDecimal safeBalance = balance == null ? BigDecimal.ZERO : balance;
+
+        if (safeBalance.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException(ErrorCode.CREDIT_INVALID_AMOUNT);
+        }
+
         this.id = id;
         this.userId = userId;
-        this.balance = balance == null ? BigDecimal.ZERO : balance;
+        this.balance = safeBalance;
     }
 
     public static Credit create(Long userId, BigDecimal initialBalance) {
@@ -20,7 +33,7 @@ public class Credit {
 
     public void add(BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("크레딧 지급 금액은 0보다 커야 합니다.");
+            throw new BusinessException(ErrorCode.CREDIT_INVALID_AMOUNT);
         }
 
         this.balance = this.balance.add(amount);

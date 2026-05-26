@@ -26,6 +26,9 @@ import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
 import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
 import com.sashimi.credit.application.service.CreditService;
+import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
+import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
+import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResult;
 
 
 import java.security.SecureRandom;
@@ -125,7 +128,7 @@ public class AuthService {
 
 
 
-    public void requestPasswordReset(PasswordResetRequestDto request) {
+    public PasswordResetRequestResponseDto requestPasswordReset(PasswordResetRequestDto request) {
         String email = normalizeEmail(request.getEmail());
 
         User user = userRepository.findByEmail(email)
@@ -135,16 +138,23 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INACTIVE_USER);
         }
 
-        emailVerificationUseCase.requestEmailVerification(
+        EmailVerificationRequestResult result = emailVerificationUseCase.requestEmailVerification(
                 new RequestEmailVerificationCommand(
                         email,
                         VerificationPurpose.PASSWORD_RESET,
                         user.getId()
                 )
         );
+
+        return new PasswordResetRequestResponseDto(
+                result.targetEmail(),
+                result.purpose(),
+                result.expiresInSeconds(),
+                result.resendAvailableInSeconds()
+        );
     }
 
-    public void resetPassword(PasswordResetConfirmRequestDto request) {
+    public PasswordResetConfirmResponseDto resetPassword(PasswordResetConfirmRequestDto request) {
         String email = normalizeEmail(request.getEmail());
 
         emailVerificationUseCase.confirmEmailVerification(
@@ -170,6 +180,8 @@ public class AuthService {
         userRepository.save(user);
 
         refreshService.deleteByUser(user);
+
+        return new PasswordResetConfirmResponseDto(true, true);
     }
 
     private String normalizeEmail(String email) {
