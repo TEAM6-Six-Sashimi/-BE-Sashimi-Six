@@ -1,5 +1,8 @@
 package com.sashimi.cart.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -14,19 +17,19 @@ public class CartItem {
 
     private CartItem(Long id, Long userId, Long courseId, BigDecimal price, boolean selected, LocalDateTime createdAt) {
         if (userId == null) {
-            throw new IllegalArgumentException("User id is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
         if (courseId == null) {
-            throw new IllegalArgumentException("Course id is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
         if (price == null) {
-            throw new IllegalArgumentException("Cart item price is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
         if (price.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Cart item price cannot be negative.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
         if (createdAt == null) {
-            throw new IllegalArgumentException("Created at is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         this.id = id;

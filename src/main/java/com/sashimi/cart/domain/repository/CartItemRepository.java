@@ -18,4 +18,6 @@ public interface CartItemRepository {
     Optional<CartItem> findByIdAndUserId(Long cartItemId, Long userId);
 
     void delete(CartItem cartItem);
+
+    void deleteAllSelectedByUserId(Long userId);
 }
