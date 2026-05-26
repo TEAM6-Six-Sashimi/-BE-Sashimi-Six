@@ -47,4 +47,29 @@ public class CreditService {
         credit.add(amount);
         creditRepository.save(credit);
     }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getBalance(Long userId) {
+        return creditRepository.findByUserId(userId)
+                .map(Credit::getBalance)
+                .orElse(BigDecimal.ZERO);
+    }
+
+    public BigDecimal chargeCredit(Long userId, BigDecimal amount) {
+        Credit credit = creditRepository.findByUserId(userId)
+                .orElseGet(() -> Credit.create(userId, BigDecimal.ZERO));
+
+        credit.add(amount);
+
+        return creditRepository.save(credit).getBalance();
+    }
+
+    public BigDecimal useCredit(Long userId, BigDecimal amount) {
+        Credit credit = creditRepository.findByUserId(userId)
+                .orElseGet(() -> Credit.create(userId, BigDecimal.ZERO));
+
+        credit.use(amount);
+
+        return creditRepository.save(credit).getBalance();
+    }
 }
