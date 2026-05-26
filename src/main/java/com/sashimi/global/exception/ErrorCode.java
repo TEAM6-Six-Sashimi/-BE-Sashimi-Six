@@ -40,8 +40,9 @@ public enum ErrorCode {
     INVALID_INPUT(400, "MEMBER_001", "입력값이 올바르지 않습니다."),
     ALREADY_APPLIED(400, "MEMBER_002","이미 강사 신청이 진행 중입니다."),
     APPLICATION_NOT_FOUND(404,"MEMBER_003", "신청을 찾을 수 없습니다."),
-    INVALID_APPLICATION_STATUS(400, "MEMBER_004", "처리할 수 없는 신청 상태입니다.");
-
+    INVALID_APPLICATION_STATUS(400, "MEMBER_004", "처리할 수 없는 신청 상태입니다."),
+    CERTIFICATE_OCR_FAILED(400, "MEMBER_005", "자격증 OCR 검증에 실패했습니다."),
+    CERTIFICATE_NOT_FOUND(404, "MEMBER_006", "자격증을 찾을 수 없습니다.");
 
 
     private final int status;

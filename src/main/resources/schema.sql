@@ -730,3 +730,16 @@ CREATE TABLE d_days (
                         user_id BIGINT NOT NULL,
                         CONSTRAINT fk_d_days_user FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
+CREATE TABLE IF NOT EXISTS user_certifications (
+                                                   user_certification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                                   user_id               BIGINT NOT NULL,
+                                                   certification_name    VARCHAR(255) NOT NULL,
+    issued_by             VARCHAR(255),
+    issued_date           DATE,
+    file_url              VARCHAR(500),
+    status                ENUM('PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING',
+    created_at            DATETIME DEFAULT NOW(),
+    deleted_at            DATETIME NULL,
+    CONSTRAINT fk_user_cert_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+    );
