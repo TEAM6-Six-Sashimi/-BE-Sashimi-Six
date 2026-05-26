@@ -3,6 +3,7 @@ package com.sashimi.credit.application.service;
 import com.sashimi.credit.domain.model.Credit;
 import com.sashimi.credit.domain.repository.CreditRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +33,11 @@ public class CreditService {
             return;
         }
 
-        creditRepository.save(Credit.create(userId, initialBalance));
+        try {
+            creditRepository.save(Credit.create(userId, initialBalance));
+        } catch (DataIntegrityViolationException e) {
+
+        }
     }
 
     private void addCredit(Long userId, BigDecimal amount) {

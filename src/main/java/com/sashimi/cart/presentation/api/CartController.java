@@ -10,6 +10,8 @@ import com.sashimi.cart.presentation.api.request.AddCartItemRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemSelectionRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemsSelectionRequest;
 import com.sashimi.cart.presentation.api.response.CartResponse;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -70,7 +72,7 @@ public class CartController {
             @RequestBody UpdateCartItemSelectionRequest request
     ) {
         if (request.selected() == null) {
-            throw new IllegalArgumentException("Selected is required.");
+            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
         }
 
         cartCommandUseCase.updateCartItemSelection(
@@ -86,7 +88,7 @@ public class CartController {
             @RequestBody UpdateCartItemsSelectionRequest request
     ) {
         if (request.selected() == null) {
-            throw new IllegalArgumentException("Selected is required.");
+            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
         }
 
         cartCommandUseCase.updateCartItemsSelection(

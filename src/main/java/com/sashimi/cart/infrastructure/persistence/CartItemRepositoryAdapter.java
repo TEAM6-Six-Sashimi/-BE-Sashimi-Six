@@ -2,6 +2,8 @@ package com.sashimi.cart.infrastructure.persistence;
 
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -27,7 +29,7 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
                 cartItem.getCreatedAt()
         )
                 : repository.findById(cartItem.getId())
-                .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CART_ITEM_NOT_FOUND));
 
         entity.changeSelected(cartItem.isSelected());
 
@@ -75,6 +77,11 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public void deleteAllSelectedByUserId(Long userId) {
+        repository.deleteAllByUserIdAndSelectedTrue(userId);
     }
 
     

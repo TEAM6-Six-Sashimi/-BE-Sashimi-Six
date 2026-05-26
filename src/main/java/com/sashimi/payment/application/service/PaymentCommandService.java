@@ -5,6 +5,8 @@ import com.sashimi.cart.application.port.CoursePort;
 import com.sashimi.cart.application.port.EnrollmentPort;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.payment.application.command.CheckoutCartCommand;
 import com.sashimi.payment.application.command.PayCourseCommand;
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase;
@@ -49,17 +51,27 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         List<CartItem> cartItems = cartItemRepository.findAllSelectedByUserId(command.userId());
 
         if (cartItems.isEmpty()) {
-            throw new IllegalArgumentException("결제할 강의를 선택해주세요.");
+            throw new BusinessException(ErrorCode.CART_EMPTY_SELECTION);
         }
 
         List<PaymentCourse> courses = cartItems.stream()
                 .map(cartItem -> {
                     CourseInfo courseInfo = coursePort.getCourseInfo(cartItem.getCourseId());
+                    if (!courseInfo.purchasable()) {
+                        throw new BusinessException(ErrorCode.COURSE_NOT_PURCHASABLE);
+                    }
+
+                    if (enrollmentPort.isEnrolled(command.userId(), cartItem.getCourseId())) {
+                        throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
+                    }
+
                     return new PaymentCourse(courseInfo.courseId(), courseInfo.title(), cartItem.getPrice());
                 })
                 .toList();
 
-        return pay(command.userId(), courses);
+        PaymentResult result = pay(command.userId(), courses);
+        cartItemRepository.deleteAllSelectedByUserId(command.userId());
+        return result;
     }
 
     @Override
@@ -67,11 +79,11 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         CourseInfo courseInfo = coursePort.getCourseInfo(command.courseId());
 
         if (!courseInfo.purchasable()) {
-            throw new IllegalArgumentException("구매할 수 없는 강의입니다.");
+            throw new BusinessException(ErrorCode.COURSE_NOT_PURCHASABLE);
         }
 
         if (enrollmentPort.isEnrolled(command.userId(), command.courseId())) {
-            throw new IllegalArgumentException("이미 수강 중인 강의입니다.");
+            throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
         }
 
         return pay(command.userId(), List.of(
@@ -80,6 +92,11 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     }
 
     private PaymentResult pay(Long userId, List<PaymentCourse> courses) {
+
+        if (courses == null || courses.isEmpty()) {
+            throw new BusinessException(ErrorCode.PAYMENT_EMPTY_COURSE);
+        }
+
         BigDecimal totalAmount = courses.stream()
                 .map(PaymentCourse::price)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -91,6 +108,10 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                         OrderItem.create(course.title(), course.price(), order.getId(), course.courseId())
                 ))
                 .toList();
+
+        for (OrderItem orderItem : orderItems) {
+            enrollmentPort.enrollPaidCourse(userId, orderItem.getCourseId(), orderItem.getId());
+        }
 
         Payment payment = paymentRepository.save(Payment.paid(totalAmount, order.getId(), userId));
 
