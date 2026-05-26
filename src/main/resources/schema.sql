@@ -83,6 +83,7 @@ CREATE TABLE courses (
 -- =========================
 CREATE TABLE course_sessions (
                                  session_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                 session_uid      VARCHAR(36)     NOT NULL,
                                  title VARCHAR(255) NOT NULL,
                                  video_url VARCHAR(500),
                                  duration_seconds INT NOT NULL DEFAULT 0,
