@@ -35,11 +35,20 @@ public class Credit {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BusinessException(ErrorCode.CREDIT_INVALID_AMOUNT);
         }
+
+        this.balance = this.balance.add(amount);
+    }
+
+    public void use(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException(ErrorCode.CREDIT_INVALID_AMOUNT);
+        }
+
         if (this.balance.compareTo(amount) < 0) {
             throw new BusinessException(ErrorCode.CREDIT_INSUFFICIENT_BALANCE);
         }
 
-        this.balance = this.balance.add(amount);
+        this.balance = this.balance.subtract(amount);
     }
 
     public Long getId() {

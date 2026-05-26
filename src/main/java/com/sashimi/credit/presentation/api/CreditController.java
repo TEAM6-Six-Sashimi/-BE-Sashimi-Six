@@ -1,6 +1,9 @@
 package com.sashimi.credit.presentation.api;
 
-import com.sashimi.credit.application.service.CreditService;
+import com.sashimi.credit.application.command.ChargeCreditCommand;
+import com.sashimi.credit.application.result.CreditBalanceResult;
+import com.sashimi.credit.application.usecase.CreditCommandUseCase;
+import com.sashimi.credit.application.usecase.CreditQueryUseCase;
 import com.sashimi.credit.presentation.api.request.ChargeCreditRequest;
 import com.sashimi.credit.presentation.api.response.CreditResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
@@ -13,19 +16,23 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/credits")
 public class CreditController {
 
-    private final CreditService creditService;
+    private final CreditCommandUseCase creditCommandUseCase;
+    private final CreditQueryUseCase creditQueryUseCase;
 
-    public CreditController(CreditService creditService) {
-        this.creditService = creditService;
+    public CreditController(
+            CreditCommandUseCase creditCommandUseCase,
+            CreditQueryUseCase creditQueryUseCase
+    ) {
+        this.creditCommandUseCase = creditCommandUseCase;
+        this.creditQueryUseCase = creditQueryUseCase;
     }
 
     @GetMapping("/me")
     public ResponseEntity<CreditResponse> getMyCredit(
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        return ResponseEntity.ok(
-                new CreditResponse(creditService.getBalance(principal.getId()))
-        );
+        CreditBalanceResult result = creditQueryUseCase.getBalance(principal.getId());
+        return ResponseEntity.ok(CreditResponse.from(result));
     }
 
     @PostMapping("/charge")
@@ -33,10 +40,10 @@ public class CreditController {
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody @Valid ChargeCreditRequest request
     ) {
-        return ResponseEntity.ok(
-                new CreditResponse(
-                        creditService.chargeCredit(principal.getId(), request.amount())
-                )
+        CreditBalanceResult result = creditCommandUseCase.chargeCredit(
+                new ChargeCreditCommand(principal.getId(), request.amount())
         );
+
+        return ResponseEntity.ok(CreditResponse.from(result));
     }
 }

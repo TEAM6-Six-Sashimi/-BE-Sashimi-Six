@@ -3,6 +3,9 @@ package com.sashimi.auth.service;
 import com.sashimi.auth.dto.LoginRequestDto;
 import com.sashimi.auth.dto.PasswordResetRequestDto;
 import com.sashimi.auth.dto.TokenResponseDto;
+import com.sashimi.credit.application.command.CreateInitialCreditCommand;
+import com.sashimi.credit.application.command.GrantReferralSignupRewardCommand;
+import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.security.jwt.JwtTokenProvider;
@@ -25,12 +28,12 @@ import com.sashimi.verification.domain.model.VerificationPurpose;
 import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
 import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
-import com.sashimi.credit.application.service.CreditService;
 import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
 import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
 import com.sashimi.verification.application.result.EmailVerificationRequestResult;
 
 
+import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.util.Locale;
 
@@ -47,7 +50,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final RefreshService refreshService;
     private final EmailVerificationUseCase emailVerificationUseCase;
-    private final CreditService creditService;
+    private final CreditCommandUseCase creditCommandUseCase;
 
     private static final String REFERRAL_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int REFERRAL_CODE_LENGTH = 8;
@@ -89,9 +92,13 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         if (referrer == null) {
-            creditService.createInitialCredit(savedUser.getId());
+            creditCommandUseCase.createInitialCredit(
+                    new CreateInitialCreditCommand(savedUser.getId(), BigDecimal.ZERO)
+            );
         } else {
-            creditService.grantReferralSignupRewards(savedUser.getId(), referrer.getId());
+            creditCommandUseCase.grantReferralSignupRewards(
+                    new GrantReferralSignupRewardCommand(savedUser.getId(), referrer.getId())
+            );
         }
 
         return UserResponseDto.from(savedUser);
