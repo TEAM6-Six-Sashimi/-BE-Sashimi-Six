@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sashimi.user.presentation.api.response.ChangePasswordResult;
 
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -25,6 +26,7 @@ public class UserAccountService implements UserCommandUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshService refreshService;
+
 
     @Override
     public UserResponseDto updateMyInfo(UpdateMyInfoCommand command) {

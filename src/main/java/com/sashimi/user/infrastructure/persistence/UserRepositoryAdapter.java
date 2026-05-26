@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -50,14 +51,25 @@ public class UserRepositoryAdapter implements UserRepository {
         return springDataUserRepository.save(UserJpaEntity.from(user)).toDomain();
     }
 
-    @Override
-    public void deleteByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime) {
-        springDataUserRepository.deleteByStatusAndDeactivatedAtBefore(status, dateTime);
-    }
 
     @Override
     public Optional<User> findByReferralCode(String referralCode) {
         return springDataUserRepository.findByReferralCode(referralCode)
                 .map(UserJpaEntity::toDomain);
     }
+
+    @Override
+    public List<User> findAllByStatusAndDeactivatedAtBefore(
+            UserStatus status,
+            LocalDateTime dateTime
+    ) {
+        return springDataUserRepository
+                .findAllByStatusAndDeactivatedAtBefore(status, dateTime)
+                .stream()
+                .map(UserJpaEntity::toDomain)
+                .toList();
+    }
+
+
+
 }

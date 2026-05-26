@@ -57,6 +57,7 @@ public enum ErrorCode {
     PAYMENT_EMPTY_COURSE(400, "PAYMENT_002", "결제할 강의가 없습니다."),
 
     CREDIT_INVALID_AMOUNT(400, "CREDIT_001", "크레딧 금액이 올바르지 않습니다."),
+    CREDIT_INSUFFICIENT_BALANCE(400, "CREDIT_002", "크레딧 잔액이 부족합니다."),
 
     INVALID_INPUT(400, "MEMBER_001", "입력값이 올바르지 않습니다."),
     ALREADY_APPLIED(400, "MEMBER_002","이미 강사 신청이 진행 중입니다."),

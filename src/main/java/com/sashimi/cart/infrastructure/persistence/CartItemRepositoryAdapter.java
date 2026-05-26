@@ -84,5 +84,9 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
         repository.deleteAllByUserIdAndSelectedTrue(userId);
     }
 
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        repository.deleteAllByUserId(userId);
+    }
     
 }

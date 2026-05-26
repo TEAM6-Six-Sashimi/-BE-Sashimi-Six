@@ -39,4 +39,9 @@ public class EmailVerificationRepositoryAdapter implements EmailVerificationRepo
         return springDataEmailVerificationRepository
                 .existsByTargetEmailAndPurposeAndVerifiedTrue(targetEmail, purpose);
     }
+
+    @Override
+    public void deleteAllByUserId(Long userId) {
+        springDataEmailVerificationRepository.deleteAllByUserId(userId);
+    }
 }

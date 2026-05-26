@@ -20,4 +20,6 @@ public interface CartItemRepository {
     void delete(CartItem cartItem);
 
     void deleteAllSelectedByUserId(Long userId);
+
+    void deleteAllByUserId(Long userId);
 }
