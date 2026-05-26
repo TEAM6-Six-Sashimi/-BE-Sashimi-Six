@@ -26,20 +26,20 @@ VALUES
     ('Python 데이터분석', 'Pandas와 Matplotlib을 활용한 데이터분석 강의입니다.', 49000, 'BEGINNER', '/images/python-data.png', 9000, 'APPROVED', 0.0, 0, 0, NOW(), 3, 3);
 
 INSERT INTO course_sessions
-(title, video_url, duration_seconds, session_order, is_preview, course_id)
+(session_uid, title, video_url, duration_seconds, session_order, is_preview, course_id)
 VALUES
-    ('Spring Boot 소개', '/videos/spring/01.mp4', 1200, 1, TRUE, 1),
-    ('프로젝트 생성과 구조 이해', '/videos/spring/02.mp4', 1800, 2, FALSE, 1),
-    ('Controller와 REST API', '/videos/spring/03.mp4', 2400, 3, FALSE, 1),
+    (UUID(), 'Spring Boot 소개', '/videos/spring/01.mp4', 1200, 1, TRUE, 1),
+    (UUID(), '프로젝트 생성과 구조 이해', '/videos/spring/02.mp4', 1800, 2, FALSE, 1),
+    (UUID(), 'Controller와 REST API', '/videos/spring/03.mp4', 2400, 3, FALSE, 1),
 
-    ('JPA 소개', '/videos/jpa/01.mp4', 1500, 1, TRUE, 2),
-    ('Entity 매핑', '/videos/jpa/02.mp4', 2700, 2, FALSE, 2),
+    (UUID(), 'JPA 소개', '/videos/jpa/01.mp4', 1500, 1, TRUE, 2),
+    (UUID(), 'Entity 매핑', '/videos/jpa/02.mp4', 2700, 2, FALSE, 2),
 
-    ('React 컴포넌트 이해', '/videos/react/01.mp4', 1600, 1, TRUE, 3),
-    ('State와 Props', '/videos/react/02.mp4', 2200, 2, FALSE, 3),
+    (UUID(), 'React 컴포넌트 이해', '/videos/react/01.mp4', 1600, 1, TRUE, 3),
+    (UUID(), 'State와 Props', '/videos/react/02.mp4', 2200, 2, FALSE, 3),
 
-    ('Pandas 기본', '/videos/data/01.mp4', 1800, 1, TRUE, 4),
-    ('데이터 시각화', '/videos/data/02.mp4', 2100, 2, FALSE, 4);
+    (UUID(), 'Pandas 기본', '/videos/data/01.mp4', 1800, 1, TRUE, 4),
+    (UUID(), '데이터 시각화', '/videos/data/02.mp4', 2100, 2, FALSE, 4);
 
 INSERT INTO cart_items
 (price, selected, user_id, course_id)

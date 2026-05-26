@@ -37,10 +37,18 @@ public enum ErrorCode {
     EMAIL_NOT_VERIFIED(400, "VERIFICATION_005", "이메일 인증이 완료되지 않았습니다."),
     EMAIL_SEND_FAILED(500, "VERIFICATION_006", "이메일 발송에 실패했습니다."),
 
+
+    COURSE_NOT_FOUND(404, "COURSE_404", "강의를 찾을 수 없습니다."),
+    COURSE_NOT_MODIFIABLE(400, "COURSE_001", "수정할 수 없는 상태의 강의입니다."),
+    COURSE_NOT_DELETABLE(400, "COURSE_002", "삭제할 수 없는 상태의 강의입니다."),
+    COURSE_NOT_PENDING(400, "COURSE_003", "승인 대기 상태가 아닌 강의입니다."),
+    COURSE_FORBIDDEN(403, "COURSE_004", "해당 강의에 대한 권한이 없습니다.");
+
     INVALID_INPUT(400, "MEMBER_001", "입력값이 올바르지 않습니다."),
     ALREADY_APPLIED(400, "MEMBER_002","이미 강사 신청이 진행 중입니다."),
     APPLICATION_NOT_FOUND(404,"MEMBER_003", "신청을 찾을 수 없습니다."),
     INVALID_APPLICATION_STATUS(400, "MEMBER_004", "처리할 수 없는 신청 상태입니다.");
+
 
 
 
