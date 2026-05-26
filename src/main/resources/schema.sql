@@ -46,8 +46,8 @@ CREATE TABLE refresh_tokens (
 -- =========================
 CREATE TABLE categories (
                             category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                            name VARCHAR(100) NOT NULL,
-                            type ENUM('COURSE', 'CERTIFICATION', 'JOB') NOT NULL DEFAULT 'COURSE',
+                            name ENUM('ai', '건강 자격증', '라이프','마케팅','외국어','재테크','취미,문화') NOT NULL,
+                            sub_category VARCHAR(100) NOT NULL,
                             sort_order INT NOT NULL DEFAULT 0,
                             is_active BOOLEAN NOT NULL DEFAULT TRUE,
                             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
