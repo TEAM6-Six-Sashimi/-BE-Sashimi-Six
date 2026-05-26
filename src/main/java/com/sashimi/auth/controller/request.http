@@ -25,7 +25,7 @@ Accept: application/json
 
 {
   "loginId": "student01",
-  "password": "$2a$10$student"
+  "password": "student"
 }
 ### 토큰 재발급
 POST http://localhost:8080/auth/reissue
