@@ -1,5 +1,7 @@
 package com.sashimi.payment.application.service;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.payment.application.usecase.PaymentQueryUseCase;
 import com.sashimi.payment.domain.model.Order;
 import com.sashimi.payment.domain.model.Payment;
@@ -34,7 +36,7 @@ public class PaymentQueryService implements PaymentQueryUseCase {
 
     private PaymentHistoryItem toHistoryItem(Payment payment) {
         Order order = orderRepository.findById(payment.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
 
         return new PaymentHistoryItem(
                 payment.getId(),

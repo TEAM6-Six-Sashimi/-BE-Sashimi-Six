@@ -8,6 +8,8 @@ import com.sashimi.cart.application.port.EnrollmentPort;
 import com.sashimi.cart.application.usecase.CartCommandUseCase;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sashimi.cart.application.command.UpdateCartItemSelectionCommand;
@@ -37,15 +39,15 @@ public class CartCommandService implements CartCommandUseCase {
         CourseInfo courseInfo = coursePort.getCourseInfo(command.courseId());
 
         if (!courseInfo.purchasable()) {
-            throw new IllegalArgumentException("구매할 수 없는 강의입니다.");
+            throw new BusinessException(ErrorCode.COURSE_NOT_PURCHASABLE);
         }
 
         if (enrollmentPort.isEnrolled(command.userId(), command.courseId())) {
-            throw new IllegalArgumentException("이미 수강 중인 강의입니다.");
+            throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
         }
 
         if (cartItemRepository.existsByUserIdAndCourseId(command.userId(), command.courseId())) {
-            throw new IllegalArgumentException("이미 장바구니에 담긴 강의입니다.");
+            throw new BusinessException(ErrorCode.CART_ITEM_ALREADY_EXISTS);
         }
 
         CartItem cartItem = CartItem.create(
@@ -57,14 +59,14 @@ public class CartCommandService implements CartCommandUseCase {
         try {
             return cartItemRepository.save(cartItem).getId();
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalArgumentException("이미 장바구니에 담긴 강의입니다.");
+            throw new BusinessException(ErrorCode.CART_ITEM_ALREADY_EXISTS);
         }
     }
 
     @Override
     public void deleteCartItem(DeleteCartItemCommand command) {
         CartItem cartItem = cartItemRepository.findByIdAndUserId(command.cartItemId(), command.userId())
-                .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CART_ITEM_NOT_FOUND));
 
         cartItemRepository.delete(cartItem);
     }
@@ -72,15 +74,15 @@ public class CartCommandService implements CartCommandUseCase {
     @Override
     public void updateCartItemSelection(UpdateCartItemSelectionCommand command) {
         if (command.userId() == null) {
-            throw new IllegalArgumentException("User id is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         if (command.cartItemId() == null) {
-            throw new IllegalArgumentException("Cart item id is required.");
+            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
         }
 
         CartItem cartItem = cartItemRepository.findByIdAndUserId(command.cartItemId(), command.userId())
-                .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CART_ITEM_NOT_FOUND));
 
         cartItemRepository.save(cartItem.changeSelected(command.selected()));
     }
@@ -88,20 +90,20 @@ public class CartCommandService implements CartCommandUseCase {
     @Override
     public void updateCartItemsSelection(UpdateCartItemsSelectionCommand command) {
         if (command.userId() == null) {
-            throw new IllegalArgumentException("User id is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         if (command.cartItemIds() == null || command.cartItemIds().isEmpty()) {
-            throw new IllegalArgumentException("Cart item ids are required.");
+            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
         }
 
         for (Long cartItemId : command.cartItemIds()) {
             if (cartItemId == null) {
-                throw new IllegalArgumentException("Cart item id is required.");
+                throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
             }
 
             CartItem cartItem = cartItemRepository.findByIdAndUserId(cartItemId, command.userId())
-                    .orElseThrow(() -> new IllegalArgumentException("장바구니 항목을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.CART_ITEM_NOT_FOUND));
 
             cartItemRepository.save(cartItem.changeSelected(command.selected()));
         }
