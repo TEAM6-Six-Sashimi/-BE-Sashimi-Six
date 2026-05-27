@@ -45,6 +45,8 @@ public enum ErrorCode {
     COURSE_FORBIDDEN(403, "COURSE_004", "해당 강의에 대한 권한이 없습니다."),
     COURSE_NOT_PURCHASABLE(400, "COURSE_005", "구매할 수 없는 강의입니다."),
 
+    CATEGORY_NOT_FOUND(404, "CATEGORY_404", "카테고리를 찾을 수 없습니다."),
+
     CART_ITEM_NOT_FOUND(404, "CART_001", "장바구니 항목을 찾을 수 없습니다."),
     CART_ITEM_ALREADY_EXISTS(409, "CART_002", "이미 장바구니에 담긴 강의입니다."),
     CART_EMPTY_SELECTION(400, "CART_003", "결제할 강의를 선택해주세요."),

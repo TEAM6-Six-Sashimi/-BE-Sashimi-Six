@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,6 +108,8 @@ class SignupEligibilityPolicyTest {
         ReflectionTestUtils.setField(request, "passwordConfirm", "Password1!");
         ReflectionTestUtils.setField(request, "email", "test@example.com");
         ReflectionTestUtils.setField(request, "name", "테스트회원");
+        ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(2000, 1, 1));
+        ReflectionTestUtils.setField(request, "interestCategoryIds", List.of(10L));
         ReflectionTestUtils.setField(request, "referralCode", referralCode);
 
         return request;
@@ -118,10 +122,12 @@ class SignupEligibilityPolicyTest {
                 "referrer1",
                 "encodedPassword",
                 "referrer@example.com",
+                LocalDate.of(1999, 1, 1),
                 Role.STUDENT,
                 UserStatus.ACTIVE,
                 true,
                 "REF12345",
+                List.of(10L),
                 null
         );
     }

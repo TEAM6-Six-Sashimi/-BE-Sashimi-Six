@@ -13,6 +13,7 @@ CREATE TABLE users (
                        email VARCHAR(255) NOT NULL UNIQUE,
                        password VARCHAR(255) NOT NULL,
                        name VARCHAR(100) NOT NULL,
+                       birth_date DATE,
                        phone VARCHAR(20),
 
                        role ENUM('STUDENT', 'INSTRUCTOR', 'ADMIN') NOT NULL DEFAULT 'STUDENT',
@@ -46,11 +47,22 @@ CREATE TABLE refresh_tokens (
 -- =========================
 CREATE TABLE categories (
                             category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                            name ENUM('ai', '건강 자격증', '라이프','마케팅','외국어','재테크','취미,문화') NOT NULL,
+                            name VARCHAR(100) NOT NULL,
                             sub_category VARCHAR(100) NOT NULL,
                             sort_order INT NOT NULL DEFAULT 0,
                             is_active BOOLEAN NOT NULL DEFAULT TRUE,
                             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_interest_categories (
+                            user_id BIGINT NOT NULL,
+                            category_id BIGINT NOT NULL,
+                            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (user_id, category_id),
+                            CONSTRAINT fk_user_interest_categories_user
+                                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+                            CONSTRAINT fk_user_interest_categories_category
+                                FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
 
 -- =========================

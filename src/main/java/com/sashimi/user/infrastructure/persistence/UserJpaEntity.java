@@ -8,7 +8,11 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -33,6 +37,9 @@ public class UserJpaEntity {
     @Column(nullable = false)
     private String email;
 
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private Role role;
@@ -47,6 +54,14 @@ public class UserJpaEntity {
     @Column(name = "referral_code", length = 50)
     private String referralCode;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "user_interest_categories",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "category_id", nullable = false)
+    private Set<Long> interestCategoryIds = new LinkedHashSet<>();
+
     @Column(name = "deleted_at")
     private LocalDateTime deactivatedAt;
 
@@ -57,16 +72,18 @@ public class UserJpaEntity {
         entity.loginId = user.getLoginId();
         entity.password = user.getPassword();
         entity.email = user.getEmail();
+        entity.birthDate = user.getBirthDate();
         entity.role = user.getRole();
         entity.status = user.getStatus();
         entity.emailVerified = user.isEmailVerified();
         entity.referralCode = user.getReferralCode();
+        entity.interestCategoryIds = new LinkedHashSet<>(user.getInterestCategoryIds());
         entity.deactivatedAt = user.getDeactivatedAt();
         return entity;
     }
 
     public User toDomain() {
-        return new User(id, name, loginId, password, email, role, status,
-                emailVerified, referralCode, deactivatedAt);
+        return new User(id, name, loginId, password, email, birthDate, role, status,
+                emailVerified, referralCode, List.copyOf(interestCategoryIds), deactivatedAt);
     }
 }
