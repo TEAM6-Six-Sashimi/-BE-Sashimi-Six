@@ -14,7 +14,7 @@ import com.sashimi.verification.domain.repository.EmailVerificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.sashimi.verification.application.policy.EmailVerificationPolicy;
 import java.time.LocalDateTime;
 import java.util.Locale;
 
@@ -24,11 +24,12 @@ import java.util.Locale;
 public class EmailVerificationService implements EmailVerificationUseCase {
 
     private static final long EXPIRE_MINUTES = 10;
-    private static final long RESEND_INTERVAL_SECONDS = 60;
+
 
     private final EmailVerificationRepository emailVerificationRepository;
     private final VerificationCodeGenerator verificationCodeGenerator;
     private final EmailSender emailSender;
+    private final EmailVerificationPolicy emailVerificationPolicy;
 
     @Override
     public EmailVerificationRequestResult requestEmailVerification(RequestEmailVerificationCommand command) {
@@ -38,7 +39,7 @@ public class EmailVerificationService implements EmailVerificationUseCase {
         emailVerificationRepository.findLatestByTargetEmailAndPurpose(
                 targetEmail,
                 command.getPurpose()
-        ).ifPresent(latest -> validateResendAvailable(latest, now));
+        ).ifPresent(latest -> emailVerificationPolicy.validateResendAvailable(latest, now));
 
         String code = verificationCodeGenerator.generate();
 
@@ -63,7 +64,7 @@ public class EmailVerificationService implements EmailVerificationUseCase {
                 targetEmail,
                 command.getPurpose(),
                 EXPIRE_MINUTES * 60,
-                RESEND_INTERVAL_SECONDS);
+                emailVerificationPolicy.resendIntervalSeconds());
     }
 
     @Override
@@ -75,13 +76,11 @@ public class EmailVerificationService implements EmailVerificationUseCase {
                 .findLatestByTargetEmailAndPurpose(targetEmail, command.getPurpose())
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMAIL_VERIFICATION_NOT_FOUND));
 
-        if (emailVerification.isExpired(now)) {
-            throw new BusinessException(ErrorCode.EMAIL_VERIFICATION_EXPIRED);
-        }
-
-        if (!emailVerification.isMatched(command.getCode())) {
-            throw new BusinessException(ErrorCode.INVALID_EMAIL_VERIFICATION_CODE);
-        }
+        emailVerificationPolicy.validateConfirmable(
+                emailVerification,
+                command.getCode(),
+                now
+        );
 
         if (!emailVerification.isVerified()) {
             emailVerification.verify(now);
@@ -105,23 +104,9 @@ public class EmailVerificationService implements EmailVerificationUseCase {
                 .findLatestByTargetEmailAndPurpose(normalizedEmail, purpose)
                 .orElseThrow(() -> new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED));
 
-        if (!emailVerification.isVerified()) {
-            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED);
-        }
-
-        if (emailVerification.isExpired(now)) {
-            throw new BusinessException(ErrorCode.EMAIL_VERIFICATION_EXPIRED);
-        }
+        emailVerificationPolicy.validateVerified(emailVerification, now);
     }
 
-    private void validateResendAvailable(EmailVerification latest, LocalDateTime now) {
-        LocalDateTime createdAt = latest.getCreatedAt();
-
-        if (createdAt != null
-                && createdAt.plusSeconds(RESEND_INTERVAL_SECONDS).isAfter(now)) {
-            throw new BusinessException(ErrorCode.EMAIL_VERIFICATION_RESEND_TOO_SOON);
-        }
-    }
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);

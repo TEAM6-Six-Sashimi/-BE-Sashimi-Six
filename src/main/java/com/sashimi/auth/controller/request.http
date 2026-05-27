@@ -24,7 +24,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "loginId": "student01",
+  "loginId": "student02",
   "password": "student"
 }
 ### 토큰 재발급
@@ -43,7 +43,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzc5NjE5MTg4LCJleHAiOjE3ODA4Mjg3ODh9.l9l6dJ1tJxVTlL7hIZV7MnbTpoUPGq3u3Xs-VizfekddSjl0K12_lYxVkooDhU3Z"
+  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdHVkZW50MDEiLCJpYXQiOjE3Nzk4MDUxNTUsImV4cCI6MTc4MTAxNDc1NX0.xbNpKrHkaYIDK-WCygTLjnBSsQnfqSs09WSyB6FxHIj5mZNtbVI7xpea9U22zEVn"
 }
 
 ### 관리자 API - 토큰 없음이면 401 정상

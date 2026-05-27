@@ -22,4 +22,12 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
                 .map(CategoryJpaEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<Category> findByName(String name) {
+        return springDataCategoryRepository.findByNameAndActiveTrueOrderBySortOrderAsc(name)
+                .stream()
+                .map(CategoryJpaEntity::toDomain)
+                .toList();
+    }
 }
