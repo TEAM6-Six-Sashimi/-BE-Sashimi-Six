@@ -148,7 +148,7 @@ class UserAccountServiceTest {
                 UserStatus.ACTIVE,
                 true,
                 "ABC12345",
-                List.of(10L),
+                List.of(1L),
                 null
         );
     }

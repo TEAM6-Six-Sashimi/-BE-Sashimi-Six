@@ -30,4 +30,12 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
                 .map(CategoryJpaEntity::toDomain)
                 .toList();
     }
+    @Override
+    public boolean existsAllActiveByIds(List<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return true;
+        }
+
+        return springDataCategoryRepository.countByIdInAndActiveTrue(categoryIds) == categoryIds.size();
+    }
 }

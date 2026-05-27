@@ -7,4 +7,5 @@ import java.util.List;
 public interface SpringDataCategoryRepository extends JpaRepository<CategoryJpaEntity, Long> {
     List<CategoryJpaEntity> findAllByActiveTrueOrderBySortOrderAsc();
     List<CategoryJpaEntity> findByNameAndActiveTrueOrderBySortOrderAsc(String name);
+    long countByIdInAndActiveTrue(List<Long> ids);
 }
