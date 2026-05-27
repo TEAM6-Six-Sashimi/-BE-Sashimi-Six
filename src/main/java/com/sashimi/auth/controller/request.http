@@ -9,13 +9,16 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "loginId": "user123",
-  "password": "Password123!",
-  "passwordConfirm": "Password123!",
+  "loginId": "testuser01",
+  "password": "Password1!",
+  "passwordConfirm": "Password1!",
   "email": "bark9@test.com",
-  "name": "박민서",
+  "name": "테스트회원",
+  "birthDate": "2000-01-01",
+  "interestCategoryIds": [1, 3],
   "referralCode": "STD001"
 }
+
 
 
 ### 로그인

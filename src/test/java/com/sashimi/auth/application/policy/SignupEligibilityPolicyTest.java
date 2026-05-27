@@ -109,7 +109,7 @@ class SignupEligibilityPolicyTest {
         ReflectionTestUtils.setField(request, "email", "test@example.com");
         ReflectionTestUtils.setField(request, "name", "테스트회원");
         ReflectionTestUtils.setField(request, "birthDate", LocalDate.of(2000, 1, 1));
-        ReflectionTestUtils.setField(request, "interestCategoryIds", List.of(10L));
+        ReflectionTestUtils.setField(request, "interestCategoryIds", List.of(1L));
         ReflectionTestUtils.setField(request, "referralCode", referralCode);
 
         return request;

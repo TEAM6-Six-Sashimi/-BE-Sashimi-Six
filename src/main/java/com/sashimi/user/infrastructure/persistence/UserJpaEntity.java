@@ -10,9 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -54,13 +52,9 @@ public class UserJpaEntity {
     @Column(name = "referral_code", length = 50)
     private String referralCode;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-            name = "user_interest_categories",
-            joinColumns = @JoinColumn(name = "user_id")
-    )
-    @Column(name = "category_id", nullable = false)
-    private Set<Long> interestCategoryIds = new LinkedHashSet<>();
+    @Convert(converter = LongListStringConverter.class)
+    @Column(name = "interest_category_ids", length = 255)
+    private List<Long> interestCategoryIds = List.of();
 
     @Column(name = "deleted_at")
     private LocalDateTime deactivatedAt;
@@ -77,13 +71,13 @@ public class UserJpaEntity {
         entity.status = user.getStatus();
         entity.emailVerified = user.isEmailVerified();
         entity.referralCode = user.getReferralCode();
-        entity.interestCategoryIds = new LinkedHashSet<>(user.getInterestCategoryIds());
+        entity.interestCategoryIds = user.getInterestCategoryIds();
         entity.deactivatedAt = user.getDeactivatedAt();
         return entity;
     }
 
     public User toDomain() {
         return new User(id, name, loginId, password, email, birthDate, role, status,
-                emailVerified, referralCode, List.copyOf(interestCategoryIds), deactivatedAt);
+                emailVerified, referralCode, interestCategoryIds, deactivatedAt);
     }
 }
