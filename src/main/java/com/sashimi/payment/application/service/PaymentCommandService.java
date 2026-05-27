@@ -1,7 +1,6 @@
 package com.sashimi.payment.application.service;
 
 import com.sashimi.cart.application.port.CourseInfo;
-import com.sashimi.cart.application.port.CoursePort;
 import com.sashimi.cart.application.port.EnrollmentPort;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
@@ -20,6 +19,7 @@ import com.sashimi.payment.domain.repository.OrderRepository;
 import com.sashimi.payment.domain.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.sashimi.cart.application.policy.CoursePurchasePolicy;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,18 +32,18 @@ import java.util.UUID;
 public class PaymentCommandService implements PaymentCommandUseCase {
 
     private final CartItemRepository cartItemRepository;
-    private final CoursePort coursePort;
+    private final CoursePurchasePolicy coursePurchasePolicy;
     private final EnrollmentPort enrollmentPort;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final PaymentRepository paymentRepository;
     private final CreditCommandUseCase creditCommandUseCase;
 
-    public PaymentCommandService(CartItemRepository cartItemRepository, CoursePort coursePort,
+    public PaymentCommandService(CartItemRepository cartItemRepository, CoursePurchasePolicy coursePurchasePolicy,
                                  EnrollmentPort enrollmentPort, OrderRepository orderRepository,
                                  OrderItemRepository orderItemRepository, PaymentRepository paymentRepository, CreditCommandUseCase creditCommandUseCase) {
         this.cartItemRepository = cartItemRepository;
-        this.coursePort = coursePort;
+        this.coursePurchasePolicy = coursePurchasePolicy;
         this.enrollmentPort = enrollmentPort;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -61,16 +61,16 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
         List<PaymentCourse> courses = cartItems.stream()
                 .map(cartItem -> {
-                    CourseInfo courseInfo = coursePort.getCourseInfo(cartItem.getCourseId());
-                    if (!courseInfo.purchasable()) {
-                        throw new BusinessException(ErrorCode.COURSE_NOT_PURCHASABLE);
-                    }
+                    CourseInfo courseInfo = coursePurchasePolicy.validatePurchasable(
+                            command.userId(),
+                            cartItem.getCourseId()
+                    );
 
-                    if (enrollmentPort.isEnrolled(command.userId(), cartItem.getCourseId())) {
-                        throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
-                    }
-
-                    return new PaymentCourse(courseInfo.courseId(), courseInfo.title(), cartItem.getPrice());
+                    return new PaymentCourse(
+                            courseInfo.courseId(),
+                            courseInfo.title(),
+                            cartItem.getPrice()
+                    );
                 })
                 .toList();
 
@@ -80,15 +80,10 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
     @Override
     public PaymentResult payCourse(PayCourseCommand command) {
-        CourseInfo courseInfo = coursePort.getCourseInfo(command.courseId());
-
-        if (!courseInfo.purchasable()) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_PURCHASABLE);
-        }
-
-        if (enrollmentPort.isEnrolled(command.userId(), command.courseId())) {
-            throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
-        }
+        CourseInfo courseInfo = coursePurchasePolicy.validatePurchasable(
+                command.userId(),
+                command.courseId()
+        );
 
         return pay(command.userId(), List.of(
                 new PaymentCourse(courseInfo.courseId(), courseInfo.title(), courseInfo.price())
