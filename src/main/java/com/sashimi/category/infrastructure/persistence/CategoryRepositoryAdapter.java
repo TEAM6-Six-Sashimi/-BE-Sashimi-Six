@@ -24,11 +24,10 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
     }
 
     @Override
-    public boolean existsAllActiveByIds(List<Long> categoryIds) {
-        if (categoryIds == null || categoryIds.isEmpty()) {
-            return true;
-        }
-
-        return springDataCategoryRepository.countByIdInAndActiveTrue(categoryIds) == categoryIds.size();
+    public List<Category> findByName(String name) {
+        return springDataCategoryRepository.findByNameAndActiveTrueOrderBySortOrderAsc(name)
+                .stream()
+                .map(CategoryJpaEntity::toDomain)
+                .toList();
     }
 }
