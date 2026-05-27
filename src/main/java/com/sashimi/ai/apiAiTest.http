@@ -1,0 +1,43 @@
+@accessToken = 여기에_발급받은_토큰_붙여넣기
+@baseUrl = http://localhost:8080
+
+### 이력서 AI 평가
+POST {{baseUrl}}/resumes/1/ai-review
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "jobPostingId": 1
+}
+
+
+### 채용공고 기반 추천 생성 - TEXT
+POST {{baseUrl}}/recommendations/job-posting
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "inputType": "TEXT",
+  "sourceUrl": null,
+  "rawContent": "프론트엔드 개발자 채용공고입니다. React, TypeScript, Next.js, GraphQL, AWS, Docker 경험을 우대합니다."
+}
+
+
+### 최신 채용공고 추천 조회
+GET {{baseUrl}}/recommendations/job-posting
+Authorization: Bearer {{accessToken}}
+
+
+### 요구 역량 조회
+GET {{baseUrl}}/recommendations/job-posting/skills
+Authorization: Bearer {{accessToken}}
+
+
+### 추천 강의 조회
+POST {{baseUrl}}/recommendations/job-posting/courses
+Authorization: Bearer {{accessToken}}
+
+
+### 추천 자격증 조회
+GET {{baseUrl}}/recommendations/job-posting/certificates
+Authorization: Bearer {{accessToken}}
