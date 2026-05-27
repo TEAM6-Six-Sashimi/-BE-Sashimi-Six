@@ -1,0 +1,17 @@
+@baseUrl = http://localhost:8080
+@accessToken = 여기에_로그인_후_받은_accessToken_붙여넣기
+
+### 장바구니 선택 강의 결제
+POST {{baseUrl}}/payments/cart/checkout
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+### 단일 강의 바로 결제
+POST {{baseUrl}}/payments/course/1
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+### 결제 내역 조회
+GET {{baseUrl}}/payments/history
+Accept: application/json
+Authorization: Bearer {{accessToken}}

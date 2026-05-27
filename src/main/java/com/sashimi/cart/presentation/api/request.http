@@ -1,0 +1,48 @@
+@baseUrl = http://localhost:8080
+@accessToken = 여기에_로그인_후_받은_accessToken_붙여넣기
+
+### 장바구니 조회
+GET {{baseUrl}}/cart
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+### 장바구니에 강의 추가
+POST {{baseUrl}}/cart
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "courseId": 1
+}
+
+### 장바구니 단일 항목 선택 상태 변경
+PATCH {{baseUrl}}/cart/1/selected
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "selected": true
+}
+
+### 장바구니 여러 항목 선택 상태 변경
+PATCH {{baseUrl}}/cart/selected
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "cartItemIds": [1, 2],
+  "selected": true
+}
+
+### 장바구니 항목 삭제
+DELETE {{baseUrl}}/cart/1
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+### 장바구니 결제 전 조회
+POST {{baseUrl}}/cart/checkout
+Accept: application/json
+Authorization: Bearer {{accessToken}}
