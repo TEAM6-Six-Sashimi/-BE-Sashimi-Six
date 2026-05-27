@@ -8,7 +8,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payments")
+@Table(
+        name = "payments",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_payment_order",
+                        columnNames = {"order_id"}
+                )
+        }
+)
 public class PaymentJpaEntity {
 
     @Id

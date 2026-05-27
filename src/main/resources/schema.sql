@@ -13,6 +13,7 @@ CREATE TABLE users (
                        email VARCHAR(255) NOT NULL UNIQUE,
                        password VARCHAR(255) NOT NULL,
                        name VARCHAR(100) NOT NULL,
+                       birth_date DATE,
                        phone VARCHAR(20),
 
                        role ENUM('STUDENT', 'INSTRUCTOR', 'ADMIN') NOT NULL DEFAULT 'STUDENT',
@@ -51,6 +52,17 @@ CREATE TABLE categories (
                             sort_order INT NOT NULL DEFAULT 0,
                             is_active BOOLEAN NOT NULL DEFAULT TRUE,
                             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_interest_categories (
+                            user_id BIGINT NOT NULL,
+                            category_id BIGINT NOT NULL,
+                            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            PRIMARY KEY (user_id, category_id),
+                            CONSTRAINT fk_user_interest_categories_user
+                                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+                            CONSTRAINT fk_user_interest_categories_category
+                                FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
 
 -- =========================
@@ -156,7 +168,8 @@ CREATE TABLE payments (
                           order_id BIGINT NOT NULL,
                           user_id BIGINT NOT NULL,
                           CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders(order_id),
-                          CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+                          CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(user_id),
+                          CONSTRAINT uq_payment_order UNIQUE (order_id)
 );
 
 -- =========================
@@ -731,3 +744,16 @@ CREATE TABLE d_days (
                         user_id BIGINT NOT NULL,
                         CONSTRAINT fk_d_days_user FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
+CREATE TABLE IF NOT EXISTS user_certifications (
+                                                   user_certification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                                   user_id               BIGINT NOT NULL,
+                                                   certification_name    VARCHAR(255) NOT NULL,
+    issued_by             VARCHAR(255),
+    issued_date           DATE,
+    file_url              VARCHAR(500),
+    status                ENUM('PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING',
+    created_at            DATETIME DEFAULT NOW(),
+    deleted_at            DATETIME NULL,
+    CONSTRAINT fk_user_cert_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+    );

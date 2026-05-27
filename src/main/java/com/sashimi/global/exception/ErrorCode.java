@@ -45,6 +45,8 @@ public enum ErrorCode {
     COURSE_FORBIDDEN(403, "COURSE_004", "해당 강의에 대한 권한이 없습니다."),
     COURSE_NOT_PURCHASABLE(400, "COURSE_005", "구매할 수 없는 강의입니다."),
 
+    CATEGORY_NOT_FOUND(404, "CATEGORY_404", "카테고리를 찾을 수 없습니다."),
+
     CART_ITEM_NOT_FOUND(404, "CART_001", "장바구니 항목을 찾을 수 없습니다."),
     CART_ITEM_ALREADY_EXISTS(409, "CART_002", "이미 장바구니에 담긴 강의입니다."),
     CART_EMPTY_SELECTION(400, "CART_003", "결제할 강의를 선택해주세요."),
@@ -57,12 +59,14 @@ public enum ErrorCode {
     PAYMENT_EMPTY_COURSE(400, "PAYMENT_002", "결제할 강의가 없습니다."),
 
     CREDIT_INVALID_AMOUNT(400, "CREDIT_001", "크레딧 금액이 올바르지 않습니다."),
+    CREDIT_INSUFFICIENT_BALANCE(400, "CREDIT_002", "크레딧 잔액이 부족합니다."),
 
     INVALID_INPUT(400, "MEMBER_001", "입력값이 올바르지 않습니다."),
     ALREADY_APPLIED(400, "MEMBER_002","이미 강사 신청이 진행 중입니다."),
     APPLICATION_NOT_FOUND(404,"MEMBER_003", "신청을 찾을 수 없습니다."),
-    INVALID_APPLICATION_STATUS(400, "MEMBER_004", "처리할 수 없는 신청 상태입니다.");
-
+    INVALID_APPLICATION_STATUS(400, "MEMBER_004", "처리할 수 없는 신청 상태입니다."),
+    CERTIFICATE_OCR_FAILED(400, "MEMBER_005", "자격증 OCR 검증에 실패했습니다."),
+    CERTIFICATE_NOT_FOUND(404, "MEMBER_006", "자격증을 찾을 수 없습니다.");
 
 
     private final int status;

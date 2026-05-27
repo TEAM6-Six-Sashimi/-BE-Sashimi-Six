@@ -3,9 +3,15 @@ package com.sashimi.user.dto;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor
@@ -36,6 +42,13 @@ public class SignupRequestDto {
 
     @NotBlank
     private String name;
+
+    @NotNull(message = "생년월일은 필수입니다.")
+    @Past(message = "생년월일은 과거 날짜여야 합니다.")
+    private LocalDate birthDate;
+
+    @NotEmpty(message = "관심 직무 카테고리를 1개 이상 선택해주세요.")
+    private List<@NotNull Long> interestCategoryIds;
 
     // 추천인 코드는 나중에 확장 가능하게 일단 선택값으로 둬도 됨
     private String referralCode;

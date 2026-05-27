@@ -5,6 +5,8 @@ import com.sashimi.cart.application.port.CoursePort;
 import com.sashimi.cart.application.port.EnrollmentPort;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
+import com.sashimi.credit.application.command.UseCreditCommand;
+import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.payment.application.command.CheckoutCartCommand;
@@ -23,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -34,16 +37,18 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final PaymentRepository paymentRepository;
+    private final CreditCommandUseCase creditCommandUseCase;
 
     public PaymentCommandService(CartItemRepository cartItemRepository, CoursePort coursePort,
                                  EnrollmentPort enrollmentPort, OrderRepository orderRepository,
-                                 OrderItemRepository orderItemRepository, PaymentRepository paymentRepository) {
+                                 OrderItemRepository orderItemRepository, PaymentRepository paymentRepository, CreditCommandUseCase creditCommandUseCase) {
         this.cartItemRepository = cartItemRepository;
         this.coursePort = coursePort;
         this.enrollmentPort = enrollmentPort;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.paymentRepository = paymentRepository;
+        this.creditCommandUseCase = creditCommandUseCase;
     }
 
     @Override
@@ -69,10 +74,9 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                 })
                 .toList();
 
-        PaymentResult result = pay(command.userId(), courses);
-        cartItemRepository.deleteAllSelectedByUserId(command.userId());
-        return result;
+        return pay(command.userId(), courses, true);
     }
+
 
     @Override
     public PaymentResult payCourse(PayCourseCommand command) {
@@ -88,11 +92,10 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
         return pay(command.userId(), List.of(
                 new PaymentCourse(courseInfo.courseId(), courseInfo.title(), courseInfo.price())
-        ));
+        ), false);
     }
 
-    private PaymentResult pay(Long userId, List<PaymentCourse> courses) {
-
+    private PaymentResult pay(Long userId, List<PaymentCourse> courses, boolean fromCart) {
         if (courses == null || courses.isEmpty()) {
             throw new BusinessException(ErrorCode.PAYMENT_EMPTY_COURSE);
         }
@@ -109,11 +112,9 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                 ))
                 .toList();
 
-        for (OrderItem orderItem : orderItems) {
-            enrollmentPort.enrollPaidCourse(userId, orderItem.getCourseId(), orderItem.getId());
-        }
-
         Payment payment = paymentRepository.save(Payment.paid(totalAmount, order.getId(), userId));
+
+        completePayment(userId, payment, orderItems, fromCart);
 
         return new PaymentResult(
                 order.getId(),
@@ -127,8 +128,28 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         );
     }
 
+    private void completePayment(
+            Long userId,
+            Payment payment,
+            List<OrderItem> orderItems,
+            boolean fromCart
+    ) {
+        creditCommandUseCase.useCredit(
+                new UseCreditCommand(userId, payment.getAmount())
+        );
+
+        for (OrderItem orderItem : orderItems) {
+            enrollmentPort.enrollPaidCourse(userId, orderItem.getCourseId(), orderItem.getId());
+        }
+
+        if (fromCart) {
+            cartItemRepository.deleteAllSelectedByUserId(userId);
+        }
+    }
+
     private String createOrderNo() {
-        return "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        return "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"))
+                + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     private record PaymentCourse(Long courseId, String title, BigDecimal price) {
