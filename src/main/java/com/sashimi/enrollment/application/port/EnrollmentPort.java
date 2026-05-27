@@ -1,4 +1,4 @@
-package com.sashimi.cart.application.port;
+package com.sashimi.enrollment.application.port;
 
 public interface EnrollmentPort {
 
