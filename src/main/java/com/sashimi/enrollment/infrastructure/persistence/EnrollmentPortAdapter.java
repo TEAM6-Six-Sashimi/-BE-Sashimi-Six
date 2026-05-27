@@ -2,6 +2,7 @@ package com.sashimi.enrollment.infrastructure.persistence;
 
 import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.enrollment.application.port.EnrollmentSummary;
+import com.sashimi.enrollment.domain.model.EnrollmentType;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +54,7 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
                 )
                 VALUES
                 (
-                    'PAID',
+                    ?,
                     0.00,
                     false,
                     CURRENT_TIMESTAMP,
@@ -65,7 +66,13 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
                 """;
 
         try {
-            jdbcTemplate.update(sql, orderItemId, courseId, userId);
+            jdbcTemplate.update(
+                    sql,
+                    EnrollmentType.PAID.name(),
+                    orderItemId,
+                    courseId,
+                    userId
+            );
         } catch (DataIntegrityViolationException e) {
             throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
         }

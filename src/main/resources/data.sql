@@ -287,10 +287,21 @@ VALUES
 INSERT INTO ai_prompts
 (name, purpose, prompt, version, is_active)
 VALUES
-    ('이력서 생성 프롬프트 v1', 'RESUME_GENERATION', '사용자의 경력과 기술스택을 바탕으로 신입 개발자 이력서를 작성한다.', 1, TRUE),
-    ('이력서 평가 프롬프트 v1', 'RESUME_EVALUATION', '채용공고와 이력서를 비교하여 강점, 약점, 개선점을 평가한다.', 1, TRUE),
-    ('채용공고 분석 프롬프트 v1', 'JOB_ANALYSIS', '채용공고에서 핵심 요구 기술과 우대사항을 추출한다.', 1, TRUE),
-    ('강의 추천 프롬프트 v1', 'COURSE_RECOMMENDATION', '사용자의 목표와 부족한 기술을 바탕으로 적합한 강의를 추천한다.', 1, TRUE);
+    ('이력서 생성 프롬프트 v1', 'RESUME_GENERATION',
+     '사용자의 경력과 기술스택을 바탕으로 신입 개발자 이력서 초안을 작성해주세요. 사용자 정보: {userProfile}',
+     1, TRUE),
+
+    ('이력서 평가 프롬프트 v1', 'RESUME_EVALUATION',
+     '아래 이력서 내용을 기반으로 강점, 약점, 개선점을 평가해주세요. 이력서 제목: {resumeTitle}, 이력서 내용: {resumeContent}',
+     1, TRUE),
+
+    ('채용공고 분석 프롬프트 v1', 'JOB_ANALYSIS',
+     '아래 채용공고 내용을 분석해서 직무명, 요구 역량, 추천 자격증, 보완 학습이 필요한 강의 방향을 도출해주세요. 이력서 보유 여부: {resumeBased}, 채용공고 내용: {jobPostingContent}',
+     1, TRUE),
+
+    ('강의 추천 프롬프트 v1', 'COURSE_RECOMMENDATION',
+     '사용자의 목표, 부족한 기술, 채용공고 요구 역량을 바탕으로 적합한 강의를 추천해주세요. 목표: {targetGoal}, 부족한 기술: {missingSkills}, 요구 역량: {requiredSkills}',
+     1, TRUE);
 
 INSERT INTO resumes
 (title, template_type, content, is_default, user_id)

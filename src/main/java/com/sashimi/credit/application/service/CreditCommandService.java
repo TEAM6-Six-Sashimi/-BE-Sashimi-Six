@@ -42,8 +42,7 @@ public class CreditCommandService implements CreditCommandUseCase {
 
     @Override
     public CreditBalanceResult chargeCredit(ChargeCreditCommand command) {
-        Credit credit = creditRepository.findByUserIdForUpdate(command.userId())
-                .orElseGet(() -> Credit.create(command.userId(), BigDecimal.ZERO));
+        Credit credit = getOrCreateCreditForUpdate(command.userId());
 
         credit.add(command.amount());
 
@@ -54,8 +53,7 @@ public class CreditCommandService implements CreditCommandUseCase {
 
     @Override
     public CreditBalanceResult useCredit(UseCreditCommand command) {
-        Credit credit = creditRepository.findByUserIdForUpdate(command.userId())
-                .orElseGet(() -> Credit.create(command.userId(), BigDecimal.ZERO));
+        Credit credit = getOrCreateCreditForUpdate(command.userId());
 
         credit.use(command.amount());
 
@@ -72,15 +70,19 @@ public class CreditCommandService implements CreditCommandUseCase {
         try {
             creditRepository.save(Credit.create(userId, initialBalance));
         } catch (DataIntegrityViolationException e) {
-            // 같은 사용자 크레딧이 동시에 생성된 경우 이미 생성된 것으로 본다.
+
         }
     }
 
     private void addCredit(Long userId, BigDecimal amount) {
-        Credit credit = creditRepository.findByUserIdForUpdate(userId)
-                .orElseGet(() -> Credit.create(userId, BigDecimal.ZERO));
+        Credit credit = getOrCreateCreditForUpdate(userId);
 
         credit.add(amount);
         creditRepository.save(credit);
+    }
+
+    private Credit getOrCreateCreditForUpdate(Long userId) {
+        return creditRepository.findByUserIdForUpdate(userId)
+                .orElseGet(() -> Credit.create(userId, BigDecimal.ZERO));
     }
 }
