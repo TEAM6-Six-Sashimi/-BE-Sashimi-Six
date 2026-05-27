@@ -77,6 +77,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         return pay(command.userId(), courses, true);
     }
 
+
     @Override
     public PaymentResult payCourse(PayCourseCommand command) {
         CourseInfo courseInfo = coursePort.getCourseInfo(command.courseId());
