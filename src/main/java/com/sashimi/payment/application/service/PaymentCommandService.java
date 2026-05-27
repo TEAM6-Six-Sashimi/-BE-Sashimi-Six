@@ -1,11 +1,12 @@
 package com.sashimi.payment.application.service;
 
+import com.sashimi.cart.application.policy.CoursePurchasePolicy;
 import com.sashimi.cart.application.port.CourseInfo;
-import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
 import com.sashimi.credit.application.command.UseCreditCommand;
 import com.sashimi.credit.application.usecase.CreditCommandUseCase;
+import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.payment.application.command.CheckoutCartCommand;
@@ -19,7 +20,6 @@ import com.sashimi.payment.domain.repository.OrderRepository;
 import com.sashimi.payment.domain.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.sashimi.cart.application.policy.CoursePurchasePolicy;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,9 +39,15 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private final PaymentRepository paymentRepository;
     private final CreditCommandUseCase creditCommandUseCase;
 
-    public PaymentCommandService(CartItemRepository cartItemRepository, CoursePurchasePolicy coursePurchasePolicy,
-                                 EnrollmentPort enrollmentPort, OrderRepository orderRepository,
-                                 OrderItemRepository orderItemRepository, PaymentRepository paymentRepository, CreditCommandUseCase creditCommandUseCase) {
+    public PaymentCommandService(
+            CartItemRepository cartItemRepository,
+            CoursePurchasePolicy coursePurchasePolicy,
+            EnrollmentPort enrollmentPort,
+            OrderRepository orderRepository,
+            OrderItemRepository orderItemRepository,
+            PaymentRepository paymentRepository,
+            CreditCommandUseCase creditCommandUseCase
+    ) {
         this.cartItemRepository = cartItemRepository;
         this.coursePurchasePolicy = coursePurchasePolicy;
         this.enrollmentPort = enrollmentPort;
@@ -69,14 +75,13 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                     return new PaymentCourse(
                             courseInfo.courseId(),
                             courseInfo.title(),
-                            cartItem.getPrice()
+                            courseInfo.price()
                     );
                 })
                 .toList();
 
-        return pay(command.userId(), courses, true);
+        return pay(command.userId(), courses, PaymentSource.CART);
     }
-
 
     @Override
     public PaymentResult payCourse(PayCourseCommand command) {
@@ -85,12 +90,19 @@ public class PaymentCommandService implements PaymentCommandUseCase {
                 command.courseId()
         );
 
-        return pay(command.userId(), List.of(
+        PaymentResult result = pay(command.userId(), List.of(
                 new PaymentCourse(courseInfo.courseId(), courseInfo.title(), courseInfo.price())
-        ), false);
+        ), PaymentSource.DIRECT);
+
+        cartItemRepository.deleteByUserIdAndCourseId(
+                command.userId(),
+                command.courseId()
+        );
+
+        return result;
     }
 
-    private PaymentResult pay(Long userId, List<PaymentCourse> courses, boolean fromCart) {
+    private PaymentResult pay(Long userId, List<PaymentCourse> courses, PaymentSource source) {
         if (courses == null || courses.isEmpty()) {
             throw new BusinessException(ErrorCode.PAYMENT_EMPTY_COURSE);
         }
@@ -109,7 +121,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
         Payment payment = paymentRepository.save(Payment.paid(totalAmount, order.getId(), userId));
 
-        completePayment(userId, payment, orderItems, fromCart);
+        completePayment(userId, payment, orderItems, source);
 
         return new PaymentResult(
                 order.getId(),
@@ -127,17 +139,21 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             Long userId,
             Payment payment,
             List<OrderItem> orderItems,
-            boolean fromCart
+            PaymentSource source
     ) {
         creditCommandUseCase.useCredit(
                 new UseCreditCommand(userId, payment.getAmount())
         );
 
         for (OrderItem orderItem : orderItems) {
-            enrollmentPort.enrollPaidCourse(userId, orderItem.getCourseId(), orderItem.getId());
+            enrollmentPort.enrollPaidCourse(
+                    userId,
+                    orderItem.getCourseId(),
+                    orderItem.getId()
+            );
         }
 
-        if (fromCart) {
+        if (source == PaymentSource.CART) {
             cartItemRepository.deleteAllSelectedByUserId(userId);
         }
     }
@@ -145,6 +161,11 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     private String createOrderNo() {
         return "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"))
                 + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
+
+    private enum PaymentSource {
+        CART,
+        DIRECT
     }
 
     private record PaymentCourse(Long courseId, String title, BigDecimal price) {

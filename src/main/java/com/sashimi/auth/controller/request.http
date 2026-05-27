@@ -36,7 +36,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-"refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiaWF0IjoxNzc5NzIxNjY5LCJleHAiOjE3ODA5MzEyNjl9.grQcVmCI8s7UV9YbHn8WHDewM6nEu2gvxH1sx_nTnkBZKMDG7ml2Vh8pPihgf32l"
+"refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdHVkZW50MDEiLCJpYXQiOjE3Nzk4Njc5ODIsImV4cCI6MTc4MTA3NzU4Mn0.IS876j2OO1n242g31wjPW5HpgGA6NjsrXDSLXfogkbdKU3W_YgD9YjV0GdR82u7O"
 }
 
 
@@ -46,7 +46,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdHVkZW50MDEiLCJpYXQiOjE3Nzk4MDUxNTUsImV4cCI6MTc4MTAxNDc1NX0.xbNpKrHkaYIDK-WCygTLjnBSsQnfqSs09WSyB6FxHIj5mZNtbVI7xpea9U22zEVn"
+  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdHVkZW50MDEiLCJpYXQiOjE3Nzk4NjgwMTQsImV4cCI6MTc4MTA3NzYxNH0.fPa-yKIiImpg3Cif08Z1FrDunxvjcs5-yMV2OUWtzZi4mt4xwgS7jQnnQNeOJswK"
 }
 
 ### 관리자 API - 토큰 없음이면 401 정상

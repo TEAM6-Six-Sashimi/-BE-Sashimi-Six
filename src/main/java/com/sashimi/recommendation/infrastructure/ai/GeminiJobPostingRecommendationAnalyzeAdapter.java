@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import com.sashimi.ai.domain.model.AiPrompt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +40,8 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
     }
 
     @Override
-    public JobPostingRecommendationAnalyzeResult analyze(JobPostingRecommendation recommendation) {
-        String prompt = promptBuilder.build(recommendation);
+    public JobPostingRecommendationAnalyzeResult analyze(JobPostingRecommendation recommendation, AiPrompt aiPrompt) {
+        String prompt = promptBuilder.build(recommendation, aiPrompt);
 
         String generatedText = geminiTextClient.generate(prompt);
 
