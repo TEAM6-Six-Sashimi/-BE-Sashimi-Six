@@ -1,5 +1,6 @@
 package com.sashimi.recommendation.infrastructure.ai;
 
+import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzeResult;
 import com.sashimi.recommendation.domain.model.CertificateRecommendation;
@@ -17,7 +18,10 @@ public class StubJobPostingRecommendationAnalyzeAdapter
         implements JobPostingRecommendationAnalyzePort {
 
     @Override
-    public JobPostingRecommendationAnalyzeResult analyze(JobPostingRecommendation recommendation) {
+    public JobPostingRecommendationAnalyzeResult analyze(
+            JobPostingRecommendation recommendation,
+            AiPrompt prompt
+    ) {
         boolean resumeBased = recommendation.resumeBased();
 
         return new JobPostingRecommendationAnalyzeResult(

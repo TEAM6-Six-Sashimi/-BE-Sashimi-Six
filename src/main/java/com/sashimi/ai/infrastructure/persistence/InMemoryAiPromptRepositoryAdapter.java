@@ -4,6 +4,7 @@ import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.ai.domain.model.AiPromptType;
 import com.sashimi.ai.domain.repository.AiPromptRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.context.annotation.Profile;
 
 import java.util.Optional;
 
@@ -11,6 +12,7 @@ import java.util.Optional;
  * 개발 초기 단계에서 사용하는 임시 AI 프롬프트 저장소 Adapter.
  */
 @Repository
+@Profile("local")
 public class InMemoryAiPromptRepositoryAdapter implements AiPromptRepository {
 
     private final AiPrompt resumeReviewPrompt = new AiPrompt(
