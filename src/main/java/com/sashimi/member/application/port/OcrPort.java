@@ -4,7 +4,7 @@ import java.time.LocalDate;
 
 public interface OcrPort {
 
-    OcrResult extractCertificateInfo(String fileUrl);
+    OcrResult extractCertificateInfo(byte[] fileBytes, String fileName);
 
     record OcrResult(
             String certificationName,

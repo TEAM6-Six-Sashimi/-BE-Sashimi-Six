@@ -23,30 +23,18 @@ public class CertificateCommandService implements CertificateCommandUseCase {
     @Override
     public void registerCertificate(RegisterCertificateCommand command) {
 
-        // OCR 검증
-        OcrPort.OcrResult result = ocrPort.extractCertificateInfo(command.fileUrl());
+        OcrPort.OcrResult result = ocrPort.extractCertificateInfo(command.fileBytes(), command.fileName());
 
         if (!result.success()) {
-            // OCR 실패 → REJECTED로 저장
-            UserCertification rejected = UserCertification.create(
-                    command.userId(),
-                    command.certificationName(),
-                    command.issuedBy(),
-                    command.issuedDate(),
-                    command.fileUrl()
-            );
-            rejected.reject();
-            userCertificationRepository.save(rejected);
             throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
         }
 
-        // OCR 성공 → VERIFIED로 저장
         UserCertification certification = UserCertification.create(
                 command.userId(),
                 result.certificationName(),
                 result.issuedBy(),
                 result.issuedDate(),
-                command.fileUrl()
+                command.fileName()
         );
         certification.verify();
         userCertificationRepository.save(certification);
@@ -58,7 +46,6 @@ public class CertificateCommandService implements CertificateCommandUseCase {
                 .findById(command.certificationId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.CERTIFICATE_NOT_FOUND));
 
-        // 본인 자격증인지 확인
         if (!certification.getUserId().equals(command.userId())) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }

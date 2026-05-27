@@ -36,6 +36,11 @@ jwt:
   access-token-validity-in-milliseconds: 10800000
   refresh-token-validity-in-milliseconds: 1209600000
 
+clova:
+  ocr:
+    secret-key: ${CLOVA_OCR_SECRET_KEY}
+    invoke-url: ${CLOVA_OCR_INVOKE_URL}
+
 ---
 spring:
   config:
@@ -61,4 +66,3 @@ spring:
 app:
   mail:
     from: ${MAIL_FROM}
-
