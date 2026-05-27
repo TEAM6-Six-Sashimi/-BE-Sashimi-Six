@@ -132,8 +132,10 @@ public class OcrAdapter implements OcrPort {
     }
 
     private LocalDate extractIssueDate(String text) {
-        // "합격일자" 키워드 뒤 날짜 우선 추출
-        Pattern passPattern = Pattern.compile("합격\\s*일\\s*자\\s*(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일");
+        // 띄어쓰기 포함한 "합격일자" 패턴
+        Pattern passPattern = Pattern.compile(
+                "합\\s*격\\s*일\\s*자\\s*(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일"
+        );
         Matcher passMatcher = passPattern.matcher(text);
         if (passMatcher.find()) {
             return LocalDate.of(
@@ -143,7 +145,7 @@ public class OcrAdapter implements OcrPort {
             );
         }
 
-        // 없으면 첫 번째 날짜 가져오기
+        // 없으면 첫 번째 날짜
         Pattern pattern = Pattern.compile("(\\d{4})[년.\\-]\\s*(\\d{1,2})[월.\\-]\\s*(\\d{1,2})");
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
