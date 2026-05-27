@@ -54,17 +54,6 @@ CREATE TABLE categories (
                             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_interest_categories (
-                            user_id BIGINT NOT NULL,
-                            category_id BIGINT NOT NULL,
-                            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            PRIMARY KEY (user_id, category_id),
-                            CONSTRAINT fk_user_interest_categories_user
-                                FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-                            CONSTRAINT fk_user_interest_categories_category
-                                FOREIGN KEY (category_id) REFERENCES categories(category_id)
-);
-
 -- =========================
 -- 3. COURSES
 -- =========================
