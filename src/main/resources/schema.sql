@@ -14,6 +14,7 @@ CREATE TABLE users (
                        password VARCHAR(255) NOT NULL,
                        name VARCHAR(100) NOT NULL,
                        birth_date DATE,
+                       interest_category_ids VARCHAR(255),
                        phone VARCHAR(20),
 
                        role ENUM('STUDENT', 'INSTRUCTOR', 'ADMIN') NOT NULL DEFAULT 'STUDENT',
@@ -47,7 +48,7 @@ CREATE TABLE refresh_tokens (
 -- =========================
 CREATE TABLE categories (
                             category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                            name ENUM('ai·데이터', '건강·자격증', '라이프·교육', '마케팅·비즈니스', '외국어', '재테크·투자', '취미·문화') NOT NULL,
+                            name ENUM('ai', '건강 자격증', '라이프','마케팅','외국어','재테크','취미,문화') NOT NULL,
                             sub_category VARCHAR(100) NOT NULL,
                             sort_order INT NOT NULL DEFAULT 0,
                             is_active BOOLEAN NOT NULL DEFAULT TRUE,

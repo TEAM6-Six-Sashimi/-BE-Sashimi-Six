@@ -2,9 +2,8 @@ package com.sashimi.cart.application.service;
 
 import com.sashimi.cart.application.command.AddCartItemCommand;
 import com.sashimi.cart.application.command.DeleteCartItemCommand;
+import com.sashimi.cart.application.policy.CoursePurchasePolicy;
 import com.sashimi.cart.application.port.CourseInfo;
-import com.sashimi.cart.application.port.CoursePort;
-import com.sashimi.cart.application.port.EnrollmentPort;
 import com.sashimi.cart.application.usecase.CartCommandUseCase;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
@@ -21,30 +20,22 @@ import org.springframework.dao.DataIntegrityViolationException;
 public class CartCommandService implements CartCommandUseCase {
 
     private final CartItemRepository cartItemRepository;
-    private final CoursePort coursePort;
-    private final EnrollmentPort enrollmentPort;
+    private final CoursePurchasePolicy coursePurchasePolicy;
 
     public CartCommandService(
             CartItemRepository cartItemRepository,
-            CoursePort coursePort,
-            EnrollmentPort enrollmentPort
+            CoursePurchasePolicy coursePurchasePolicy
     ) {
         this.cartItemRepository = cartItemRepository;
-        this.coursePort = coursePort;
-        this.enrollmentPort = enrollmentPort;
+        this.coursePurchasePolicy = coursePurchasePolicy;
     }
 
     @Override
     public Long addCartItem(AddCartItemCommand command) {
-        CourseInfo courseInfo = coursePort.getCourseInfo(command.courseId());
-
-        if (!courseInfo.purchasable()) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_PURCHASABLE);
-        }
-
-        if (enrollmentPort.isEnrolled(command.userId(), command.courseId())) {
-            throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
-        }
+        CourseInfo courseInfo = coursePurchasePolicy.validatePurchasable(
+                command.userId(),
+                command.courseId()
+        );
 
         if (cartItemRepository.existsByUserIdAndCourseId(command.userId(), command.courseId())) {
             throw new BusinessException(ErrorCode.CART_ITEM_ALREADY_EXISTS);

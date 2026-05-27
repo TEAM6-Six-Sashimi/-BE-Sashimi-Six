@@ -1,20 +1,18 @@
-package com.sashimi.cart.infrastructure.persistence;
+package com.sashimi.enrollment.infrastructure.persistence;
 
-import com.sashimi.cart.application.port.EnrollmentPort;
+import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class TemporaryEnrollmentPortAdapter implements EnrollmentPort {
+@RequiredArgsConstructor
+public class EnrollmentPortAdapter implements EnrollmentPort {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public TemporaryEnrollmentPortAdapter(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public boolean isEnrolled(Long userId, Long courseId) {
@@ -38,10 +36,29 @@ public class TemporaryEnrollmentPortAdapter implements EnrollmentPort {
     @Override
     public void enrollPaidCourse(Long userId, Long courseId, Long orderItemId) {
         String sql = """
-            INSERT INTO enrollments
-            (enrollment_type, progress_rate, is_completed, enrolled_at, completed_at, order_item_id, course_id, user_id)
-            VALUES ('PAID', 0.00, false, CURRENT_TIMESTAMP, NULL, ?, ?, ?)
-            """;
+                INSERT INTO enrollments
+                (
+                    enrollment_type,
+                    progress_rate,
+                    is_completed,
+                    enrolled_at,
+                    completed_at,
+                    order_item_id,
+                    course_id,
+                    user_id
+                )
+                VALUES
+                (
+                    'PAID',
+                    0.00,
+                    false,
+                    CURRENT_TIMESTAMP,
+                    NULL,
+                    ?,
+                    ?,
+                    ?
+                )
+                """;
 
         try {
             jdbcTemplate.update(sql, orderItemId, courseId, userId);
