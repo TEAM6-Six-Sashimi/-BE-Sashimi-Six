@@ -1,5 +1,8 @@
 package com.sashimi.recommendation.application.service;
 
+import com.sashimi.ai.domain.model.AiPrompt;
+import com.sashimi.ai.domain.model.AiPromptType;
+import com.sashimi.ai.domain.repository.AiPromptRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.command.CreateJobPostingRecommendationCommand;
@@ -26,15 +29,18 @@ public class JobPostingRecommendationService implements
     private final JobPostingRecommendationRepository recommendationRepository;
     private final JobPostingRecommendationAnalyzePort analyzePort;
     private final JobPostingRecommendationPolicy recommendationPolicy;
+    private final AiPromptRepository aiPromptRepository;
 
     public JobPostingRecommendationService(
             JobPostingRecommendationRepository recommendationRepository,
             JobPostingRecommendationAnalyzePort analyzePort,
-            JobPostingRecommendationPolicy recommendationPolicy
+            JobPostingRecommendationPolicy recommendationPolicy,
+            AiPromptRepository aiPromptRepository
     ) {
         this.recommendationRepository = recommendationRepository;
         this.analyzePort = analyzePort;
         this.recommendationPolicy = recommendationPolicy;
+        this.aiPromptRepository = aiPromptRepository;
     }
 
     @Override
@@ -52,7 +58,10 @@ public class JobPostingRecommendationService implements
 
         JobPostingRecommendation savedRecommendation = recommendationRepository.save(recommendation);
 
-        JobPostingRecommendationAnalyzeResult analyzeResult = analyzePort.analyze(savedRecommendation);
+        AiPrompt prompt = aiPromptRepository.findActiveByType(AiPromptType.JOB_POSTING_ANALYSIS)
+                .orElseThrow(() -> new BusinessException(ErrorCode.AI_PROMPT_NOT_FOUND));
+
+        JobPostingRecommendationAnalyzeResult analyzeResult = analyzePort.analyze(savedRecommendation, prompt);
 
         JobPostingRecommendation analyzedRecommendation = savedRecommendation.analyzed(
                 analyzeResult.jobTitle(),
