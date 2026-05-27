@@ -8,5 +8,7 @@ public interface CreditRepository {
 
     Optional<Credit> findByUserId(Long userId);
 
+    Optional<Credit> findByUserIdForUpdate(Long userId);
+
     Credit save(Credit credit);
 }

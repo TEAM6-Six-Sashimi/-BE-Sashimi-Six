@@ -23,4 +23,12 @@ public class CreditRepositoryAdapter implements CreditRepository {
     public Credit save(Credit credit) {
         return springDataCreditRepository.save(CreditJpaEntity.from(credit)).toDomain();
     }
+
+    @Override
+    public Optional<Credit> findByUserIdForUpdate(Long userId) {
+        return springDataCreditRepository.findByUserIdForUpdate(userId)
+                .map(CreditJpaEntity::toDomain);
+    }
+
+
 }
