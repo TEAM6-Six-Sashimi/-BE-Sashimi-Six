@@ -1,11 +1,8 @@
 package com.sashimi.member.presentation.api.request;
 
-import java.time.LocalDate;
+import org.springframework.web.multipart.MultipartFile;
 
 public record RegisterCertificateRequest(
-        String certificationName,
-        String issuedBy,
-        LocalDate issuedDate,
-        String fileUrl
+        MultipartFile file
 ) {
 }

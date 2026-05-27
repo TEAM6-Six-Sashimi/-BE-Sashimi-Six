@@ -3,11 +3,12 @@ package com.sashimi.member.presentation;
 import com.sashimi.member.application.command.DeleteCertificateCommand;
 import com.sashimi.member.application.command.RegisterCertificateCommand;
 import com.sashimi.member.application.usecase.CertificateCommandUseCase;
-import com.sashimi.member.presentation.api.request.RegisterCertificateRequest;
 import com.sashimi.member.presentation.api.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/members")
@@ -17,18 +18,16 @@ public class CertificateController {
     private final CertificateCommandUseCase certificateCommandUseCase;
 
     // 자격증 등록
-    @PostMapping("/{userId}/certificates")
+    @PostMapping(value = "/{userId}/certificates", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> registerCertificate(
             @PathVariable Long userId,
-            @RequestBody RegisterCertificateRequest request
-    ) {
+            @RequestPart("file") MultipartFile file
+    ) throws Exception {
         certificateCommandUseCase.registerCertificate(
                 new RegisterCertificateCommand(
                         userId,
-                        request.certificationName(),
-                        request.issuedBy(),
-                        request.issuedDate(),
-                        request.fileUrl()
+                        file.getBytes(),
+                        file.getOriginalFilename()
                 )
         );
         return ResponseEntity.ok(ApiResponse.of("자격증이 등록되었습니다."));

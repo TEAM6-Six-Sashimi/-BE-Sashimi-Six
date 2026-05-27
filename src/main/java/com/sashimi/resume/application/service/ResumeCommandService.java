@@ -4,6 +4,8 @@ package com.sashimi.resume.application.service;
 import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.ai.domain.model.AiPromptType;
 import com.sashimi.ai.domain.repository.AiPromptRepository;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.resume.application.command.CreateResumeCommand;
 import com.sashimi.resume.application.command.DeleteResumeCommand;
 import com.sashimi.resume.application.command.ReviewResumeCommand;
@@ -44,11 +46,11 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
     public ResumeEvaluation review(ReviewResumeCommand command) {
         // 1. 요청한 사용자의 이력서인지 확인하면서 조회한다.
         Resume resume = resumeRepository.findByIdAndUserId(command.resumeId(), command.userId())
-                .orElseThrow(() -> new IllegalArgumentException("이력서를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
 
         // 2. 이력서 평가에 사용할 활성 프롬프트를 조회한다.
         AiPrompt prompt = aiPromptRepository.findActiveByType(AiPromptType.RESUME_REVIEW)
-                .orElseThrow(() -> new IllegalStateException("활성화된 이력서 평가 프롬프트가 없습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AI_PROMPT_NOT_FOUND));
 
         // 3. 실제 OpenAI 호출은 Port 뒤의 Infrastructure Adapter가 담당한다.
         ResumeAiReviewResult aiResult = resumeAiReviewPort.review(resume, prompt);
@@ -87,7 +89,7 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
     @Transactional
     public Resume update(UpdateResumeCommand command) {
         Resume resume = resumeRepository.findByIdAndUserId(command.resumeId(), command.userId())
-                .orElseThrow(() -> new IllegalArgumentException("Resume not found."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
 
         Resume updatedResume = resume.update(
                 command.title(),

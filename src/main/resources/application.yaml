@@ -26,7 +26,7 @@ spring:
 
 ## key 확인 후 수정 예정
 gemini:
-  api-key: ${GEMINI_API_KEY}
+  api-key: ${GEMINI_API_KEY:}
   model: gemini-2.0-flash
   base-url: https://generativelanguage.googleapis.com/v1beta
   timeout-seconds: 30
@@ -35,6 +35,11 @@ jwt:
   secret: this-is-sashimi-lms-jwt-secret-key-for-hs256-authentication
   access-token-validity-in-milliseconds: 10800000
   refresh-token-validity-in-milliseconds: 1209600000
+
+clova:
+  ocr:
+    secret-key: ${CLOVA_OCR_SECRET_KEY}
+    invoke-url: ${CLOVA_OCR_INVOKE_URL}
 
 ---
 spring:
@@ -61,4 +66,3 @@ spring:
 app:
   mail:
     from: ${MAIL_FROM}
-

@@ -12,5 +12,7 @@ public interface CourseRepository {
     List<Course> findByInstructorIdAndStatus(Long instructorId, CourseStatus status);
     List<Course> findByInstructorIdAndStatusIn(Long instructorId, List<CourseStatus> statuses);
     List<Course> findByStatus(CourseStatus status);
+    List<Course> findByStatusAndCategoryId(CourseStatus status, Long categoryId);
+    List<Course> findByStatusAndCategoryIdIn(CourseStatus status, List<Long> categoryIds);
     void deleteById(Long id);
 }

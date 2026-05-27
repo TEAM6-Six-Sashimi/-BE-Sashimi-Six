@@ -1,5 +1,7 @@
 package com.sashimi.resume.application.service;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.resume.application.usecase.ResumeQueryUseCase;
 import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.repository.ResumeRepository;
@@ -27,6 +29,6 @@ public class ResumeQueryService implements ResumeQueryUseCase {
     @Transactional(readOnly = true)
     public Resume getResume(Long userId, Long resumeId) {
         return resumeRepository.findByIdAndUserId(resumeId, userId)
-                .orElseThrow(() -> new IllegalArgumentException("Resume not found."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
     }
 }
