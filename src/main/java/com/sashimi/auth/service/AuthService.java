@@ -8,6 +8,7 @@ import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
 import com.sashimi.auth.dto.PasswordResetRequestDto;
 import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
 import com.sashimi.auth.dto.TokenResponseDto;
+import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.credit.application.command.CreateInitialCreditCommand;
 import com.sashimi.credit.application.command.GrantReferralSignupRewardCommand;
 import com.sashimi.credit.application.usecase.CreditCommandUseCase;
@@ -39,7 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -59,16 +62,20 @@ public class AuthService {
     private final CreditCommandUseCase creditCommandUseCase;
     private final ApplicationEventPublisher eventPublisher;
     private final SignupEligibilityPolicy signupEligibilityPolicy;
+    private final CategoryRepository categoryRepository;
 
     public UserResponseDto register(SignupRequestDto request) {
         SignupEligibility eligibility = signupEligibilityPolicy.validate(request);
+        List<Long> interestCategoryIds = normalizeInterestCategoryIds(request.getInterestCategoryIds());
 
         User user = User.createStudent(
                 request.getName(),
                 request.getLoginId(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getEmail(),
-                generateUniqueReferralCode()
+                request.getBirthDate(),
+                generateUniqueReferralCode(),
+                interestCategoryIds
         );
 
         User savedUser = userRepository.save(user);
@@ -231,5 +238,25 @@ public class AuthService {
 
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private List<Long> normalizeInterestCategoryIds(List<Long> categoryIds) {
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        if (categoryIds.stream().anyMatch(Objects::isNull)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        List<Long> normalizedIds = categoryIds.stream()
+                .distinct()
+                .toList();
+
+        if (!categoryRepository.existsAllActiveByIds(normalizedIds)) {
+            throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+
+        return normalizedIds;
     }
 }

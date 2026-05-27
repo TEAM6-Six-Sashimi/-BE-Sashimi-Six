@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface CategoryRepository {
     List<Category> findAllActive();
+
+    boolean existsAllActiveByIds(List<Long> categoryIds);
 }

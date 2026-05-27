@@ -18,7 +18,9 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
@@ -141,10 +143,12 @@ class UserAccountServiceTest {
                 "testuser",
                 "encodedCurrentPassword",
                 "test@example.com",
+                LocalDate.of(2000, 1, 1),
                 Role.STUDENT,
                 UserStatus.ACTIVE,
                 true,
                 "ABC12345",
+                List.of(10L),
                 null
         );
     }

@@ -1,49 +1,61 @@
 INSERT INTO users
-(login_id, email, password, name, phone, role, status, email_verified, referral_code)
+(login_id, email, password, name, birth_date, phone, role, status, email_verified, referral_code)
 VALUES
-    ('admin01', 'admin@test.com', '$2a$10$admin', '관리재', '010-0000-0000', 'ADMIN', 'ACTIVE', TRUE, 'ADMIN001'),
-    ('instructor01', 'instructor1@test.com', '$2a$10$instructor', '김강사', '010-1111-1111', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS001'),
-    ('instructor02', 'instructor2@test.com', '$2a$10$instructor', '이강사', '010-2222-2222', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS002'),
-    ('student01', 'student1@test.com', '$2a$10$vYwWcwkU/lHpqmL3WERfgOi0yx/OxCkfbtGQHJjIj8IpfTdGptORi', '박학생', '010-3333-3333', 'STUDENT', 'ACTIVE', TRUE, 'STD001'),
-    ('student02', 'student2@test.com', '$2a$10$student', '최학생', '010-4444-4444', 'STUDENT', 'ACTIVE', TRUE, 'STD002'),
-    ('student03', 'student3@test.com', '$2a$10$student', '정학생', '010-5555-5555', 'STUDENT', 'ACTIVE', TRUE, 'STD003');
+    ('admin01', 'admin@test.com', '$2a$10$admin', '관리재', '1985-01-01', '010-0000-0000', 'ADMIN', 'ACTIVE', TRUE, 'ADMIN001'),
+    ('instructor01', 'instructor1@test.com', '$2a$10$instructor', '김강사', '1988-03-12', '010-1111-1111', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS001'),
+    ('instructor02', 'instructor2@test.com', '$2a$10$instructor', '이강사', '1990-07-20', '010-2222-2222', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS002'),
+    ('student01', 'student1@test.com', '$2a$10$vYwWcwkU/lHpqmL3WERfgOi0yx/OxCkfbtGQHJjIj8IpfTdGptORi', '박학생', '2001-05-14', '010-3333-3333', 'STUDENT', 'ACTIVE', TRUE, 'STD001'),
+    ('student02', 'student2@test.com', '$2a$10$student', '최학생', '2000-10-03', '010-4444-4444', 'STUDENT', 'ACTIVE', TRUE, 'STD002'),
+    ('student03', 'student3@test.com', '$2a$10$student', '정학생', '1999-12-25', '010-5555-5555', 'STUDENT', 'ACTIVE', TRUE, 'STD003');
 
 INSERT INTO categories
 (name, sub_category, sort_order, is_active)
 VALUES
-    ('ai', 'ChatGPT 활용', 1, TRUE),
-    ('ai', '프롬프트 엔지니어링', 2, TRUE),
-    ('건강 자격증', '요가 지도사', 3, TRUE),
-    ('건강 자격증', '퍼스널트레이너', 4, TRUE),
-    ('라이프', '요리', 5, TRUE),
-    ('마케팅', 'SNS 마케팅', 6, TRUE),
-    ('외국어', '영어', 7, TRUE),
-    ('재테크', '주식', 8, TRUE),
-    ('취미,문화', '그림', 9, TRUE);
+    ('IT/정보처리', '정보처리기사', 1, TRUE),
+    ('IT/정보처리', '정보처리산업기사', 2, TRUE),
+    ('IT/정보처리', '정보보안기사', 3, TRUE),
+    ('데이터/AI', 'SQLD', 4, TRUE),
+    ('데이터/AI', 'ADsP', 5, TRUE),
+    ('데이터/AI', '빅데이터분석기사', 6, TRUE),
+    ('사무/컴퓨터활용', '컴퓨터활용능력 1급', 7, TRUE),
+    ('사무/컴퓨터활용', '워드프로세서', 8, TRUE),
+    ('회계/세무', '전산회계 1급', 9, TRUE),
+    ('회계/세무', '전산세무 2급', 10, TRUE),
+    ('산업안전', '산업안전기사', 11, TRUE),
+    ('전기/전자', '전기기사', 12, TRUE),
+    ('한국사', '한국사능력검정시험 심화', 13, TRUE);
+
+INSERT INTO user_interest_categories
+(user_id, category_id)
+VALUES
+    (4, 1),
+    (4, 4),
+    (5, 7),
+    (6, 11);
 
 INSERT INTO courses
 (title, description, price, difficulty, thumbnail, total_duration, status, rating_avg, review_count, student_count, approved_at, category_id, instructor_id)
 VALUES
-    ('Spring Boot 입문', 'Spring Boot로 REST API 서버를 만드는 입문 강의입니다.', 59000, 'BEGINNER', '/images/spring-basic.png', 10800, 'APPROVED', 4.8, 2, 3, NOW(), 1, 2),
-    ('JPA 실전 강의', 'JPA 연관관계와 쿼리 최적화를 배우는 강의입니다.', 79000, 'INTERMEDIATE', '/images/jpa.png', 14400, 'APPROVED', 4.5, 1, 2, NOW(), 1, 2),
-    ('React 기본부터 프로젝트까지', 'React 기반 프론트엔드 개발 강의입니다.', 69000, 'BEGINNER', '/images/react.png', 12600, 'APPROVED', 4.7, 1, 1, NOW(), 2, 3),
-    ('Python 데이터분석', 'Pandas와 Matplotlib을 활용한 데이터분석 강의입니다.', 49000, 'BEGINNER', '/images/python-data.png', 9000, 'APPROVED', 0.0, 0, 0, NOW(), 3, 3);
+    ('정보처리기사 필기 핵심 이론', '정보처리기사 필기 합격에 필요한 과목별 핵심 개념을 정리하는 강의입니다.', 59000, 'BEGINNER', '/images/cert-info-processing-written.png', 10800, 'APPROVED', 4.8, 2, 3, NOW(), 1, 2),
+    ('정보처리기사 실기 문제풀이', '정보처리기사 실기 빈출 유형과 서술형 문제 풀이를 배우는 강의입니다.', 79000, 'INTERMEDIATE', '/images/cert-info-processing-practical.png', 14400, 'APPROVED', 4.5, 1, 2, NOW(), 1, 2),
+    ('SQLD 2주 완성', 'SQLD 국가공인 자격 취득을 위한 데이터 모델링과 SQL 핵심 강의입니다.', 69000, 'BEGINNER', '/images/cert-sqld.png', 12600, 'APPROVED', 4.7, 1, 1, NOW(), 4, 3),
+    ('빅데이터분석기사 필기 입문', '빅데이터분석기사 필기 과목을 기초부터 정리하는 강의입니다.', 49000, 'BEGINNER', '/images/cert-bigdata.png', 9000, 'APPROVED', 0.0, 0, 0, NOW(), 6, 3);
 
 INSERT INTO course_sessions
 (session_uid, title, video_url, duration_seconds, session_order, is_preview, course_id)
 VALUES
-    (UUID(), 'Spring Boot 소개', '/videos/spring/01.mp4', 1200, 1, TRUE, 1),
-    (UUID(), '프로젝트 생성과 구조 이해', '/videos/spring/02.mp4', 1800, 2, FALSE, 1),
-    (UUID(), 'Controller와 REST API', '/videos/spring/03.mp4', 2400, 3, FALSE, 1),
+    (UUID(), '시험 안내와 과목 구조', '/videos/cert/ip-written-01.mp4', 1200, 1, TRUE, 1),
+    (UUID(), '소프트웨어 설계 핵심', '/videos/cert/ip-written-02.mp4', 1800, 2, FALSE, 1),
+    (UUID(), '데이터베이스 구축 핵심', '/videos/cert/ip-written-03.mp4', 2400, 3, FALSE, 1),
 
-    (UUID(), 'JPA 소개', '/videos/jpa/01.mp4', 1500, 1, TRUE, 2),
-    (UUID(), 'Entity 매핑', '/videos/jpa/02.mp4', 2700, 2, FALSE, 2),
+    (UUID(), '실기 시험 출제 방식', '/videos/cert/ip-practical-01.mp4', 1500, 1, TRUE, 2),
+    (UUID(), '요구사항 확인과 SQL 풀이', '/videos/cert/ip-practical-02.mp4', 2700, 2, FALSE, 2),
 
-    (UUID(), 'React 컴포넌트 이해', '/videos/react/01.mp4', 1600, 1, TRUE, 3),
-    (UUID(), 'State와 Props', '/videos/react/02.mp4', 2200, 2, FALSE, 3),
+    (UUID(), '데이터 모델링 이해', '/videos/cert/sqld-01.mp4', 1600, 1, TRUE, 3),
+    (UUID(), 'SQL 기본과 활용', '/videos/cert/sqld-02.mp4', 2200, 2, FALSE, 3),
 
-    (UUID(), 'Pandas 기본', '/videos/data/01.mp4', 1800, 1, TRUE, 4),
-    (UUID(), '데이터 시각화', '/videos/data/02.mp4', 2100, 2, FALSE, 4);
+    (UUID(), '빅데이터 분석 기획', '/videos/cert/bigdata-01.mp4', 1800, 1, TRUE, 4),
+    (UUID(), '통계 기반 데이터 시각화', '/videos/cert/bigdata-02.mp4', 2100, 2, FALSE, 4);
 
 INSERT INTO cart_items
 (price, selected, user_id, course_id)
@@ -62,10 +74,10 @@ VALUES
 INSERT INTO order_items
 (course_title, price, discount_amount, final_price, order_id, course_id)
 VALUES
-    ('Spring Boot 입문', 59000, 5000, 54000, 1, 1),
-    ('JPA 실전 강의', 79000, 5000, 74000, 1, 2),
-    ('React 기본부터 프로젝트까지', 69000, 0, 69000, 2, 3),
-    ('Spring Boot 입문', 59000, 0, 59000, 3, 1);
+    ('정보처리기사 필기 핵심 이론', 59000, 5000, 54000, 1, 1),
+    ('정보처리기사 실기 문제풀이', 79000, 5000, 74000, 1, 2),
+    ('SQLD 2주 완성', 69000, 0, 69000, 2, 3),
+    ('정보처리기사 필기 핵심 이론', 59000, 0, 59000, 3, 1);
 
 INSERT INTO payments
 (amount, status, paid_at, order_id, user_id)
@@ -97,9 +109,9 @@ VALUES
 INSERT INTO reviews
 (rating, content, status, user_id, course_id)
 VALUES
-    (5, 'Spring Boot 입문자가 듣기 좋았습니다.', 'ACTIVE', 4, 1),
-    (4, '설명이 친절하고 실습이 많아서 좋았습니다.', 'ACTIVE', 5, 1),
-    (5, 'React 기본 개념을 잡기에 좋았습니다.', 'ACTIVE', 5, 3);
+    (5, '정보처리기사 필기 입문자가 듣기 좋았습니다.', 'ACTIVE', 4, 1),
+    (4, '설명이 친절하고 기출 포인트가 많아서 좋았습니다.', 'ACTIVE', 5, 1),
+    (5, 'SQLD 기본 개념을 잡기에 좋았습니다.', 'ACTIVE', 5, 3);
 
 INSERT INTO review_replies
 (content, review_id, user_id)
@@ -110,21 +122,21 @@ VALUES
 INSERT INTO course_qna
 (title, content, status, course_id, session_id, user_id)
 VALUES
-    ('Controller와 Service 차이가 궁금합니다.', 'Controller와 Service를 왜 나누는지 잘 모르겠습니다.', 'WAITING', 1, 3, 4),
-    ('JPA Entity 수정 질문입니다.', 'Entity 필드명을 바꿨을 때 DB도 자동으로 바뀌나요?', 'ANSWERED', 2, 5, 4);
+    ('필기 3과목 공부 순서가 궁금합니다.', '데이터베이스 구축 과목은 어떤 순서로 공부하면 좋을까요?', 'WAITING', 1, 3, 4),
+    ('실기 SQL 작성 질문입니다.', 'SQL 서술형 답안을 작성할 때 감점 포인트가 궁금합니다.', 'ANSWERED', 2, 5, 4);
 
 INSERT INTO course_announcements
 (title, content, is_pinned, course_id, user_id)
 VALUES
-    ('Spring Boot 강의 자료 안내', '섹션별 실습 코드는 첨부파일에서 확인 가능합니다.', TRUE, 1, 2),
-    ('React 실습 환경 안내', 'Node.js LTS 버전을 설치해주세요.', TRUE, 3, 3);
+    ('정보처리기사 필기 자료 안내', '섹션별 요약 노트와 기출 체크리스트는 첨부파일에서 확인 가능합니다.', TRUE, 1, 2),
+    ('SQLD 실습 환경 안내', 'SQL 실습 파일과 예제 데이터는 첨부파일에서 확인해주세요.', TRUE, 3, 3);
 
 INSERT INTO coupons
 (code, name, discount_type, discount_value, min_order_amount, started_at, expired_at, is_active)
 VALUES
     ('WELCOME10000', '신규 가입 1만원 할인', 'AMOUNT', 10000, 50000, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), TRUE),
     ('SPRING20', '봄맞이 20% 할인', 'PERCENT', 20, 30000, NOW(), DATE_ADD(NOW(), INTERVAL 60 DAY), TRUE),
-    ('BACKEND5000', '백엔드 강의 5천원 할인', 'AMOUNT', 5000, 30000, NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY), TRUE);
+    ('CERT5000', '자격증 강의 5천원 할인', 'AMOUNT', 5000, 30000, NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY), TRUE);
 
 INSERT INTO coupon_usages
 (discount_amount, user_id, coupon_id, order_id)
@@ -149,8 +161,8 @@ VALUES
 INSERT INTO instructor_profiles
 (bio, career, certifications, portfolio_url, approval_status, approved_at, user_id)
 VALUES
-    ('백엔드 개발과 Spring Boot 강의를 전문으로 합니다.', '백엔드 개발 7년, 교육 3년', '정보처리기사, SQLD', 'https://portfolio.example.com/instructor1', 'APPROVED', NOW(), 2),
-    ('프론트엔드와 데이터 분석 강의를 진행합니다.', '프론트엔드 개발 5년, 데이터 분석 프로젝트 다수', 'ADsP, 빅데이터분석기사', 'https://portfolio.example.com/instructor2', 'APPROVED', NOW(), 3);
+    ('정보처리기사와 SQLD 자격증 강의를 전문으로 합니다.', '소프트웨어 개발 7년, 자격증 교육 3년', '정보처리기사, SQLD', 'https://portfolio.example.com/instructor1', 'APPROVED', NOW(), 2),
+    ('데이터 분석 자격증과 빅데이터분석기사 강의를 진행합니다.', '데이터 분석 프로젝트 5년, 자격증 교육 다수', 'ADsP, 빅데이터분석기사', 'https://portfolio.example.com/instructor2', 'APPROVED', NOW(), 3);
 
 INSERT INTO instructor_bank_accounts
 (bank_name, account_number, account_holder, is_primary, verification_status, user_id)
@@ -176,8 +188,8 @@ VALUES
 INSERT INTO notifications
 (type, title, content, link_url, is_read, user_id)
 VALUES
-    ('PAYMENT', '결제가 완료되었습니다.', 'Spring Boot 입문 외 1개 강의 결제가 완료되었습니다.', '/orders/1', FALSE, 4),
-    ('COURSE', '수강이 시작되었습니다.', 'Spring Boot 입문 강의를 바로 수강할 수 있습니다.', '/courses/1', FALSE, 4),
+    ('PAYMENT', '결제가 완료되었습니다.', '정보처리기사 필기 핵심 이론 외 1개 강의 결제가 완료되었습니다.', '/orders/1', FALSE, 4),
+    ('COURSE', '수강이 시작되었습니다.', '정보처리기사 필기 핵심 이론 강의를 바로 수강할 수 있습니다.', '/courses/1', FALSE, 4),
     ('QNA', '새 질문이 등록되었습니다.', '수강생이 강의에 질문을 남겼습니다.', '/courses/1/qna', FALSE, 2),
     ('SYSTEM', '서비스 점검 안내', '금일 새벽 2시부터 3시까지 서비스 점검이 예정되어 있습니다.', '/notices', TRUE, 5);
 
@@ -279,13 +291,14 @@ INSERT INTO course_skills
 (skill_level, skill_id, course_id)
 VALUES
     ('BASIC', 1, 1),
-    ('BASIC', 2, 1),
+    ('BASIC', 4, 1),
+    ('BASIC', 1, 2),
     ('INTERMEDIATE', 3, 2),
     ('INTERMEDIATE', 4, 2),
-    ('BASIC', 5, 3),
-    ('BASIC', 6, 3),
+    ('BASIC', 4, 3),
     ('BASIC', 7, 4),
-    ('BASIC', 8, 4);
+    ('BASIC', 8, 4),
+    ('BASIC', 9, 4);
 
 INSERT INTO ai_resume_evaluations
 (overall_score, strengths, weaknesses, suggestions, ai_result, resume_id, job_posting_id, prompt_id)
@@ -328,11 +341,11 @@ VALUES
         'COURSE',
         2,
         91.00,
-        '백엔드 공고 대비 JPA 역량 보완이 필요하여 JPA 실전 강의를 추천합니다.',
+        '정보처리기사 실기 대비 SQL과 문제풀이 역량 보완이 필요하여 실기 문제풀이 강의를 추천합니다.',
         JSON_OBJECT(
                 'reasonType', 'SKILL_GAP',
-                'missingSkill', 'JPA',
-                'recommendedCourse', 'JPA 실전 강의'
+                'missingSkill', 'SQL 서술형 문제풀이',
+                'recommendedCourse', '정보처리기사 실기 문제풀이'
         ),
         4,
         4
@@ -343,11 +356,11 @@ VALUES
         'COURSE',
         3,
         88.00,
-        '프론트엔드 공고 대비 React 프로젝트 경험 강화를 위해 추천합니다.',
+        '데이터 자격증 준비를 위해 SQL 기본기와 데이터 모델링 역량을 보완할 수 있는 SQLD 강의를 추천합니다.',
         JSON_OBJECT(
-                'reasonType', 'JOB_MATCH',
-                'targetSkill', 'React',
-                'recommendedCourse', 'React 기본부터 프로젝트까지'
+                'reasonType', 'CERTIFICATION_MATCH',
+                'targetSkill', 'SQL',
+                'recommendedCourse', 'SQLD 2주 완성'
         ),
         4,
         5
@@ -356,8 +369,8 @@ VALUES
 INSERT INTO certifications
 (name, description, level, issuing_organization, pass_rate, employment_rate, external_url, category_id)
 VALUES
-    ('정보처리기사', '소프트웨어 개발 및 정보시스템 구축 역량을 평가하는 국가기술자격입니다.', '기사', '한국산업인력공단', 55.20, 68.50, 'https://www.q-net.or.kr', 5),
-    ('SQLD', 'SQL 활용 능력과 데이터 모델링 이해도를 평가하는 자격증입니다.', '민간자격', '한국데이터산업진흥원', 45.30, 61.00, 'https://www.dataq.or.kr', 5),
+    ('정보처리기사', '소프트웨어 개발 및 정보시스템 구축 역량을 평가하는 국가기술자격입니다.', '기사', '한국산업인력공단', 55.20, 68.50, 'https://www.q-net.or.kr', 1),
+    ('SQLD', 'SQL 활용 능력과 데이터 모델링 이해도를 평가하는 국가공인 민간자격입니다.', '국가공인 민간자격', '한국데이터산업진흥원', 45.30, 61.00, 'https://www.dataq.or.kr', 4),
     ('ADsP', '데이터 분석 기획과 기본 분석 역량을 평가하는 자격증입니다.', '민간자격', '한국데이터산업진흥원', 52.70, 58.40, 'https://www.dataq.or.kr', 5);
 
 INSERT INTO external_exam_links
@@ -371,8 +384,8 @@ INSERT INTO roadmaps
 (goal_type, title, target_name, due_date, created_by_ai, status, user_id)
 VALUES
     ('CERTIFICATION', '정보처리기사 합격 로드맵', '정보처리기사', '2026-08-31', TRUE, 'ACTIVE', 4),
-    ('JOB', '백엔드 신입 취업 준비 로드맵', '백엔드 개발자', '2026-09-30', TRUE, 'ACTIVE', 4),
-    ('COURSE', 'React 기초 완주 로드맵', 'React 기본부터 프로젝트까지', '2026-06-30', FALSE, 'ACTIVE', 5);
+    ('JOB', '데이터 자격증 기반 취업 준비 로드맵', '데이터 분석가', '2026-09-30', TRUE, 'ACTIVE', 4),
+    ('COURSE', 'SQLD 2주 완성 로드맵', 'SQLD 2주 완성', '2026-06-30', FALSE, 'ACTIVE', 5);
 
 INSERT INTO roadmap_steps
 (title, description, step_order, status, course_id, roadmap_id, certification_id)
@@ -381,12 +394,12 @@ VALUES
     ('기초 이론 학습', '소프트웨어 공학, 데이터베이스, 운영체제 기초를 학습합니다.', 2, 'IN_PROGRESS', NULL, 1, 1),
     ('기출문제 풀이', '최근 5개년 기출문제를 반복 풀이합니다.', 3, 'TODO', NULL, 1, 1),
 
-    ('Spring Boot 강의 수강', '백엔드 기본기를 위해 Spring Boot 입문 강의를 수강합니다.', 1, 'DONE', 1, 2, NULL),
-    ('JPA 심화 학습', 'JPA 실전 강의를 통해 연관관계와 쿼리 최적화를 학습합니다.', 2, 'IN_PROGRESS', 2, 2, NULL),
-    ('이력서 개선', 'AI 평가 결과를 바탕으로 프로젝트 경험을 보완합니다.', 3, 'TODO', NULL, 2, NULL),
+    ('정보처리기사 필기 강의 수강', '자격증 기본기를 위해 정보처리기사 필기 핵심 이론 강의를 수강합니다.', 1, 'DONE', 1, 2, NULL),
+    ('SQLD 기본기 보완', 'SQLD 2주 완성 강의를 통해 SQL과 데이터 모델링을 학습합니다.', 2, 'IN_PROGRESS', 3, 2, NULL),
+    ('이력서 자격증 섹션 개선', 'AI 평가 결과를 바탕으로 자격증 학습 이력과 프로젝트 경험을 보완합니다.', 3, 'TODO', NULL, 2, NULL),
 
-    ('React 기본 학습', '컴포넌트, props, state를 학습합니다.', 1, 'IN_PROGRESS', 3, 3, NULL),
-    ('미니 프로젝트 구현', '간단한 강의 목록 페이지를 구현합니다.', 2, 'TODO', 3, 3, NULL);
+    ('SQLD 기본 학습', '데이터 모델링, SQL 기본, SQL 활용을 학습합니다.', 1, 'IN_PROGRESS', 3, 3, NULL),
+    ('기출 유형 풀이', 'SQLD 빈출 유형과 오답 포인트를 반복 학습합니다.', 2, 'TODO', 3, 3, NULL);
 
 INSERT INTO inquiries
 (category, title, content, status, user_id)
@@ -408,16 +421,16 @@ VALUES
 INSERT INTO bookmarks
 (timestamp_seconds, memo, user_id, session_id)
 VALUES
-    (520, 'Controller 설명 다시 보기', 4, 3),
-    (900, 'JPA Entity 매핑 중요', 4, 5),
-    (300, 'React 컴포넌트 개념 복습', 5, 6);
+    (520, '데이터베이스 구축 핵심 다시 보기', 4, 3),
+    (900, '실기 SQL 감점 포인트 중요', 4, 5),
+    (300, 'SQLD 데이터 모델링 개념 복습', 5, 6);
 
 INSERT INTO lecture_notes
 (title, content, session_id, user_id)
 VALUES
-    ('Controller 정리', 'Controller는 요청을 받고 Service에 비즈니스 로직 처리를 위임한다.', 3, 4),
-    ('JPA Entity 정리', 'Entity는 DB 테이블과 매핑되는 객체이다.', 5, 4),
-    ('React State 정리', 'State는 컴포넌트 내부에서 관리되는 동적인 데이터이다.', 7, 5);
+    ('데이터베이스 구축 정리', '데이터베이스 설계와 SQL 기본 개념은 필기와 실기 모두에서 자주 출제된다.', 3, 4),
+    ('실기 SQL 정리', 'SQL 답안은 조건 누락과 컬럼명 오류를 특히 주의해야 한다.', 5, 4),
+    ('SQLD 모델링 정리', '엔터티, 속성, 관계 개념을 구분해서 암기한다.', 7, 5);
 
 INSERT INTO reports
 (target_type, target_id, reason, status, processed_at, user_id)
@@ -428,7 +441,7 @@ VALUES
 INSERT INTO admin_logs
 (action_type, target_type, target_id, description, user_id)
 VALUES
-    ('APPROVE_COURSE', 'COURSE', 1, 'Spring Boot 입문 강의를 승인했습니다.', 1),
+    ('APPROVE_COURSE', 'COURSE', 1, '정보처리기사 필기 핵심 이론 강의를 승인했습니다.', 1),
     ('ANSWER_INQUIRY', 'INQUIRY', 1, '결제 문의에 답변했습니다.', 1),
     ('REJECT_REPORT', 'REPORT', 2, '신고 내용을 검토 후 반려했습니다.', 1);
 
@@ -444,5 +457,5 @@ INSERT INTO d_days
 (title, target_date, category, user_id)
 VALUES
     ('정보처리기사 필기시험', '2026-08-31', 'CERTIFICATION', 4),
-    ('백엔드 신입 지원 마감', '2026-09-30', 'JOB', 4),
-    ('React 강의 완강 목표', '2026-06-30', 'COURSE', 5);
+    ('데이터 분석가 지원 마감', '2026-09-30', 'JOB', 4),
+    ('SQLD 강의 완강 목표', '2026-06-30', 'COURSE', 5);
