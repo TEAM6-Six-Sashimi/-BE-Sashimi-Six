@@ -242,7 +242,7 @@ public class AuthService {
 
     private List<Long> normalizeInterestCategoryIds(List<Long> categoryIds) {
         if (categoryIds == null || categoryIds.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            return List.of();
         }
 
         if (categoryIds.stream().anyMatch(Objects::isNull)) {
