@@ -176,7 +176,7 @@ public class AuthService {
 
         refreshService.saveOrUpdate(user, tokenResponse.getRefreshToken(), refreshExpiryDate);
 
-        return tokenResponse;
+        return tokenResponse.withName(user.getName());
     }
 
     public TokenResponseDto reissue(String refreshTokenValue) {
@@ -198,7 +198,7 @@ public class AuthService {
 
         refreshService.saveOrUpdate(user, tokenResponse.getRefreshToken(), refreshExpiryDate);
 
-        return tokenResponse;
+        return tokenResponse.withName(user.getName());
     }
 
     public void logout(String refreshTokenValue) {
