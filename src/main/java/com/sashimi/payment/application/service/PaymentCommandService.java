@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -75,6 +76,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
         return pay(command.userId(), courses, true);
     }
+
 
     @Override
     public PaymentResult payCourse(PayCourseCommand command) {
@@ -146,7 +148,8 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     }
 
     private String createOrderNo() {
-        return "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        return "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"))
+                + "-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
     private record PaymentCourse(Long courseId, String title, BigDecimal price) {

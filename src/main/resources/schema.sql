@@ -168,7 +168,8 @@ CREATE TABLE payments (
                           order_id BIGINT NOT NULL,
                           user_id BIGINT NOT NULL,
                           CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders(order_id),
-                          CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+                          CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(user_id),
+                          CONSTRAINT uq_payment_order UNIQUE (order_id)
 );
 
 -- =========================

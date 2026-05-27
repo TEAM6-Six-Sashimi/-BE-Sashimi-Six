@@ -42,7 +42,7 @@ public class CreditCommandService implements CreditCommandUseCase {
 
     @Override
     public CreditBalanceResult chargeCredit(ChargeCreditCommand command) {
-        Credit credit = creditRepository.findByUserId(command.userId())
+        Credit credit = creditRepository.findByUserIdForUpdate(command.userId())
                 .orElseGet(() -> Credit.create(command.userId(), BigDecimal.ZERO));
 
         credit.add(command.amount());
@@ -54,7 +54,7 @@ public class CreditCommandService implements CreditCommandUseCase {
 
     @Override
     public CreditBalanceResult useCredit(UseCreditCommand command) {
-        Credit credit = creditRepository.findByUserId(command.userId())
+        Credit credit = creditRepository.findByUserIdForUpdate(command.userId())
                 .orElseGet(() -> Credit.create(command.userId(), BigDecimal.ZERO));
 
         credit.use(command.amount());
@@ -77,7 +77,7 @@ public class CreditCommandService implements CreditCommandUseCase {
     }
 
     private void addCredit(Long userId, BigDecimal amount) {
-        Credit credit = creditRepository.findByUserId(userId)
+        Credit credit = creditRepository.findByUserIdForUpdate(userId)
                 .orElseGet(() -> Credit.create(userId, BigDecimal.ZERO));
 
         credit.add(amount);
