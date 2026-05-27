@@ -1,7 +1,7 @@
 package com.sashimi.payment.application.service;
 
 import com.sashimi.cart.application.port.CourseInfo;
-import com.sashimi.cart.application.port.EnrollmentPort;
+import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
 import com.sashimi.credit.application.command.UseCreditCommand;

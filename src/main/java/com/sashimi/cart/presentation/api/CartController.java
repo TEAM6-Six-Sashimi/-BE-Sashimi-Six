@@ -10,14 +10,24 @@ import com.sashimi.cart.presentation.api.request.AddCartItemRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemSelectionRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemsSelectionRequest;
 import com.sashimi.cart.presentation.api.response.CartResponse;
-import com.sashimi.global.exception.BusinessException;
-import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.exception.ErrorResponse;
+import com.sashimi.security.principal.CustomUserPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import com.sashimi.security.principal.CustomUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Cart", description = "장바구니 API")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/cart")
 public class CartController {
@@ -33,18 +43,38 @@ public class CartController {
         this.cartQueryUseCase = cartQueryUseCase;
     }
 
+    @Operation(summary = "장바구니 조회", description = "로그인한 사용자의 장바구니 목록과 선택된 항목의 총 금액을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "장바구니 조회 성공",
+                    content = @Content(schema = @Schema(implementation = CartResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     public ResponseEntity<CartResponse> getCart(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         CartQueryUseCase.CartView cartView = cartQueryUseCase.getCart(principal.getId());
         return ResponseEntity.ok(CartResponse.from(cartView));
     }
 
+    @Operation(summary = "장바구니 항목 추가", description = "강의를 장바구니에 추가합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "장바구니 추가 성공",
+                    content = @Content(schema = @Schema(implementation = Long.class))),
+            @ApiResponse(responseCode = "400", description = "구매할 수 없는 강의 또는 잘못된 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "이미 장바구니에 있거나 이미 수강 중인 강의",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping
     public ResponseEntity<Long> addCartItem(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestBody AddCartItemRequest request
+            @RequestBody @Valid AddCartItemRequest request
     ) {
         Long cartItemId = cartCommandUseCase.addCartItem(
                 new AddCartItemCommand(principal.getId(), request.courseId())
@@ -53,9 +83,19 @@ public class CartController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cartItemId);
     }
 
+    @Operation(summary = "장바구니 항목 삭제", description = "장바구니 항목 ID로 특정 항목을 삭제합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "장바구니 항목 삭제 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "장바구니 항목을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @DeleteMapping("/{cartItemId}")
     public ResponseEntity<Void> deleteCartItem(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserPrincipal principal,
+            @Parameter(description = "삭제할 장바구니 항목 ID", example = "1")
             @PathVariable Long cartItemId
     ) {
         cartCommandUseCase.deleteCartItem(
@@ -65,16 +105,24 @@ public class CartController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "장바구니 단일 항목 선택 상태 변경", description = "장바구니 항목 하나의 선택 여부를 변경합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "선택 상태 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 선택 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "장바구니 항목을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/{cartItemId}/selected")
     public ResponseEntity<Void> updateCartItemSelection(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserPrincipal principal,
+            @Parameter(description = "선택 상태를 변경할 장바구니 항목 ID", example = "1")
             @PathVariable Long cartItemId,
-            @RequestBody UpdateCartItemSelectionRequest request
+            @RequestBody @Valid UpdateCartItemSelectionRequest request
     ) {
-        if (request.selected() == null) {
-            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
-        }
-
         cartCommandUseCase.updateCartItemSelection(
                 new UpdateCartItemSelectionCommand(principal.getId(), cartItemId, request.selected())
         );
@@ -82,15 +130,22 @@ public class CartController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "장바구니 여러 항목 선택 상태 변경", description = "장바구니 항목 여러 개의 선택 여부를 한 번에 변경합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "선택 상태 변경 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 선택 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "장바구니 항목을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/selected")
     public ResponseEntity<Void> updateCartItemsSelection(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestBody UpdateCartItemsSelectionRequest request
+            @RequestBody @Valid UpdateCartItemsSelectionRequest request
     ) {
-        if (request.selected() == null) {
-            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
-        }
-
         cartCommandUseCase.updateCartItemsSelection(
                 new UpdateCartItemsSelectionCommand(principal.getId(), request.cartItemIds(), request.selected())
         );
@@ -98,8 +153,18 @@ public class CartController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "장바구니 결제 전 조회", description = "결제 대상으로 선택된 장바구니 항목과 총 금액을 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "결제 대상 조회 성공",
+                    content = @Content(schema = @Schema(implementation = CartResponse.class))),
+            @ApiResponse(responseCode = "400", description = "선택된 장바구니 항목이 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/checkout")
     public ResponseEntity<CartResponse> checkout(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         CartQueryUseCase.CartView cartView =
@@ -107,6 +172,4 @@ public class CartController {
 
         return ResponseEntity.ok(CartResponse.from(cartView));
     }
-
-
 }

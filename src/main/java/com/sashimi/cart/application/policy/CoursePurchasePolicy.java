@@ -2,7 +2,7 @@ package com.sashimi.cart.application.policy;
 
 import com.sashimi.cart.application.port.CourseInfo;
 import com.sashimi.cart.application.port.CoursePort;
-import com.sashimi.cart.application.port.EnrollmentPort;
+import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
