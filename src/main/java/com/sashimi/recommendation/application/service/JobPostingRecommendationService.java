@@ -6,6 +6,7 @@ import com.sashimi.ai.domain.repository.AiPromptRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.command.CreateJobPostingRecommendationCommand;
+import com.sashimi.recommendation.application.event.JobPostingRecommendationAnalyzedEvent;
 import com.sashimi.recommendation.application.policy.JobPostingRecommendationPolicy;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzeResult;
@@ -16,6 +17,7 @@ import com.sashimi.recommendation.domain.model.CourseRecommendation;
 import com.sashimi.recommendation.domain.model.JobPostingRecommendation;
 import com.sashimi.recommendation.domain.model.RequiredSkillRecommendation;
 import com.sashimi.recommendation.domain.repository.JobPostingRecommendationRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,17 +32,20 @@ public class JobPostingRecommendationService implements
     private final JobPostingRecommendationAnalyzePort analyzePort;
     private final JobPostingRecommendationPolicy recommendationPolicy;
     private final AiPromptRepository aiPromptRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public JobPostingRecommendationService(
             JobPostingRecommendationRepository recommendationRepository,
             JobPostingRecommendationAnalyzePort analyzePort,
             JobPostingRecommendationPolicy recommendationPolicy,
-            AiPromptRepository aiPromptRepository
+            AiPromptRepository aiPromptRepository,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.recommendationRepository = recommendationRepository;
         this.analyzePort = analyzePort;
         this.recommendationPolicy = recommendationPolicy;
         this.aiPromptRepository = aiPromptRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -71,7 +76,19 @@ public class JobPostingRecommendationService implements
                 analyzeResult.certificates()
         );
 
-        return recommendationRepository.save(analyzedRecommendation);
+        JobPostingRecommendation savedAnalyzedRecommendation = recommendationRepository.save(analyzedRecommendation);
+
+        eventPublisher.publishEvent(
+                new JobPostingRecommendationAnalyzedEvent(
+                        savedAnalyzedRecommendation.userId(),
+                        savedAnalyzedRecommendation.recommendationId(),
+                        savedAnalyzedRecommendation.jobTitle(),
+                        savedAnalyzedRecommendation.matchRate(),
+                        savedAnalyzedRecommendation.createdAt()
+                )
+        );
+
+        return savedAnalyzedRecommendation;
     }
 
     @Override
