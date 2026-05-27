@@ -16,7 +16,7 @@ import java.math.BigDecimal;
  * Controller, Service, Repository 흐름을 먼저 검증할 수 있다.
  */
 @Component
-@Profile({"local", "gemini"})
+@Profile({"local"})
 public class StubResumeAiReviewAdapter implements ResumeAiReviewPort {
 
     @Override

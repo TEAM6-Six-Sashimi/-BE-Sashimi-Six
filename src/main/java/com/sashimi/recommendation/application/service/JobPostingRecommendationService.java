@@ -1,6 +1,9 @@
 package com.sashimi.recommendation.application.service;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.command.CreateJobPostingRecommendationCommand;
+import com.sashimi.recommendation.application.policy.JobPostingRecommendationPolicy;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzeResult;
 import com.sashimi.recommendation.application.usecase.JobPostingRecommendationCommandUseCase;
@@ -22,21 +25,22 @@ public class JobPostingRecommendationService implements
 
     private final JobPostingRecommendationRepository recommendationRepository;
     private final JobPostingRecommendationAnalyzePort analyzePort;
+    private final JobPostingRecommendationPolicy recommendationPolicy;
 
     public JobPostingRecommendationService(
             JobPostingRecommendationRepository recommendationRepository,
-            JobPostingRecommendationAnalyzePort analyzePort
+            JobPostingRecommendationAnalyzePort analyzePort,
+            JobPostingRecommendationPolicy recommendationPolicy
     ) {
         this.recommendationRepository = recommendationRepository;
         this.analyzePort = analyzePort;
+        this.recommendationPolicy = recommendationPolicy;
     }
 
     @Override
     @Transactional
     public JobPostingRecommendation create(CreateJobPostingRecommendationCommand command) {
-
-        // TODO: ResumeRepository 연동 후 실제 이력서 보유 여부를 조회하도록 변경한다.
-        boolean hasResume = true;
+        boolean hasResume = recommendationPolicy.isResumeBased(command.userId());
 
         JobPostingRecommendation recommendation = JobPostingRecommendation.create(
                 command.userId(),
@@ -65,7 +69,7 @@ public class JobPostingRecommendationService implements
     @Transactional(readOnly = true)
     public JobPostingRecommendation getLatest(Long userId) {
         return recommendationRepository.findLatestByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Job posting recommendation not found."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.JOB_POSTING_RECOMMENDATION_NOT_FOUND));
     }
 
     @Override
