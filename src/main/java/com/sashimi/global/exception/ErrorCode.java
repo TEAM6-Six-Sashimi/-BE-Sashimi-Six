@@ -64,7 +64,18 @@ public enum ErrorCode {
     APPLICATION_NOT_FOUND(404,"MEMBER_003", "신청을 찾을 수 없습니다."),
     INVALID_APPLICATION_STATUS(400, "MEMBER_004", "처리할 수 없는 신청 상태입니다."),
     CERTIFICATE_OCR_FAILED(400, "MEMBER_005", "자격증 OCR 검증에 실패했습니다."),
-    CERTIFICATE_NOT_FOUND(404, "MEMBER_006", "자격증을 찾을 수 없습니다.");
+    CERTIFICATE_NOT_FOUND(404, "MEMBER_006", "자격증을 찾을 수 없습니다."),
+
+    AI_API_KEY_MISSING(500, "AI_001", "AI API Key가 설정되지 않았습니다."),
+    AI_API_KEY_NOT_RESOLVED(500, "AI_002", "AI API Key 환경변수가 정상적으로 치환되지 않았습니다."),
+    AI_API_CALL_FAILED(502, "AI_003", "AI API 호출에 실패했습니다."),
+    AI_RESPONSE_EMPTY(502, "AI_004", "AI 응답이 비어 있습니다."),
+    AI_RESPONSE_PARSE_FAILED(502, "AI_005", "AI 응답 결과를 파싱할 수 없습니다."),
+    AI_PROMPT_NOT_FOUND(404, "AI_006", "활성화된 AI 프롬프트를 찾을 수 없습니다."),
+
+    RESUME_NOT_FOUND(404, "RESUME_404", "이력서를 찾을 수 없습니다."),
+
+    JOB_POSTING_RECOMMENDATION_NOT_FOUND(404, "RECOMMENDATION_404", "채용공고 추천 결과를 찾을 수 없습니다.");
 
 
     private final int status;
