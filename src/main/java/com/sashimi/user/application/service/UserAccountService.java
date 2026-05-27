@@ -6,16 +6,20 @@ import com.sashimi.token.service.RefreshService;
 import com.sashimi.user.application.command.ChangePasswordCommand;
 import com.sashimi.user.application.command.UpdateMyInfoCommand;
 import com.sashimi.user.application.command.WithdrawUserCommand;
+import com.sashimi.user.application.event.UserPasswordChangedEvent;
 import com.sashimi.user.presentation.api.response.WithdrawUserResult;
 import com.sashimi.user.application.usecase.UserCommandUseCase;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import com.sashimi.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.sashimi.user.presentation.api.response.ChangePasswordResult;
+
+import java.time.LocalDateTime;
 
 
 @Service
@@ -26,6 +30,7 @@ public class UserAccountService implements UserCommandUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshService refreshService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Override
@@ -54,9 +59,15 @@ public class UserAccountService implements UserCommandUseCase {
         }
 
         user.changePassword(passwordEncoder.encode(command.getNewPassword()));
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        refreshService.deleteByUser(user);
+        eventPublisher.publishEvent(
+                new UserPasswordChangedEvent(
+                        savedUser.getId(),
+                        savedUser.getEmail(),
+                        LocalDateTime.now()
+                )
+        );
 
         return new ChangePasswordResult(true, true);
     }

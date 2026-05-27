@@ -1,7 +1,7 @@
-package com.sashimi.verification.application.event;
+package com.sashimi.token.event;
 
-import com.sashimi.user.application.event.UserWithdrawnEvent;
-import com.sashimi.verification.domain.repository.EmailVerificationRepository;
+import com.sashimi.token.repository.RefreshTokenRepository;
+import com.sashimi.user.application.event.UserPasswordChangedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,14 +13,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class UserWithdrawalEmailVerificationCleanupHandler {
+public class UserPasswordChangedTokenCleanupHandler {
 
-    private final EmailVerificationRepository emailVerificationRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void handle(UserWithdrawnEvent event) {
-        emailVerificationRepository.deleteAllByUserId(event.userId());
-        log.info("Email verification records cleaned up after user withdrawal. userId={}", event.userId());
+    public void handle(UserPasswordChangedEvent event) {
+        refreshTokenRepository.deleteByUserId(event.userId());
+        log.info("Refresh token invalidated after password change. userId={}", event.userId());
     }
 }
