@@ -122,6 +122,7 @@ class SignupEligibilityPolicyTest {
                 "referrer1",
                 "encodedPassword",
                 "referrer@example.com",
+                "010-9999-9999",
                 LocalDate.of(1999, 1, 1),
                 Role.STUDENT,
                 UserStatus.ACTIVE,
