@@ -7,6 +7,4 @@ import java.util.List;
 public interface ResumeQueryUseCase {
 
     List<Resume> getMyResumes(Long userId);
-
-    Resume getResume(Long userId, Long resumeId);
 }

@@ -96,8 +96,7 @@ class ResumeCommandServiceTest {
     @Test
     void reviewResume() {
         // given
-        // 사용자가 작성한 이력서
-        // 사용자가 소유한 이력서를 조회했다고 가정
+        // 사용자가 작성한 이력서 조회
         Resume resume = new Resume(
                 1L,
                 1L,
@@ -106,7 +105,6 @@ class ResumeCommandServiceTest {
         );
 
         // 이력서 평가에 사용할 활성 AI 프롬프트
-        // DB 에서 조회된 활성 AI 프롬프트 준비
         AiPrompt prompt = new AiPrompt(
                 1L,
                 "Resume Review Prompt",
@@ -117,7 +115,6 @@ class ResumeCommandServiceTest {
         );
 
         // AI Adapter가 반환했다고 가정하는 평가 결과
-        // 실제 AI 호출 결과 대신 Port가 반환할 평가 결과 준비
         ResumeAiReviewResult aiResult = new ResumeAiReviewResult(
                 BigDecimal.valueOf(82),
                 "Strong Java/Spring experience",
@@ -127,7 +124,6 @@ class ResumeCommandServiceTest {
         );
 
         // Repository에 저장된 후 ID가 부여된 평가 결과
-        // 평가 결과 저장 후 ID가 부여된 도메인 객체 준비
         ResumeEvaluation savedEvaluation = ResumeEvaluation.evaluated(
                 aiResult.overallScore(),
                 aiResult.strengths(),
@@ -173,7 +169,6 @@ class ResumeCommandServiceTest {
     void reviewResumeThrowsWhenResumeNotFound() {
         // given
         // 요청한 사용자의 이력서를 찾지 못하는 상황
-        // 요청한 사용자의 이력서를 찾지 못한 상황
         when(resumeRepository.findByIdAndUserId(999L, 1L))
                 .thenReturn(Optional.empty());
 
@@ -197,7 +192,6 @@ class ResumeCommandServiceTest {
     void reviewResumeThrowsWhenActivePromptNotFound() {
         // given
         // 이력서는 있지만, 사용할 수 있는 활성 AI 프롬프트가 없는 상황
-        // 이력서는 존재하지만, 사용할 활성 AI 프롬프트가 없는 상황
         Resume resume = new Resume(
                 1L,
                 1L,

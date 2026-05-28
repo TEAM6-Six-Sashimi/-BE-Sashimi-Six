@@ -115,11 +115,11 @@ public class ResumeController {
     }
 
     @Operation(
-            summary = "내 이력서 목록 조회",
-            description = "로그인한 사용자가 작성한 이력서 목록을 조회합니다."
+            summary = "내 이력서 조회",
+            description = "로그인한 사용자가 작성한 이력서를 조회합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "이력서 목록 조회 성공",
+            @ApiResponse(responseCode = "200", description = "이력서 조회 성공",
                     content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResumeResponse.class)))),
             @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -132,28 +132,6 @@ public class ResumeController {
         return resumeQueryUseCase.getMyResumes(principal.getId()).stream()
                 .map(ResumeResponse::from)
                 .toList();
-    }
-
-    @Operation(
-            summary = "이력서 상세 조회",
-            description = "로그인한 사용자가 작성한 특정 이력서의 상세 내용을 조회합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "이력서 상세 조회 성공",
-                    content = @Content(schema = @Schema(implementation = ResumeResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "이력서를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @GetMapping("/{resumeId}")
-    public ResumeResponse getResume(
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @PathVariable Long resumeId
-    ) {
-        Resume resume = resumeQueryUseCase.getResume(principal.getId(), resumeId);
-        return ResumeResponse.from(resume);
     }
 
     @Operation(

@@ -24,11 +24,4 @@ public class ResumeQueryService implements ResumeQueryUseCase {
     public List<Resume> getMyResumes(Long userId) {
         return resumeRepository.findAllByUserId(userId);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Resume getResume(Long userId, Long resumeId) {
-        return resumeRepository.findByIdAndUserId(resumeId, userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
-    }
 }
