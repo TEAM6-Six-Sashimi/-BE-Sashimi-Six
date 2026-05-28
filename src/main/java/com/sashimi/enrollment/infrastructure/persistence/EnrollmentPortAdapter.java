@@ -6,6 +6,7 @@ import com.sashimi.enrollment.domain.model.EnrollmentType;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class EnrollmentPortAdapter implements EnrollmentPort {
@@ -73,7 +75,13 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
                     courseId,
                     userId
             );
+
+            log.info("수강 등록 완료 - userId={}, courseId={}, orderItemId={}",
+                    userId, courseId, orderItemId);
+
         } catch (DataIntegrityViolationException e) {
+            log.warn("수강 등록 중복 요청 - userId={}, courseId={}, orderItemId={}",
+                    userId, courseId, orderItemId);
             throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
         }
     }

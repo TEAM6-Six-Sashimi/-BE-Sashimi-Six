@@ -56,6 +56,7 @@ CREATE TABLE categories (
                             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+
 -- =========================
 -- 3. COURSES
 -- =========================

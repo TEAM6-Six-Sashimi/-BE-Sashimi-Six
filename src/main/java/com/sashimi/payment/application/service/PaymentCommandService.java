@@ -18,6 +18,7 @@ import com.sashimi.payment.domain.model.Payment;
 import com.sashimi.payment.domain.repository.OrderItemRepository;
 import com.sashimi.payment.domain.repository.OrderRepository;
 import com.sashimi.payment.domain.repository.PaymentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @Transactional
 public class PaymentCommandService implements PaymentCommandUseCase {
@@ -59,6 +61,8 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
     @Override
     public PaymentResult checkoutCart(CheckoutCartCommand command) {
+        log.info("장바구니 결제 요청 - userId={}", command.userId());
+
         List<CartItem> cartItems = cartItemRepository.findAllSelectedByUserId(command.userId());
 
         if (cartItems.isEmpty()) {
@@ -85,6 +89,9 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
     @Override
     public PaymentResult payCourse(PayCourseCommand command) {
+        log.info("단일 강의 결제 요청 - userId={}, courseId={}",
+                command.userId(), command.courseId());
+
         CourseInfo courseInfo = coursePurchasePolicy.validatePurchasable(
                 command.userId(),
                 command.courseId()
@@ -113,6 +120,9 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
         Order order = orderRepository.save(Order.paid(createOrderNo(), totalAmount, userId));
 
+        log.info("주문 생성 완료 - userId={}, orderId={}, orderNo={}, totalAmount={}",
+                userId, order.getId(), order.getOrderNo(), totalAmount);
+
         List<OrderItem> orderItems = courses.stream()
                 .map(course -> orderItemRepository.save(
                         OrderItem.create(course.title(), course.price(), order.getId(), course.courseId())
@@ -122,6 +132,9 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         Payment payment = paymentRepository.save(Payment.paid(totalAmount, order.getId(), userId));
 
         completePayment(userId, payment, orderItems, source);
+
+        log.info("결제 완료 처리 완료 - userId={}, orderId={}, paymentId={}, amount={}, courseCount={}",
+                userId, order.getId(), payment.getId(), payment.getAmount(), orderItems.size());
 
         return new PaymentResult(
                 order.getId(),
