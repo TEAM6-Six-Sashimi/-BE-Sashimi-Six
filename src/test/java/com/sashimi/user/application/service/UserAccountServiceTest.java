@@ -143,6 +143,7 @@ class UserAccountServiceTest {
                 "testuser",
                 "encodedCurrentPassword",
                 "test@example.com",
+                "010-9999-9999",
                 LocalDate.of(2000, 1, 1),
                 Role.STUDENT,
                 UserStatus.ACTIVE,
