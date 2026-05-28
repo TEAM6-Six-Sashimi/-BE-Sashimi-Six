@@ -1,6 +1,7 @@
 package com.sashimi.course.application.service;
 
 import com.sashimi.course.application.command.*;
+import com.sashimi.course.application.port.CategoryPort;
 import com.sashimi.course.application.usecase.CourseCommandUseCase;
 import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.model.CourseSession;
@@ -17,20 +18,24 @@ import java.util.List;
 public class CourseCommandService implements CourseCommandUseCase {
 
     private final CourseRepository courseRepository;
+    private final CategoryPort categoryPort;
 
-    public CourseCommandService(CourseRepository courseRepository) {
+    public CourseCommandService(CourseRepository courseRepository, CategoryPort categoryPort) {
         this.courseRepository = courseRepository;
+        this.categoryPort = categoryPort;
     }
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
+        Long categoryId = categoryPort.getCategoryIdBySubCategoryName(command.subCategoryName());
+
         List<CourseSession> sessions = command.sessions().stream()
                 .map(s -> CourseSession.create(s.title(), s.videoUrl(), s.durationSeconds(),
                         s.sessionOrder(), s.preview(), s.attachmentName(),
                         s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
                 .toList();
 
-        Course course = Course.create(command.instructorId(), command.categoryId(), command.title(),
+        Course course = Course.create(command.instructorId(), categoryId, command.title(),
                 command.description(), command.price(), command.difficulty(), command.thumbnail(),
                 command.initialStatus(), sessions);
 
