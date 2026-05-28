@@ -3,7 +3,8 @@ package com.sashimi.member.application.command;
 public record ApplyInstructorCommand(
         Long userId,
         String bio,
-        String career,
-        String portfolioUrl
+        String portfolioUrl,
+        byte[] fileBytes,
+        String fileName
 ) {
 }

@@ -243,10 +243,10 @@ VALUES
 
 -- 더미 데이터
 INSERT INTO instructor_profiles
-(bio, career, certifications, portfolio_url, approval_status, approved_at, user_id)
+(bio, portfolio_url, certification_name, issued_by, approval_status, approved_at, user_id)
 VALUES
-    ('정보처리기사와 SQLD 자격증 강의를 전문으로 합니다.', '소프트웨어 개발 7년, 자격증 교육 3년', '정보처리기사, SQLD', 'https://portfolio.example.com/instructor1', 'APPROVED', NOW(), 2),
-    ('데이터 분석 자격증과 빅데이터분석기사 강의를 진행합니다.', '데이터 분석 프로젝트 5년, 자격증 교육 다수', 'ADsP, 빅데이터분석기사', 'https://portfolio.example.com/instructor2', 'APPROVED', NOW(), 3);
+    ('정보처리기사와 SQLD 자격증 강의를 전문으로 합니다.', 'https://portfolio.example.com/instructor1', '정보처리기사', '한국산업인력공단', 'APPROVED', NOW(), 2),
+    ('데이터 분석 자격증과 빅데이터분석기사 강의를 진행합니다.', 'https://portfolio.example.com/instructor2', 'ADsP', '한국데이터산업진흥원', 'APPROVED', NOW(), 3);
 
 INSERT INTO instructor_bank_accounts
 (bank_name, account_number, account_holder, is_primary, verification_status, user_id)
