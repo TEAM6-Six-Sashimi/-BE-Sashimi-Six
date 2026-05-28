@@ -2,6 +2,7 @@ package com.sashimi.auth.service;
 
 import com.sashimi.auth.application.policy.SignupEligibility;
 import com.sashimi.auth.application.policy.SignupEligibilityPolicy;
+import com.sashimi.security.blacklist.TokenBlacklistService;
 import com.sashimi.auth.dto.LoginRequestDto;
 import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
@@ -63,6 +64,7 @@ public class AuthService {
     private final ApplicationEventPublisher eventPublisher;
     private final SignupEligibilityPolicy signupEligibilityPolicy;
     private final CategoryRepository categoryRepository;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public UserResponseDto register(SignupRequestDto request) {
         SignupEligibility eligibility = signupEligibilityPolicy.validate(request);
@@ -202,13 +204,20 @@ public class AuthService {
         return tokenResponse.withName(user.getName());
     }
 
-    public void logout(String refreshTokenValue) {
+    public void logout(String accessToken, String refreshTokenValue) {
         RefreshToken refreshToken = refreshService.findValidRefreshToken(refreshTokenValue);
 
         User user = userRepository.findById(refreshToken.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         refreshService.deleteByUser(user);
+
+        if (accessToken != null) {
+            long remainingMillis = jwtTokenProvider.getRemainingExpiry(accessToken);
+            if (remainingMillis > 0) {
+                tokenBlacklistService.blacklist(accessToken, remainingMillis);
+            }
+        }
     }
 
     @Transactional(readOnly = true)

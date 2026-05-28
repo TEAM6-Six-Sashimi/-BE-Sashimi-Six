@@ -24,6 +24,11 @@ spring:
   profiles:
     active: gemini
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
 ## key 확인 후 수정 예정
 gemini:
   api-key: ${GEMINI_API_KEY:}
@@ -38,8 +43,8 @@ jwt:
 
 clova:
   ocr:
-    secret-key: ${CLOVA_OCR_SECRET_KEY}
-    invoke-url: ${CLOVA_OCR_INVOKE_URL}
+    secret-key: ${CLOVA_OCR_SECRET_KEY:}
+    invoke-url: ${CLOVA_OCR_INVOKE_URL:}
 
 ---
 spring:
