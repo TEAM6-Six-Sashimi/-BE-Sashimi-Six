@@ -94,7 +94,6 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
         Resume resume = Resume.create(
                 command.userId(),
                 command.title(),
-                command.templateType(),
                 command.content(),
                 command.defaultResume()
         );
@@ -110,7 +109,6 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
 
         Resume updatedResume = resume.update(
                 command.title(),
-                command.templateType(),
                 command.content(),
                 command.defaultResume()
         );
@@ -122,7 +120,7 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
     @Transactional
     public void delete(DeleteResumeCommand command) {
         Resume resume = resumeRepository.findByIdAndUserId(command.resumeId(), command.userId())
-                .orElseThrow(() -> new IllegalArgumentException("Resume not found."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
 
         resumeRepository.delete(resume);
     }
