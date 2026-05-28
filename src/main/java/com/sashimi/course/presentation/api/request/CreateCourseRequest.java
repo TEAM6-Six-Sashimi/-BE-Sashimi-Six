@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record CreateCourseRequest(
-        Long categoryId,
+        String subCategoryName,
         String title,
         String description,
         BigDecimal price,

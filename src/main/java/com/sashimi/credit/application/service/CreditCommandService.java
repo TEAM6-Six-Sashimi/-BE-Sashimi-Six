@@ -9,12 +9,14 @@ import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.credit.domain.model.Credit;
 import com.sashimi.credit.domain.repository.CreditRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -57,9 +59,12 @@ public class CreditCommandService implements CreditCommandUseCase {
 
         credit.use(command.amount());
 
-        return new CreditBalanceResult(
-                creditRepository.save(credit).getBalance()
-        );
+        Credit savedCredit = creditRepository.save(credit);
+
+        log.info("크레딧 사용 완료 - userId={}, usedAmount={}, balance={}",
+                command.userId(), command.amount(), savedCredit.getBalance());
+
+        return new CreditBalanceResult(savedCredit.getBalance());
     }
 
     private void createInitialCredit(Long userId, BigDecimal initialBalance) {

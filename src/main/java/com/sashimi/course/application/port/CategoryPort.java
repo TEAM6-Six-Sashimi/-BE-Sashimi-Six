@@ -4,4 +4,5 @@ import java.util.List;
 
 public interface CategoryPort {
     List<Long> getCategoryIdsByName(String categoryName);
+    Long getCategoryIdBySubCategoryName(String subCategoryName);
 }
