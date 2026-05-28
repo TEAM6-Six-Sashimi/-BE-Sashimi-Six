@@ -10,6 +10,7 @@ import com.sashimi.resume.application.command.CreateResumeCommand;
 import com.sashimi.resume.application.command.DeleteResumeCommand;
 import com.sashimi.resume.application.command.ReviewResumeCommand;
 import com.sashimi.resume.application.command.UpdateResumeCommand;
+import com.sashimi.resume.application.event.ResumeEvaluatedEvent;
 import com.sashimi.resume.application.port.ResumeAiReviewPort;
 import com.sashimi.resume.application.port.ResumeAiReviewResult;
 import com.sashimi.resume.application.usecase.ResumeCommandUseCase;
@@ -18,6 +19,7 @@ import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.model.ResumeEvaluation;
 import com.sashimi.resume.domain.repository.ResumeEvaluationRepository;
 import com.sashimi.resume.domain.repository.ResumeRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,17 +30,20 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
     private final ResumeEvaluationRepository resumeEvaluationRepository;
     private final AiPromptRepository aiPromptRepository;
     private final ResumeAiReviewPort resumeAiReviewPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ResumeCommandService(
             ResumeRepository resumeRepository,
             ResumeEvaluationRepository resumeEvaluationRepository,
             AiPromptRepository aiPromptRepository,
-            ResumeAiReviewPort resumeAiReviewPort
+            ResumeAiReviewPort resumeAiReviewPort,
+            ApplicationEventPublisher eventPublisher
     ) {
         this.resumeRepository = resumeRepository;
         this.resumeEvaluationRepository = resumeEvaluationRepository;
         this.aiPromptRepository = aiPromptRepository;
         this.resumeAiReviewPort = resumeAiReviewPort;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -67,8 +72,20 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
                 prompt.promptId()
         );
 
-        // 5. 평가 결과를 AI_RESUME_EVALUATIONS 테이블에 저장한다.
-        return resumeEvaluationRepository.save(evaluation);
+        ResumeEvaluation savedEvaluation = resumeEvaluationRepository.save(evaluation);
+
+        eventPublisher.publishEvent(
+                new ResumeEvaluatedEvent(
+                        command.userId(),
+                        resume.resumeId(),
+                        savedEvaluation.evaluationId(),
+                        command.jobPostingId(),
+                        savedEvaluation.overallScore(),
+                        savedEvaluation.evaluationAt()
+                )
+        );
+
+        return savedEvaluation;
     }
 
     @Override
