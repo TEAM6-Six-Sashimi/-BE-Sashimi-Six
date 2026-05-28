@@ -3,6 +3,8 @@ package com.sashimi.ai.infrastructure.persistence;
 import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.ai.domain.model.AiPromptType;
 import com.sashimi.ai.domain.repository.AiPromptRepository;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
@@ -31,7 +33,7 @@ public class AiPromptRepositoryAdapter implements AiPromptRepository {
             case RESUME_GENERATE -> "RESUME_GENERATION";
             case RESUME_REVIEW -> "RESUME_EVALUATION";
             case JOB_POSTING_ANALYSIS -> "JOB_ANALYSIS";
-            default -> throw new IllegalArgumentException("지원하지 않는 AI 프롬프트 타입입니다.");
+            default -> throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         };
     }
 }

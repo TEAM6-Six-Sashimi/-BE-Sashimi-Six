@@ -56,4 +56,11 @@ public class SignupRequestDto {
     public boolean isPasswordMatched() {
         return password != null && password.equals(passwordConfirm);
     }
+
+    @NotBlank(message = "전화번호는 필수입니다.")
+    @Pattern(
+            regexp = "^010-\\d{4}-\\d{4}$",
+            message = "전화번호 형식은 010-0000-0000이어야 합니다."
+    )
+    private String phone;
 }

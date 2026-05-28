@@ -438,7 +438,6 @@ CREATE TABLE ai_prompts (
 CREATE TABLE resumes (
                          resume_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                          title VARCHAR(255) NOT NULL,
-                         template_type VARCHAR(50),
                          content JSON,
                          is_default BOOLEAN NOT NULL DEFAULT FALSE,
                          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -519,7 +518,7 @@ CREATE TABLE ai_resume_evaluations (
                                        ai_result JSON,
                                        evaluated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                        resume_id BIGINT NOT NULL,
-                                       job_posting_id BIGINT NOT NULL,
+                                       job_posting_id BIGINT NULL,
                                        prompt_id BIGINT NOT NULL,
                                        CONSTRAINT fk_resume_evaluations_resume FOREIGN KEY (resume_id) REFERENCES resumes(resume_id) ON DELETE CASCADE,
                                        CONSTRAINT fk_resume_evaluations_job FOREIGN KEY (job_posting_id) REFERENCES job_postings(job_posting_id),

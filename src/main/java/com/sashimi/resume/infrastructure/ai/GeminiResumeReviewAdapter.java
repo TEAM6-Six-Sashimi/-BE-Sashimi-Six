@@ -51,8 +51,9 @@ public class GeminiResumeReviewAdapter implements ResumeAiReviewPort {
                     root.path("strengths").asText(),
                     root.path("weaknesses").asText(),
                     root.path("suggestions").asText(),
-                    root.path("aiResult").asText()
+                    jsonText
             );
+
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.AI_RESPONSE_PARSE_FAILED);
         }

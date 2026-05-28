@@ -1,5 +1,8 @@
 package com.sashimi.resume.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.time.LocalDateTime;
 
 public class Resume {
@@ -7,7 +10,6 @@ public class Resume {
     private final Long resumeId;
     private final Long userId;
     private final String title;
-    private final ResumeTemplateType templateType;
     private final String content;
     private final boolean defaultResume;
     private final LocalDateTime createdAt;
@@ -18,7 +20,6 @@ public class Resume {
                 resumeId,
                 userId,
                 title,
-                ResumeTemplateType.BASIC,
                 content,
                 false,
                 LocalDateTime.now(),
@@ -30,23 +31,21 @@ public class Resume {
             Long resumeId,
             Long userId,
             String title,
-            ResumeTemplateType templateType,
             String content,
             boolean defaultResume,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
         if (userId == null) {
-            throw new IllegalArgumentException("User id is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Resume title is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         this.resumeId = resumeId;
         this.userId = userId;
         this.title = title;
-        this.templateType = templateType == null ? ResumeTemplateType.BASIC : templateType;
         this.content = content;
         this.defaultResume = defaultResume;
         this.createdAt = createdAt == null ? LocalDateTime.now() : createdAt;
@@ -56,7 +55,6 @@ public class Resume {
     public static Resume create(
             Long userId,
             String title,
-            ResumeTemplateType templateType,
             String content,
             boolean defaultResume
     ) {
@@ -64,7 +62,6 @@ public class Resume {
                 null,
                 userId,
                 title,
-                templateType,
                 content,
                 defaultResume,
                 LocalDateTime.now(),
@@ -74,7 +71,6 @@ public class Resume {
 
     public Resume update(
             String title,
-            ResumeTemplateType templateType,
             String content,
             Boolean defaultResume
     ) {
@@ -82,7 +78,6 @@ public class Resume {
                 this.resumeId,
                 this.userId,
                 title == null ? this.title : title,
-                templateType == null ? this.templateType : templateType,
                 content == null ? this.content : content,
                 defaultResume == null ? this.defaultResume : defaultResume,
                 this.createdAt,
@@ -95,7 +90,6 @@ public class Resume {
                 resumeId,
                 this.userId,
                 this.title,
-                this.templateType,
                 this.content,
                 this.defaultResume,
                 this.createdAt,
@@ -113,10 +107,6 @@ public class Resume {
 
     public String title() {
         return title;
-    }
-
-    public ResumeTemplateType templateType() {
-        return templateType;
     }
 
     public String content() {

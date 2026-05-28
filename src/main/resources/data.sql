@@ -292,7 +292,7 @@ VALUES
      1, TRUE),
 
     ('이력서 평가 프롬프트 v1', 'RESUME_EVALUATION',
-     '아래 이력서 내용을 기반으로 강점, 약점, 개선점을 평가해주세요. 이력서 제목: {resumeTitle}, 이력서 내용: {resumeContent}',
+     '아래 이력서 내용을 BASIC(기본 정보), EDUCATION(학력 사항), CAREER(경력 사항), SKILL(기술 및 자격증) 기준으로 평가해주세요. 각 항목별 점수와 총점을 산출해주세요. BASIC은 회원가입 시 입력한 이름, 이메일, 연락처 등 기본 정보를 기준으로 평가합니다. 현재 이력서 내용에 없는 항목은 보완 필요 항목에 포함해주세요. 이력서 제목: {resumeTitle}, 이력서 내용: {resumeContent}',
      1, TRUE),
 
     ('채용공고 분석 프롬프트 v1', 'JOB_ANALYSIS',
@@ -304,16 +304,28 @@ VALUES
      1, TRUE);
 
 INSERT INTO resumes
-(title, template_type, content, is_default, user_id)
+(title, content, is_default, user_id)
 VALUES
     (
         '백엔드 신입 개발자 이력서',
-        'BASIC',
         JSON_OBJECT(
+                'basic', JSON_OBJECT(
                 'name', '박학생',
-                'position', 'Backend Developer',
+                'email', 'student1@test.com',
+                'phone', '010-1234-5678',
+                'position', 'Backend Developer'
+                         ),
+                'education', JSON_ARRAY(
+                        JSON_OBJECT(
+                                'school', '울지대학교',
+                                'major', '의료IT학과',
+                                'startYear', '2022',
+                                'endYear', '2027'
+                        )
+                             ),
+                'career', JSON_ARRAY(),
                 'skills', JSON_ARRAY('Java', 'Spring Boot', 'MySQL'),
-                'projects', JSON_ARRAY('LMS 프로젝트', '의료 AI 상담 프로젝트'),
+                'certificates', JSON_ARRAY(),
                 'summary', 'Spring Boot와 REST API 개발 경험이 있는 신입 백엔드 개발자입니다.'
         ),
         TRUE,
@@ -321,12 +333,24 @@ VALUES
     ),
     (
         '프론트엔드 지원용 이력서',
-        'MODERN',
         JSON_OBJECT(
+                'basic', JSON_OBJECT(
                 'name', '최학생',
-                'position', 'Frontend Developer',
+                'email', 'student2@test.com',
+                'phone', '010-4444-4444',
+                'position', 'Frontend Developer'
+                         ),
+                'education', JSON_ARRAY(),
+                'career', JSON_ARRAY(
+                        JSON_OBJECT(
+                                'company', '강의 플랫폼 프로젝트',
+                                'role', 'Frontend Developer',
+                                'period', '2025',
+                                'description', 'React 기반 강의 목록과 상세 화면 UI를 구현했습니다.'
+                        )
+                          ),
                 'skills', JSON_ARRAY('React', 'JavaScript', 'HTML', 'CSS'),
-                'projects', JSON_ARRAY('강의 플랫폼 UI 개발'),
+                'certificates', JSON_ARRAY(),
                 'summary', 'React 기반 사용자 중심 UI 구현에 관심이 있습니다.'
         ),
         TRUE,
