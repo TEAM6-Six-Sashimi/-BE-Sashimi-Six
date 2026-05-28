@@ -5,6 +5,7 @@ import com.sashimi.category.domain.repository.CategoryRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class CategoryRepositoryAdapter implements CategoryRepository {
@@ -30,6 +31,12 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
                 .map(CategoryJpaEntity::toDomain)
                 .toList();
     }
+    @Override
+    public Optional<Category> findBySubCategory(String subCategory) {
+        return springDataCategoryRepository.findBySubCategoryAndActiveTrue(subCategory)
+                .map(CategoryJpaEntity::toDomain);
+    }
+
     @Override
     public boolean existsAllActiveByIds(List<Long> categoryIds) {
         if (categoryIds == null || categoryIds.isEmpty()) {
