@@ -5,6 +5,7 @@ import com.sashimi.course.application.usecase.CourseCommandUseCase;
 import com.sashimi.course.application.usecase.CourseQueryUseCase;
 import com.sashimi.course.presentation.api.request.CreateCourseRequest;
 import com.sashimi.course.presentation.api.request.UpdateCourseRequest;
+import com.sashimi.course.presentation.api.response.ApprovedCourseResponse;
 import com.sashimi.course.presentation.api.response.CourseResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,10 +27,10 @@ public class InstructorCourseController {
     }
 
     @GetMapping("/approved")
-    public ResponseEntity<List<CourseResponse>> getApprovedCourses(
+    public ResponseEntity<List<ApprovedCourseResponse>> getApprovedCourses(
             @RequestHeader("X-USER-ID") Long instructorId) {
-        List<CourseResponse> courses = courseQueryUseCase.getApprovedCoursesByInstructor(instructorId)
-                .stream().map(CourseResponse::from).toList();
+        List<ApprovedCourseResponse> courses = courseQueryUseCase.getApprovedCoursesByInstructor(instructorId)
+                .stream().map(ApprovedCourseResponse::from).toList();
         return ResponseEntity.ok(courses);
     }
 
