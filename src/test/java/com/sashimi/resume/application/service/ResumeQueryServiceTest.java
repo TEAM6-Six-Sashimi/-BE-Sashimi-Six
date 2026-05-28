@@ -1,5 +1,7 @@
 package com.sashimi.resume.application.service;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.repository.ResumeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -74,7 +76,9 @@ class ResumeQueryServiceTest {
 
         // when & then
         assertThatThrownBy(() -> resumeQueryService.getResume(1L, 999L))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOfSatisfying(BusinessException.class, exception ->
+                        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.RESUME_NOT_FOUND)
+                );
 
         verify(resumeRepository).findByIdAndUserId(999L, 1L);
     }

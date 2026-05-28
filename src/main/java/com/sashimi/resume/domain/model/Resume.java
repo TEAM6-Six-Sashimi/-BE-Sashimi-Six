@@ -1,5 +1,8 @@
 package com.sashimi.resume.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.time.LocalDateTime;
 
 public class Resume {
@@ -34,10 +37,10 @@ public class Resume {
             LocalDateTime updatedAt
     ) {
         if (userId == null) {
-            throw new IllegalArgumentException("User id is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Resume title is required.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         this.resumeId = resumeId;
