@@ -2,7 +2,7 @@ INSERT INTO users
 (login_id, email, password, name, birth_date, phone, role, status, email_verified, referral_code)
 VALUES
     ('admin01', 'admin@test.com', '$2a$10$admin', '관리재', '1985-01-01', '010-0000-0000', 'ADMIN', 'ACTIVE', TRUE, 'ADMIN001'),
-    ('instructor01', 'instructor1@test.com', '$2a$10$instructor', '김강사', '1988-03-12', '010-1111-1111', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS001'),
+    ('instructor01', 'instructor1@test.com', '$2a$10$SwKCvl1vtkjOSh0F.KflsOx8eolg1MTZdqUXcfzZQ4piogm8.PosK', '김강사', '1988-03-12', '010-1111-1111', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS001'),
     ('instructor02', 'instructor2@test.com', '$2a$10$instructor', '이강사', '1990-07-20', '010-2222-2222', 'INSTRUCTOR', 'ACTIVE', TRUE, 'INS002'),
     ('student01', 'student1@test.com', '$2a$10$vYwWcwkU/lHpqmL3WERfgOi0yx/OxCkfbtGQHJjIj8IpfTdGptORi', '박학생', '2001-05-14', '010-3333-3333', 'STUDENT', 'ACTIVE', TRUE, 'STD001'),
     ('student02', 'student2@test.com', '$2a$10$student', '최학생', '2000-10-03', '010-4444-4444', 'STUDENT', 'ACTIVE', TRUE, 'STD002'),
