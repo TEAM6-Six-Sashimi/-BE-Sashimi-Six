@@ -106,7 +106,6 @@ public class ResumeController {
                 new CreateResumeCommand(
                         principal.getId(),
                         request.title(),
-                        request.templateType(),
                         request.content(),
                         Boolean.TRUE.equals(request.defaultResume())
                 )
@@ -183,7 +182,6 @@ public class ResumeController {
                         principal.getId(),
                         resumeId,
                         request.title(),
-                        request.templateType(),
                         request.content(),
                         request.defaultResume()
                 )

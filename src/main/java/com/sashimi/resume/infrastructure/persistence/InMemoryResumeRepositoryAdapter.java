@@ -25,7 +25,28 @@ public class InMemoryResumeRepositoryAdapter implements ResumeRepository {
                 1L,
                 1L,
                 "백엔드 개발자 이력서",
-                "Java와 Spring Boot 기반 REST API 프로젝트 경험이 있습니다."
+                """
+                {
+                  "basic": {
+                    "name": "박학생",
+                    "email": "student1@test.com",
+                    "phone": "010-1234-5678",
+                    "position": "Backend Developer"
+                  },
+                  "education": [
+                    {
+                      "school": "울지대학교",
+                      "major": "의료IT학과",
+                      "startYear": "2022",
+                      "endYear": "2027"
+                    }
+                  ],
+                  "career": [],
+                  "skills": ["Java", "Spring Boot", "MySQL"],
+                  "certificates": [],
+                  "summary": "Spring Boot와 REST API 개발 경험이 있는 신입 백엔드 개발자입니다."
+                }
+                """
         );
 
         resumes.put(sampleResume.resumeId(), sampleResume);

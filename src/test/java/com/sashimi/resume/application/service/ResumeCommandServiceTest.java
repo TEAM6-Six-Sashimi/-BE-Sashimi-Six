@@ -12,7 +12,6 @@ import com.sashimi.resume.application.port.ResumeAiReviewPort;
 import com.sashimi.resume.application.port.ResumeAiReviewResult;
 import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.model.ResumeEvaluation;
-import com.sashimi.resume.domain.model.ResumeTemplateType;
 import com.sashimi.resume.domain.repository.ResumeEvaluationRepository;
 import com.sashimi.resume.domain.repository.ResumeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,12 +58,13 @@ class ResumeCommandServiceTest {
     @Test
     void createResume() {
         // given
+        // 이력서 생성은 더 이상 templateType을 받지 않는다.
+        // 이력서의 기본 정보, 학력, 경력, 기술 정보는 content JSON 안에 저장한다.
         // 이력서 생성 요청 Command 준비
         CreateResumeCommand command = new CreateResumeCommand(
                 1L,
                 "Backend Resume",
-                ResumeTemplateType.BASIC,
-                "{\"summary\":\"Java backend developer\"}",
+                "{\"basic\":{\"name\":\"박학생\"},\"skills\":[\"Java\",\"Spring Boot\"]}",
                 true
         );
 
@@ -72,8 +72,7 @@ class ResumeCommandServiceTest {
         Resume savedResume = Resume.create(
                 1L,
                 "Backend Resume",
-                ResumeTemplateType.BASIC,
-                "{\"summary\":\"Java backend developer\"}",
+                "{\"basic\":{\"name\":\"박학생\"},\"skills\":[\"Java\",\"Spring Boot\"]}",
                 true
         ).withId(10L);
 
@@ -87,7 +86,7 @@ class ResumeCommandServiceTest {
         assertThat(result.resumeId()).isEqualTo(10L);
         assertThat(result.userId()).isEqualTo(1L);
         assertThat(result.title()).isEqualTo("Backend Resume");
-        assertThat(result.templateType()).isEqualTo(ResumeTemplateType.BASIC);
+        assertThat(result.content()).contains("Spring Boot");
         assertThat(result.defaultResume()).isTrue();
 
         // Service가 Repository save를 호출했는지 확인
@@ -97,14 +96,16 @@ class ResumeCommandServiceTest {
     @Test
     void reviewResume() {
         // given
+        // 사용자가 작성한 이력서
         // 사용자가 소유한 이력서를 조회했다고 가정
         Resume resume = new Resume(
                 1L,
                 1L,
                 "Backend Resume",
-                "{\"summary\":\"Java backend developer\"}"
+                "{\"basic\":{\"name\":\"박학생\"},\"skills\":[\"Java\",\"Spring Boot\"]}"
         );
 
+        // 이력서 평가에 사용할 활성 AI 프롬프트
         // DB 에서 조회된 활성 AI 프롬프트 준비
         AiPrompt prompt = new AiPrompt(
                 1L,
@@ -115,15 +116,17 @@ class ResumeCommandServiceTest {
                 true
         );
 
+        // AI Adapter가 반환했다고 가정하는 평가 결과
         // 실제 AI 호출 결과 대신 Port가 반환할 평가 결과 준비
         ResumeAiReviewResult aiResult = new ResumeAiReviewResult(
                 BigDecimal.valueOf(82),
                 "Strong Java/Spring experience",
                 "Needs cloud experience",
                 "Add AWS deployment project",
-                "{\"summary\":\"Good backend resume\"}"
+                "{\"overallScore\":82,\"sectionScores\":[],\"improvementItems\":[]}"
         );
 
+        // Repository에 저장된 후 ID가 부여된 평가 결과
         // 평가 결과 저장 후 ID가 부여된 도메인 객체 준비
         ResumeEvaluation savedEvaluation = ResumeEvaluation.evaluated(
                 aiResult.overallScore(),
@@ -155,6 +158,7 @@ class ResumeCommandServiceTest {
         assertThat(result.evaluationId()).isEqualTo(100L);
         assertThat(result.overallScore()).isEqualByComparingTo("82");
         assertThat(result.strengths()).isEqualTo("Strong Java/Spring experience");
+        assertThat(result.aiResult()).contains("sectionScores");
 
         // 이력서 조회 -> 프롬프트 조회 -> AI 평가 -> 평가 결과 저장 순서의 핵심 협력 객체 호출 검증
         verify(resumeRepository).findByIdAndUserId(1L, 1L);
@@ -168,6 +172,7 @@ class ResumeCommandServiceTest {
     @Test
     void reviewResumeThrowsWhenResumeNotFound() {
         // given
+        // 요청한 사용자의 이력서를 찾지 못하는 상황
         // 요청한 사용자의 이력서를 찾지 못한 상황
         when(resumeRepository.findByIdAndUserId(999L, 1L))
                 .thenReturn(Optional.empty());
@@ -191,12 +196,13 @@ class ResumeCommandServiceTest {
     @Test
     void reviewResumeThrowsWhenActivePromptNotFound() {
         // given
+        // 이력서는 있지만, 사용할 수 있는 활성 AI 프롬프트가 없는 상황
         // 이력서는 존재하지만, 사용할 활성 AI 프롬프트가 없는 상황
         Resume resume = new Resume(
                 1L,
                 1L,
                 "Backend Resume",
-                "{\"summary\":\"Java backend developer\"}"
+                "{\"basic\":{\"name\":\"박학생\"},\"skills\":[\"Java\",\"Spring Boot\"]}"
         );
 
         when(resumeRepository.findByIdAndUserId(1L, 1L))
