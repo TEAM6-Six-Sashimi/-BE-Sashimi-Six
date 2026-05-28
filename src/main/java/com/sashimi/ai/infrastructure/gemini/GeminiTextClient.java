@@ -2,6 +2,7 @@ package com.sashimi.ai.infrastructure.gemini;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -11,6 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class GeminiTextClient {
 
@@ -29,6 +31,12 @@ public class GeminiTextClient {
 
     public String generate(String prompt) {
         validateGeminiApiKey();
+
+        long startedAt = System.currentTimeMillis();
+
+        log.info("🪢 Gemini API 호출: model={}, promptLength={}",
+                geminiProperties.model(),
+                prompt == null ? 0 : prompt.length());
 
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
@@ -50,10 +58,26 @@ public class GeminiTextClient {
                     .retrieve()
                     .body(String.class);
 
+            String generatedText = extractGeneratedText(responseBody);
+
+            log.info("🪢 Gemini API 호출 성공: model={}, elapsedMs={}, responseLength={}",
+                    geminiProperties.model(),
+                    System.currentTimeMillis() - startedAt,
+                    generatedText == null ? 0 : generatedText.length());
+
             return extractGeneratedText(responseBody);
         } catch (RestClientResponseException e) {
+            log.error("🪢 Gemini API 호출 실패: model={}, statusCode={}, elapsedMs={}",
+                    geminiProperties.model(),
+                    e.getStatusCode(),
+                    System.currentTimeMillis() - startedAt,
+                    e);
             throw new BusinessException(ErrorCode.AI_API_CALL_FAILED);
         } catch (Exception e) {
+            log.error("🪢 Gemini API 호출 실패: model={}, elapsedMs={}",
+                    geminiProperties.model(),
+                    System.currentTimeMillis() - startedAt,
+                    e);
             throw new BusinessException(ErrorCode.AI_API_CALL_FAILED);
         }
     }

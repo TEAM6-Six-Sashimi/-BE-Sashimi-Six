@@ -19,11 +19,14 @@ import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.model.ResumeEvaluation;
 import com.sashimi.resume.domain.repository.ResumeEvaluationRepository;
 import com.sashimi.resume.domain.repository.ResumeRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
+@Transactional
 public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeUseCase {
 
     private final ResumeRepository resumeRepository;
@@ -49,6 +52,9 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
     @Override
     @Transactional
     public ResumeEvaluation review(ReviewResumeCommand command) {
+        log.info("📃 이력서 AI 리뷰 요청 시작: userId={}, resumeId={}, jobPostingId={}",
+                command.userId(), command.resumeId(), command.jobPostingId());
+
         // 1. 요청한 사용자의 이력서인지 확인하면서 조회한다.
         Resume resume = resumeRepository.findByIdAndUserId(command.resumeId(), command.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
@@ -98,7 +104,12 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
                 command.defaultResume()
         );
 
-        return resumeRepository.save(resume);
+        Resume savedResume = resumeRepository.save(resume);
+
+        log.info("📃 이력서 생성: userId={}, resumeId={}, defaultResume={}",
+                command.userId(), savedResume.resumeId(), savedResume.defaultResume());
+
+        return savedResume;
     }
 
     @Override
@@ -113,7 +124,12 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
                 command.defaultResume()
         );
 
-        return resumeRepository.save(updatedResume);
+        Resume savedResume = resumeRepository.save(updatedResume);
+
+        log.info("📃 이력서 수정: userId={}, resumeId={}, defaultResume={}",
+                command.userId(), savedResume.resumeId(), savedResume.defaultResume());
+
+        return savedResume;
     }
 
     @Override
@@ -123,6 +139,9 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
 
         resumeRepository.delete(resume);
+
+        log.info("📃 이력서 삭제: userId={}, resumeId={}",
+                command.userId(), command.resumeId());
     }
 
 }
