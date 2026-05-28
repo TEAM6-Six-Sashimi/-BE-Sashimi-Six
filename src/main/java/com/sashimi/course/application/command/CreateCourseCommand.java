@@ -8,7 +8,7 @@ import java.util.List;
 
 public record CreateCourseCommand(
         Long instructorId,
-        Long categoryId,
+        String subCategoryName,
         String title,
         String description,
         BigDecimal price,

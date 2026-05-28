@@ -7,6 +7,7 @@ import com.sashimi.course.presentation.api.request.CreateCourseRequest;
 import com.sashimi.course.presentation.api.request.UpdateCourseRequest;
 import com.sashimi.course.presentation.api.response.ApprovedCourseResponse;
 import com.sashimi.course.presentation.api.response.CourseResponse;
+import com.sashimi.member.presentation.api.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -51,21 +52,19 @@ public class InstructorCourseController {
     }
 
     @PostMapping
-    public ResponseEntity<Long> createCourse(
+    public ResponseEntity<ApiResponse<Void>> createCourse(
             @RequestHeader("X-USER-ID") Long instructorId,
             @RequestBody CreateCourseRequest request) {
         List<CreateSessionCommand> sessionCommands = request.sessions().stream()
-                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), s.durationSeconds(),
-                        s.sessionOrder(), s.preview(), s.attachmentName(),
-                        s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
+                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), 0, 0, false, null, null, null, null))
                 .toList();
 
         Long courseId = courseCommandUseCase.createCourse(new CreateCourseCommand(
-                instructorId, request.categoryId(), request.title(), request.description(),
+                instructorId, request.subCategoryName(), request.title(), request.description(),
                 request.price(), request.difficulty(), request.thumbnail(),
                 request.initialStatus(), sessionCommands));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(courseId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of("성공했습니다."));
     }
 
     @PutMapping("/{courseId}")
@@ -74,9 +73,7 @@ public class InstructorCourseController {
             @PathVariable Long courseId,
             @RequestBody UpdateCourseRequest request) {
         List<CreateSessionCommand> sessionCommands = request.sessions().stream()
-                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), s.durationSeconds(),
-                        s.sessionOrder(), s.preview(), s.attachmentName(),
-                        s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
+                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), 0, 0, false, null, null, null, null))
                 .toList();
 
         courseCommandUseCase.updateCourse(new UpdateCourseCommand(
