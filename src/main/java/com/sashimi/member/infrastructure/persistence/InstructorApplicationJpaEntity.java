@@ -18,44 +18,49 @@ public class InstructorApplicationJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "instructorProfileId")
+    @Column(name = "instructor_profile_id")
     private Long id;
 
-    @Column(name = "userId", nullable = false)
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
 
-    @Column(name = "career", columnDefinition = "TEXT")
-    private String career;
-
-    @Column(name = "portfolioUrl")
+    @Column(name = "portfolio_url")
     private String portfolioUrl;
 
+    @Column(name = "certification_name")
+    private String certificationName;
+
+    @Column(name = "issued_by")
+    private String issuedBy;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "approvalStatus")
+    @Column(name = "approval_status")
     private ApprovalStatus approvalStatus;
 
-    @Column(name = "approvedAt")
+    @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
-    @Column(name = "createdAt")
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updatedAt")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Builder
-    public InstructorApplicationJpaEntity(Long id, Long userId, String bio, String career,
-                                          String portfolioUrl, ApprovalStatus approvalStatus,
+    public InstructorApplicationJpaEntity(Long id, Long userId, String bio,
+                                          String portfolioUrl, String certificationName,
+                                          String issuedBy, ApprovalStatus approvalStatus,
                                           LocalDateTime approvedAt, LocalDateTime createdAt,
                                           LocalDateTime updatedAt) {
         this.id = id;
         this.userId = userId;
         this.bio = bio;
-        this.career = career;
         this.portfolioUrl = portfolioUrl;
+        this.certificationName = certificationName;
+        this.issuedBy = issuedBy;
         this.approvalStatus = approvalStatus;
         this.approvedAt = approvedAt;
         this.createdAt = createdAt;
@@ -67,8 +72,9 @@ public class InstructorApplicationJpaEntity {
                 .id(domain.getId())
                 .userId(domain.getUserId())
                 .bio(domain.getBio())
-                .career(domain.getCareer())
                 .portfolioUrl(domain.getPortfolioUrl())
+                .certificationName(domain.getCertificationName())
+                .issuedBy(domain.getIssuedBy())
                 .approvalStatus(domain.getApprovalStatus())
                 .approvedAt(domain.getApprovedAt())
                 .createdAt(domain.getCreatedAt())
@@ -81,8 +87,9 @@ public class InstructorApplicationJpaEntity {
                 .id(id)
                 .userId(userId)
                 .bio(bio)
-                .career(career)
                 .portfolioUrl(portfolioUrl)
+                .certificationName(certificationName)
+                .issuedBy(issuedBy)
                 .approvalStatus(approvalStatus)
                 .approvedAt(approvedAt)
                 .createdAt(createdAt)

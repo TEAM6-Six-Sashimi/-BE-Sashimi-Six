@@ -328,9 +328,9 @@ CREATE TABLE credits (
 CREATE TABLE instructor_profiles (
                                      instructor_profile_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                      bio TEXT,
-                                     career TEXT,
-                                     certifications TEXT,
                                      portfolio_url VARCHAR(500),
+                                     certification_name VARCHAR(255),
+                                     issued_by VARCHAR(255),
                                      approval_status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
                                      approved_at DATETIME NULL,
                                      created_at DATETIME DEFAULT NOW(),

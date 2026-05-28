@@ -14,19 +14,21 @@ public class InstructorApplication {
     private Long id;
     private Long userId;
     private String bio;
-    private String career;
     private String portfolioUrl;
+    private String certificationName;
+    private String issuedBy;
     private ApprovalStatus approvalStatus;
     private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static InstructorApplication create(Long userId, String bio, String career, String portfolioUrl) {
+    public static InstructorApplication create(Long userId, String bio, String portfolioUrl, String certificationName, String issuedBy) {
         return InstructorApplication.builder()
                 .userId(userId)
                 .bio(bio)
-                .career(career)
                 .portfolioUrl(portfolioUrl)
+                .certificationName(certificationName)
+                .issuedBy(issuedBy)
                 .approvalStatus(ApprovalStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();

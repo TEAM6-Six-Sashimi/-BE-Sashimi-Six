@@ -9,8 +9,9 @@ public record InstructorApplicationResponse(
         Long id,
         Long userId,
         String bio,
-        String career,
         String portfolioUrl,
+        String certificationName,
+        String issuedBy,
         ApprovalStatus approvalStatus,
         LocalDateTime approvedAt,
         LocalDateTime createdAt
@@ -20,8 +21,9 @@ public record InstructorApplicationResponse(
                 domain.getId(),
                 domain.getUserId(),
                 domain.getBio(),
-                domain.getCareer(),
                 domain.getPortfolioUrl(),
+                domain.getCertificationName(),
+                domain.getIssuedBy(),
                 domain.getApprovalStatus(),
                 domain.getApprovedAt(),
                 domain.getCreatedAt()
