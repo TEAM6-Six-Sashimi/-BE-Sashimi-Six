@@ -56,6 +56,10 @@ public class UserJpaEntity {
     @Column(name = "interest_category_ids", length = 255)
     private List<Long> interestCategoryIds = List.of();
 
+    @Column(name = "phone", length = 20)
+    private String phone;
+
+
     @Column(name = "deleted_at")
     private LocalDateTime deactivatedAt;
 
@@ -66,6 +70,7 @@ public class UserJpaEntity {
         entity.loginId = user.getLoginId();
         entity.password = user.getPassword();
         entity.email = user.getEmail();
+        entity.phone = user.getPhone();
         entity.birthDate = user.getBirthDate();
         entity.role = user.getRole();
         entity.status = user.getStatus();
@@ -77,7 +82,7 @@ public class UserJpaEntity {
     }
 
     public User toDomain() {
-        return new User(id, name, loginId, password, email, birthDate, role, status,
+        return new User(id, name, loginId, password, email, phone, birthDate, role, status,
                 emailVerified, referralCode, interestCategoryIds, deactivatedAt);
     }
 }

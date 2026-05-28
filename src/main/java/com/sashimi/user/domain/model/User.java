@@ -18,8 +18,9 @@ public class User {
     private String referralCode;
     private List<Long> interestCategoryIds;
     private LocalDateTime deactivatedAt;
+    private String phone;
 
-    public User(Long id, String name, String loginId, String password, String email, LocalDate birthDate,
+    public User(Long id, String name, String loginId, String password, String email,String phone, LocalDate birthDate,
                 Role role, UserStatus status, boolean emailVerified,
                 String referralCode, List<Long> interestCategoryIds, LocalDateTime deactivatedAt) {
         this.id = id;
@@ -34,12 +35,17 @@ public class User {
         this.referralCode = referralCode;
         this.interestCategoryIds = interestCategoryIds == null ? List.of() : List.copyOf(interestCategoryIds);
         this.deactivatedAt = deactivatedAt;
+        this.phone = phone;
+    }
+
+    public String getPhone() {
+        return phone;
     }
 
     public static User createStudent(String name, String loginId, String password,
-                                     String email, LocalDate birthDate, String referralCode,
-                                     List<Long> interestCategoryIds) {
-        return new User(null, name, loginId, password, email, birthDate,
+                                     String email, String phone, LocalDate birthDate,
+                                     String referralCode, List<Long> interestCategoryIds) {
+        return new User(null, name, loginId, password, email, phone, birthDate,
                 Role.STUDENT, UserStatus.ACTIVE, true, referralCode, interestCategoryIds, null);
     }
 
