@@ -14,6 +14,9 @@ public class CategoryJpaEntity {
     @Column(name = "category_id")
     private Long id;
 
+    @Column(name = "main_category_id", nullable = false)
+    private Long mainCategoryId;
+
     @Column(name = "name", nullable = false)
     private String name;
 
@@ -32,6 +35,6 @@ public class CategoryJpaEntity {
     protected CategoryJpaEntity() {}
 
     public Category toDomain() {
-        return Category.restore(id, name, subCategory, sortOrder, active, createdAt);
+        return Category.restore(id, mainCategoryId, name, subCategory, sortOrder, active, createdAt);
     }
 }

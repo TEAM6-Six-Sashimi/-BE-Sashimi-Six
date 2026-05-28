@@ -36,6 +36,7 @@ public class CategoryController {
 
         List<CategoryGroupResponse> response = grouped.entrySet().stream()
                 .map(e -> new CategoryGroupResponse(
+                        e.getValue().get(0).getMainCategoryId(),
                         e.getKey(),
                         e.getValue().stream()
                                 .map(Category::getSubCategory)
