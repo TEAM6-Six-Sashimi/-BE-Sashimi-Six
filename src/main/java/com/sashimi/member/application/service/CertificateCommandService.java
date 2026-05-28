@@ -6,6 +6,7 @@ import com.sashimi.member.application.port.OcrPort;
 import com.sashimi.member.application.usecase.CertificateCommandUseCase;
 import com.sashimi.member.domain.model.UserCertification;
 import com.sashimi.member.domain.repository.UserCertificationRepository;
+import com.sashimi.member.presentation.api.response.CertificateResponse;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ public class CertificateCommandService implements CertificateCommandUseCase {
     private final OcrPort ocrPort;
 
     @Override
-    public void registerCertificate(RegisterCertificateCommand command) {
+    public CertificateResponse registerCertificate(RegisterCertificateCommand command) {
 
         OcrPort.OcrResult result = ocrPort.extractCertificateInfo(command.fileBytes(), command.fileName());
 
@@ -37,7 +38,8 @@ public class CertificateCommandService implements CertificateCommandUseCase {
                 command.fileName()
         );
         certification.verify();
-        userCertificationRepository.save(certification);
+        UserCertification saved = userCertificationRepository.save(certification);
+        return CertificateResponse.from(saved);
     }
 
     @Override

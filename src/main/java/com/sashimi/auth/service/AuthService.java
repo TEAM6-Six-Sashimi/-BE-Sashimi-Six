@@ -73,6 +73,7 @@ public class AuthService {
                 request.getLoginId(),
                 passwordEncoder.encode(request.getPassword()),
                 request.getEmail(),
+                request.getPhone(),
                 request.getBirthDate(),
                 generateUniqueReferralCode(),
                 interestCategoryIds
