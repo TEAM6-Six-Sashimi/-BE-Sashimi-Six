@@ -22,7 +22,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -114,9 +113,9 @@ public class PaymentCommandService implements PaymentCommandUseCase {
             throw new BusinessException(ErrorCode.PAYMENT_EMPTY_COURSE);
         }
 
-        BigDecimal totalAmount = courses.stream()
-                .map(PaymentCourse::price)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        Long totalAmount = courses.stream()
+                .mapToLong(PaymentCourse::price)
+                .sum();
 
         Order order = orderRepository.save(Order.paid(createOrderNo(), totalAmount, userId));
 
@@ -181,6 +180,6 @@ public class PaymentCommandService implements PaymentCommandUseCase {
         DIRECT
     }
 
-    private record PaymentCourse(Long courseId, String title, BigDecimal price) {
+    private record PaymentCourse(Long courseId, String title, Long price) {
     }
 }

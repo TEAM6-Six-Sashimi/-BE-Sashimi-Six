@@ -1,6 +1,5 @@
 package com.sashimi.payment.application.usecase;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,7 +14,7 @@ public interface PaymentQueryUseCase {
             Long paymentId,
             Long orderId,
             String orderNo,
-            BigDecimal amount,
+            Long amount,
             String paymentStatus,
             String orderStatus,
             LocalDateTime paidAt,

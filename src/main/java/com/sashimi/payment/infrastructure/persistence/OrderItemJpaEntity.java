@@ -3,7 +3,6 @@ package com.sashimi.payment.infrastructure.persistence;
 import com.sashimi.payment.domain.model.OrderItem;
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_items")
@@ -18,13 +17,13 @@ public class OrderItemJpaEntity {
     private String courseTitle;
 
     @Column(name = "price", nullable = false)
-    private BigDecimal price;
+    private Long price;
 
     @Column(name = "discount_amount", nullable = false)
-    private BigDecimal discountAmount;
+    private Long discountAmount;
 
     @Column(name = "final_price", nullable = false)
-    private BigDecimal finalPrice;
+    private Long finalPrice;
 
     @Column(name = "order_id", nullable = false)
     private Long orderId;
@@ -35,8 +34,8 @@ public class OrderItemJpaEntity {
     protected OrderItemJpaEntity() {
     }
 
-    private OrderItemJpaEntity(String courseTitle, BigDecimal price, BigDecimal discountAmount,
-                               BigDecimal finalPrice, Long orderId, Long courseId) {
+    private OrderItemJpaEntity(String courseTitle, Long price, Long discountAmount,
+                               Long finalPrice, Long orderId, Long courseId) {
         this.courseTitle = courseTitle;
         this.price = price;
         this.discountAmount = discountAmount;

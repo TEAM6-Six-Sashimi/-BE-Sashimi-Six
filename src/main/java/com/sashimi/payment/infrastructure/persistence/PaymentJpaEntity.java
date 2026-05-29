@@ -4,7 +4,6 @@ import com.sashimi.payment.domain.model.Payment;
 import com.sashimi.payment.domain.model.PaymentStatus;
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -25,7 +24,7 @@ public class PaymentJpaEntity {
     private Long id;
 
     @Column(name = "amount", nullable = false)
-    private BigDecimal amount;
+    private Long amount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -46,7 +45,7 @@ public class PaymentJpaEntity {
     protected PaymentJpaEntity() {
     }
 
-    private PaymentJpaEntity(BigDecimal amount, PaymentStatus status, LocalDateTime paidAt,
+    private PaymentJpaEntity(Long amount, PaymentStatus status, LocalDateTime paidAt,
                              LocalDateTime createdAt, Long orderId, Long userId) {
         this.amount = amount;
         this.status = status;

@@ -2,12 +2,11 @@ package com.sashimi.cart.presentation.api.response;
 
 import com.sashimi.cart.application.usecase.CartQueryUseCase;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public record CartResponse(
         List<CartItemResponse> items,
-        BigDecimal totalPrice,
+        Long totalPrice,
         int itemCount,
         int selectedItemCount
 ) {

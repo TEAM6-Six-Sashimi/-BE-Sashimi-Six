@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +18,9 @@ public class CreditQueryService implements CreditQueryUseCase {
 
     @Override
     public CreditBalanceResult getBalance(Long userId) {
-        BigDecimal balance = creditRepository.findByUserId(userId)
+        Long balance = creditRepository.findByUserId(userId)
                 .map(Credit::getBalance)
-                .orElse(BigDecimal.ZERO);
+                .orElse(0L);
 
         return new CreditBalanceResult(balance);
     }

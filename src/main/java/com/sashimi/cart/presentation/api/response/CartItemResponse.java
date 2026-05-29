@@ -2,15 +2,13 @@ package com.sashimi.cart.presentation.api.response;
 
 import com.sashimi.cart.application.usecase.CartQueryUseCase;
 
-import java.math.BigDecimal;
-
 public record CartItemResponse(
         Long cartItemId,
         Long courseId,
         String title,
         String thumbnail,
         String instructorName,
-        BigDecimal price,
+        Long price,
         boolean selected
 ) {
     public static CartItemResponse from(CartQueryUseCase.CartItemView view) {

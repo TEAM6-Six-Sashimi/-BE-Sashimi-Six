@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -68,7 +67,7 @@ class PaymentCommandServiceTest {
                 10L,
                 1L,
                 100L,
-                BigDecimal.valueOf(30000),
+                30000L,
                 true,
                 LocalDateTime.now()
         );
@@ -76,7 +75,7 @@ class PaymentCommandServiceTest {
         CourseInfo courseInfo = new CourseInfo(
                 100L,
                 "Spring Boot Basic",
-                BigDecimal.valueOf(30000),
+                30000L,
                 "thumbnail.png",
                 "Instructor",
                 true
@@ -85,9 +84,9 @@ class PaymentCommandServiceTest {
         Order savedOrder = Order.restore(
                 1L,
                 "ORD-TEST",
-                BigDecimal.valueOf(30000),
-                BigDecimal.ZERO,
-                BigDecimal.valueOf(30000),
+                30000L,
+                0L,
+                30000L,
                 com.sashimi.payment.domain.model.OrderStatus.PAID,
                 LocalDateTime.now(),
                 1L
@@ -96,16 +95,16 @@ class PaymentCommandServiceTest {
         OrderItem savedOrderItem = OrderItem.restore(
                 11L,
                 "Spring Boot Basic",
-                BigDecimal.valueOf(30000),
-                BigDecimal.ZERO,
-                BigDecimal.valueOf(30000),
+                30000L,
+                0L,
+                30000L,
                 1L,
                 100L
         );
 
         Payment savedPayment = Payment.restore(
                 20L,
-                BigDecimal.valueOf(30000),
+                30000L,
                 com.sashimi.payment.domain.model.PaymentStatus.PAID,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
@@ -128,7 +127,7 @@ class PaymentCommandServiceTest {
 
         assertThat(result.orderId()).isEqualTo(1L);
         assertThat(result.paymentId()).isEqualTo(20L);
-        assertThat(result.amount()).isEqualByComparingTo("30000");
+        assertThat(result.amount()).isEqualTo(30000L);
         assertThat(result.courses()).hasSize(1);
         assertThat(result.courses().get(0).courseId()).isEqualTo(100L);
 
@@ -137,7 +136,7 @@ class PaymentCommandServiceTest {
 
         verify(creditCommandUseCase).useCredit(creditCaptor.capture());
         assertThat(creditCaptor.getValue().userId()).isEqualTo(1L);
-        assertThat(creditCaptor.getValue().amount()).isEqualByComparingTo("30000");
+        assertThat(creditCaptor.getValue().amount()).isEqualTo(30000L);
 
         verify(enrollmentPort).enrollPaidCourse(1L, 100L, 11L);
         verify(cartItemRepository).deleteAllSelectedByUserId(1L);
@@ -149,7 +148,7 @@ class PaymentCommandServiceTest {
         CourseInfo courseInfo = new CourseInfo(
                 100L,
                 "Spring Boot Basic",
-                BigDecimal.valueOf(30000),
+                30000L,
                 "thumbnail.png",
                 "Instructor",
                 true
@@ -158,9 +157,9 @@ class PaymentCommandServiceTest {
         Order savedOrder = Order.restore(
                 1L,
                 "ORD-TEST",
-                BigDecimal.valueOf(30000),
-                BigDecimal.ZERO,
-                BigDecimal.valueOf(30000),
+                30000L,
+                0L,
+                30000L,
                 com.sashimi.payment.domain.model.OrderStatus.PAID,
                 LocalDateTime.now(),
                 1L
@@ -169,16 +168,16 @@ class PaymentCommandServiceTest {
         OrderItem savedOrderItem = OrderItem.restore(
                 11L,
                 "Spring Boot Basic",
-                BigDecimal.valueOf(30000),
-                BigDecimal.ZERO,
-                BigDecimal.valueOf(30000),
+                30000L,
+                0L,
+                30000L,
                 1L,
                 100L
         );
 
         Payment savedPayment = Payment.restore(
                 20L,
-                BigDecimal.valueOf(30000),
+                30000L,
                 com.sashimi.payment.domain.model.PaymentStatus.PAID,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
@@ -232,7 +231,7 @@ class PaymentCommandServiceTest {
         CourseInfo courseInfo = new CourseInfo(
                 100L,
                 "Spring Boot Basic",
-                BigDecimal.valueOf(30000),
+                30000L,
                 "thumbnail.png",
                 "Instructor",
                 true
@@ -241,9 +240,9 @@ class PaymentCommandServiceTest {
         Order savedOrder = Order.restore(
                 1L,
                 "ORD-TEST",
-                BigDecimal.valueOf(30000),
-                BigDecimal.ZERO,
-                BigDecimal.valueOf(30000),
+                30000L,
+                0L,
+                30000L,
                 com.sashimi.payment.domain.model.OrderStatus.PAID,
                 LocalDateTime.now(),
                 1L
@@ -252,16 +251,16 @@ class PaymentCommandServiceTest {
         OrderItem savedOrderItem = OrderItem.restore(
                 11L,
                 "Spring Boot Basic",
-                BigDecimal.valueOf(30000),
-                BigDecimal.ZERO,
-                BigDecimal.valueOf(30000),
+                30000L,
+                0L,
+                30000L,
                 1L,
                 100L
         );
 
         Payment savedPayment = Payment.restore(
                 20L,
-                BigDecimal.valueOf(30000),
+                30000L,
                 com.sashimi.payment.domain.model.PaymentStatus.PAID,
                 LocalDateTime.now(),
                 LocalDateTime.now(),

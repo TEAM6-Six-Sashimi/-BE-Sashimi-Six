@@ -5,7 +5,7 @@ import java.math.BigDecimal;
 public record PublicCourseView(
         String instructorName,
         String title,
-        BigDecimal price,
+        Long price,
         String thumbnail,
         int totalDuration,
         BigDecimal ratingAvg,

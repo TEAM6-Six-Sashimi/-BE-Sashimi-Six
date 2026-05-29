@@ -13,7 +13,7 @@ public record CourseResponse(
         Long categoryId,
         String title,
         String description,
-        BigDecimal price,
+        Long price,
         CourseDifficulty difficulty,
         String thumbnail,
         int totalDuration,

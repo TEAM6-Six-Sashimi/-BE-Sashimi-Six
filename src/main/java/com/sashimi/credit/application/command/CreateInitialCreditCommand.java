@@ -4,6 +4,6 @@ import java.math.BigDecimal;
 
 public record CreateInitialCreditCommand(
         Long userId,
-        BigDecimal initialBalance
+        Long initialBalance
 ) {
 }

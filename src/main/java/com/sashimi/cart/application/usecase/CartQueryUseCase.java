@@ -1,6 +1,5 @@
 package com.sashimi.cart.application.usecase;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface CartQueryUseCase {
@@ -10,7 +9,7 @@ public interface CartQueryUseCase {
 
     record CartView(
             List<CartItemView> items,
-            BigDecimal totalPrice,
+            Long totalPrice,
             int itemCount,
             int selectedItemCount
     ) {
@@ -22,7 +21,7 @@ public interface CartQueryUseCase {
             String title,
             String thumbnail,
             String instructorName,
-            BigDecimal price,
+            Long price,
             boolean selected
     ) {
     }
