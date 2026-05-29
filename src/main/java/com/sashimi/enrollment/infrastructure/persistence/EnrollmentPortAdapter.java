@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -101,5 +102,21 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
                 rs.getBoolean("is_completed"),
                 rs.getObject("enrolled_at", LocalDateTime.class)
         ), userId);
+    }
+
+    @Override
+    public Optional<EnrollmentSummary> getEnrollmentByCourse(Long userId, Long courseId) {
+        String sql = """
+                SELECT course_id, progress_rate, is_completed, enrolled_at
+                FROM enrollments
+                WHERE user_id = ? AND course_id = ?
+                """;
+        List<EnrollmentSummary> results = jdbcTemplate.query(sql, (rs, rowNum) -> new EnrollmentSummary(
+                rs.getLong("course_id"),
+                rs.getBigDecimal("progress_rate"),
+                rs.getBoolean("is_completed"),
+                rs.getObject("enrolled_at", LocalDateTime.class)
+        ), userId, courseId);
+        return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 }
