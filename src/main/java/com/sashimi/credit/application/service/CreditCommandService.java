@@ -14,7 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+
 
 @Slf4j
 @Service
@@ -22,15 +22,15 @@ import java.math.BigDecimal;
 @Transactional
 public class CreditCommandService implements CreditCommandUseCase {
 
-    public static final BigDecimal NEW_USER_REFERRAL_REWARD = BigDecimal.valueOf(5000);
-    public static final BigDecimal REFERRER_REWARD = BigDecimal.valueOf(1000);
+    public static final Long NEW_USER_REFERRAL_REWARD = 5000L;
+    public static final Long REFERRER_REWARD = 1000L;
 
     private final CreditRepository creditRepository;
 
     @Override
     public void createInitialCredit(CreateInitialCreditCommand command) {
-        BigDecimal initialBalance = command.initialBalance() == null
-                ? BigDecimal.ZERO
+        Long initialBalance = command.initialBalance() == null
+                ? 0L
                 : command.initialBalance();
 
         createInitialCredit(command.userId(), initialBalance);
@@ -67,7 +67,7 @@ public class CreditCommandService implements CreditCommandUseCase {
         return new CreditBalanceResult(savedCredit.getBalance());
     }
 
-    private void createInitialCredit(Long userId, BigDecimal initialBalance) {
+    private void createInitialCredit(Long userId, Long initialBalance) {
         if (creditRepository.findByUserId(userId).isPresent()) {
             return;
         }
@@ -79,7 +79,7 @@ public class CreditCommandService implements CreditCommandUseCase {
         }
     }
 
-    private void addCredit(Long userId, BigDecimal amount) {
+    private void addCredit(Long userId, Long amount) {
         Credit credit = getOrCreateCreditForUpdate(userId);
 
         credit.add(amount);
@@ -88,6 +88,6 @@ public class CreditCommandService implements CreditCommandUseCase {
 
     private Credit getOrCreateCreditForUpdate(Long userId) {
         return creditRepository.findByUserIdForUpdate(userId)
-                .orElseGet(() -> Credit.create(userId, BigDecimal.ZERO));
+                .orElseGet(() -> Credit.create(userId, 0L));
     }
 }

@@ -97,6 +97,24 @@ public class JobPostingRecommendation {
         );
     }
 
+    public JobPostingRecommendation failed() {
+        return new JobPostingRecommendation(
+                recommendationId,
+                userId,
+                inputType,
+                sourceUrl,
+                rawContent,
+                jobTitle,
+                RecommendationAnalysisStatus.FAILED,
+                resumeBased,
+                matchRate,
+                requiredSkills,
+                courses,
+                certificates,
+                createdAt
+        );
+    }
+
     public JobPostingRecommendation withId(Long recommendationId) {
         return new JobPostingRecommendation(
                 recommendationId,

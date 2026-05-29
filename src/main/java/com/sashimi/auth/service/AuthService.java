@@ -92,7 +92,7 @@ public class AuthService {
             );
         } else {
             creditCommandUseCase.createInitialCredit(
-                    new CreateInitialCreditCommand(savedUser.getId(), BigDecimal.ZERO)
+                    new CreateInitialCreditCommand(savedUser.getId(), 0L)
             );
         }
 

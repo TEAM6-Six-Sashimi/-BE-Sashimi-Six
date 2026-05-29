@@ -5,6 +5,7 @@ import com.sashimi.enrollment.application.query.EnrolledCourseView;
 import java.math.BigDecimal;
 
 public record EnrolledCourseResponse(
+        Long courseId,
         String title,
         String thumbnail,
         String instructorName,
@@ -13,6 +14,7 @@ public record EnrolledCourseResponse(
 ) {
     public static EnrolledCourseResponse from(EnrolledCourseView view) {
         return new EnrolledCourseResponse(
+                view.courseId(),
                 view.title(),
                 view.thumbnail(),
                 view.instructorName(),

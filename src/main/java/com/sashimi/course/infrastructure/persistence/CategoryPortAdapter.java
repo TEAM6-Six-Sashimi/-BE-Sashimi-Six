@@ -31,4 +31,11 @@ public class CategoryPortAdapter implements CategoryPort {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND))
                 .getId();
     }
+
+    @Override
+    public String getCategoryNameById(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND))
+                .getSubCategory();
+    }
 }

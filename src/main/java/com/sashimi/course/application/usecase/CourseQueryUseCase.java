@@ -10,4 +10,5 @@ public interface CourseQueryUseCase {
     Course getCourseDetail(Long courseId, Long instructorId);
     List<Course> getApprovedCoursesForAdmin();
     List<Course> getPendingCoursesForAdmin();
+    List<Course> getRejectedCoursesForAdmin();
 }

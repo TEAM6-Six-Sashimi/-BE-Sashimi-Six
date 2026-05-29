@@ -11,7 +11,7 @@ public class Course {
     private final Long categoryId;
     private final String title;
     private final String description;
-    private final BigDecimal price;
+    private final Long price;
     private final CourseDifficulty difficulty;
     private final String thumbnail;
     private final int totalDuration;
@@ -26,14 +26,14 @@ public class Course {
     private final List<CourseSession> sessions;
 
     private Course(Long id, Long instructorId, Long categoryId, String title, String description,
-                   BigDecimal price, CourseDifficulty difficulty, String thumbnail, int totalDuration,
+                   Long price, CourseDifficulty difficulty, String thumbnail, int totalDuration,
                    CourseStatus status, String rejectReason, BigDecimal ratingAvg,
                    int reviewCount, int studentCount, LocalDateTime createdAt,
                    LocalDateTime updatedAt, LocalDateTime approvedAt, List<CourseSession> sessions) {
         if (instructorId == null) throw new IllegalArgumentException("Instructor id is required.");
         if (categoryId == null) throw new IllegalArgumentException("Category id is required.");
         if (title == null || title.isBlank()) throw new IllegalArgumentException("Title is required.");
-        if (price == null || price.compareTo(BigDecimal.ZERO) < 0) throw new IllegalArgumentException("Price must be zero or positive.");
+        if (price == null || price < 0) throw new IllegalArgumentException("Price must be zero or positive.");
         if (difficulty == null) throw new IllegalArgumentException("Difficulty is required.");
         if (status == null) throw new IllegalArgumentException("Status is required.");
 
@@ -58,7 +58,7 @@ public class Course {
     }
 
     public static Course create(Long instructorId, Long categoryId, String title, String description,
-                                BigDecimal price, CourseDifficulty difficulty, String thumbnail,
+                                Long price, CourseDifficulty difficulty, String thumbnail,
                                 CourseStatus initialStatus, List<CourseSession> sessions) {
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
         return new Course(null, instructorId, categoryId, title, description, price, difficulty, thumbnail,
@@ -67,7 +67,7 @@ public class Course {
     }
 
     public static Course restore(Long id, Long instructorId, Long categoryId, String title, String description,
-                                 BigDecimal price, CourseDifficulty difficulty, String thumbnail, int totalDuration,
+                                 Long price, CourseDifficulty difficulty, String thumbnail, int totalDuration,
                                  CourseStatus status, String rejectReason, BigDecimal ratingAvg,
                                  int reviewCount, int studentCount, LocalDateTime createdAt,
                                  LocalDateTime updatedAt, LocalDateTime approvedAt, List<CourseSession> sessions) {
@@ -76,7 +76,7 @@ public class Course {
                 createdAt, updatedAt, approvedAt, sessions);
     }
 
-    public Course update(Long categoryId, String title, String description, BigDecimal price,
+    public Course update(Long categoryId, String title, String description, Long price,
                          CourseDifficulty difficulty, String thumbnail, CourseStatus targetStatus,
                          List<CourseSession> sessions) {
         if (!canModify()) throw new IllegalStateException("수정할 수 없는 상태의 강의입니다.");
@@ -113,7 +113,7 @@ public class Course {
     public Long getCategoryId() { return categoryId; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
-    public BigDecimal getPrice() { return price; }
+    public Long getPrice() { return price; }
     public CourseDifficulty getDifficulty() { return difficulty; }
     public String getThumbnail() { return thumbnail; }
     public int getTotalDuration() { return totalDuration; }

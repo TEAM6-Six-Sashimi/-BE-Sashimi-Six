@@ -53,4 +53,9 @@ public class CourseQueryService implements CourseQueryUseCase {
     public List<Course> getPendingCoursesForAdmin() {
         return courseRepository.findByStatus(CourseStatus.PENDING);
     }
+
+    @Override
+    public List<Course> getRejectedCoursesForAdmin() {
+        return courseRepository.findByStatus(CourseStatus.REJECTED);
+    }
 }
