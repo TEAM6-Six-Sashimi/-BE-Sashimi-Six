@@ -12,7 +12,7 @@ public class ResumeEvaluatedLogHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(ResumeEvaluatedEvent event) {
         log.info(
-                "Resume evaluated. userId={}, resumeId={}, evaluationId={}, jobPostingId={}, overallScore={}, evaluatedAt={}",
+                "📃 이력서 AI 평가 완료: userId={}, resumeId={}, evaluationId={}, jobPostingId={}, overallScore={}, evaluatedAt={}",
                 event.userId(),
                 event.resumeId(),
                 event.evaluationId(),

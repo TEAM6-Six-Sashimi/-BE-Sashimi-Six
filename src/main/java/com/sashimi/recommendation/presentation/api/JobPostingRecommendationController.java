@@ -133,7 +133,7 @@ public class JobPostingRecommendationController {
             @ApiResponse(responseCode = "404", description = "채용공고 추천 결과를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PostMapping("/courses")
+    @GetMapping("/courses")
     public List<CourseRecommendationResponse> recommendCourses(
             @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserPrincipal principal

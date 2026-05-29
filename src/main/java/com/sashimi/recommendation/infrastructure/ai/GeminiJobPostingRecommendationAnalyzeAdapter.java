@@ -11,6 +11,7 @@ import com.sashimi.recommendation.domain.model.CertificateRecommendation;
 import com.sashimi.recommendation.domain.model.CourseRecommendation;
 import com.sashimi.recommendation.domain.model.JobPostingRecommendation;
 import com.sashimi.recommendation.domain.model.RequiredSkillRecommendation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
@@ -20,6 +21,7 @@ import com.sashimi.ai.domain.model.AiPrompt;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Component
 @Profile("gemini")
 public class GeminiJobPostingRecommendationAnalyzeAdapter
@@ -43,7 +45,22 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
     public JobPostingRecommendationAnalyzeResult analyze(JobPostingRecommendation recommendation, AiPrompt aiPrompt) {
         String prompt = promptBuilder.build(recommendation, aiPrompt);
 
+        log.info("🗃️ 채용공고 AI 추천 요청: recommendationId={}, inputType={}, resumeBased={}, promptLength={}",
+                recommendation.recommendationId(),
+                recommendation.inputType(),
+                recommendation.resumeBased(),
+                prompt == null ? 0 : prompt.length());
+
         String generatedText = geminiTextClient.generate(prompt);
+
+        JobPostingRecommendationAnalyzeResult result =
+                parseAnalysisResult(generatedText, recommendation.resumeBased());
+
+        log.info("🗃️ 채용공고 AI 추천 결과: recommendationId={}, skillCount={}, courseCount={}, certificateCount={}",
+                recommendation.recommendationId(),
+                result.requiredSkills().size(),
+                result.courses().size(),
+                result.certificates().size());
 
         return parseAnalysisResult(generatedText, recommendation.resumeBased());
     }
@@ -74,8 +91,13 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
                     certificates
             );
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.AI_RESPONSE_PARSE_FAILED);
-        }
+        log.error("🗃️ 채용공고 AI 추천 요청 실패: generatedTextLength={}, resumeBased={}",
+                generatedText == null ? 0 : generatedText.length(),
+                resumeBased,
+                e);
+
+        throw new BusinessException(ErrorCode.AI_RESPONSE_PARSE_FAILED);
+    }
     }
 
     private Integer parseNullableInteger(JsonNode node) {
