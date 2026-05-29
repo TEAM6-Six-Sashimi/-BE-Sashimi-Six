@@ -1,3 +1,4 @@
+--
 -- V4__change_money_columns_to_bigint.sql
 -- 금액/가격/크레딧은 소수점을 사용하지 않으므로 DECIMAL -> BIGINT로 변경한다.
 -- 평점, 진행률, AI 점수 같은 비율/점수성 컬럼은 DECIMAL 유지.
