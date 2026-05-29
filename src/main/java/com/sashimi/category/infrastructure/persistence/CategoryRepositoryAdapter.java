@@ -38,6 +38,12 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
     }
 
     @Override
+    public Optional<Category> findById(Long id) {
+        return springDataCategoryRepository.findById(id)
+                .map(CategoryJpaEntity::toDomain);
+    }
+
+    @Override
     public boolean existsAllActiveByIds(List<Long> categoryIds) {
         if (categoryIds == null || categoryIds.isEmpty()) {
             return true;
