@@ -28,6 +28,7 @@ public class JwtTokenProvider {
     }
 
     private static final String AUTHORITIES_KEY = "auth";
+    private static final String ROLE_KEY = "role";
 
     private final UserDetailsService userDetailsService;
 
@@ -58,9 +59,12 @@ public class JwtTokenProvider {
 
         Date accessTokenExpiresIn = new Date(now + accessTokenValidityInMilliseconds);
 
+        String role = authorities.replace("ROLE_", "");
+
         String accessToken = Jwts.builder()
                 .subject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
+                .claim(ROLE_KEY, role)
                 .issuedAt(new Date(now))
                 .expiration(accessTokenExpiresIn)
                 .signWith(key)
