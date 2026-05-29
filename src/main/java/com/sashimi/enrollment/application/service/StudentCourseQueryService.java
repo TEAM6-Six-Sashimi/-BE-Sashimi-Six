@@ -30,6 +30,7 @@ public class StudentCourseQueryService implements StudentCourseQueryUseCase {
                 .map(summary -> {
                     EnrolledCourseInfo courseInfo = coursePort.getCourseInfo(summary.courseId());
                     return new EnrolledCourseView(
+                            summary.courseId(),
                             courseInfo.title(),
                             courseInfo.thumbnail(),
                             courseInfo.instructorName(),
