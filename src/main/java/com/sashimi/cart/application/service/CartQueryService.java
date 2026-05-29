@@ -10,7 +10,6 @@ import com.sashimi.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -50,10 +49,10 @@ public class CartQueryService implements CartQueryUseCase {
                 .map(this::toView)
                 .toList();
 
-        BigDecimal totalPrice = itemViews.stream()
+        Long totalPrice = itemViews.stream()
                 .filter(CartItemView::selected)
-                .map(CartItemView::price)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+                .mapToLong(CartItemView::price)
+                .sum();
 
         int selectedItemCount = (int) itemViews.stream()
                 .filter(CartItemView::selected)

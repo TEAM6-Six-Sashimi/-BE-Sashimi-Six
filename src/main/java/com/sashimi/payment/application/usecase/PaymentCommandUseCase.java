@@ -3,7 +3,6 @@ package com.sashimi.payment.application.usecase;
 import com.sashimi.payment.application.command.CheckoutCartCommand;
 import com.sashimi.payment.application.command.PayCourseCommand;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface PaymentCommandUseCase {
@@ -16,7 +15,7 @@ public interface PaymentCommandUseCase {
             Long orderId,
             String orderNo,
             Long paymentId,
-            BigDecimal amount,
+            Long amount,
             String status,
             List<PaidCourse> courses
     ) {
@@ -25,7 +24,7 @@ public interface PaymentCommandUseCase {
     record PaidCourse(
             Long courseId,
             String title,
-            BigDecimal price
+            Long price
     ) {
     }
 }

@@ -2,7 +2,6 @@ package com.sashimi.cart.infrastructure.persistence;
 
 
 import jakarta.persistence.*;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,8 +21,8 @@ import java.time.LocalDateTime;
         @Column(name = "cart_item_id")
         private Long id;
 
-        @Column(name = "price", nullable = false, precision = 10, scale = 2)
-        private BigDecimal price;
+        @Column(name = "price", nullable = false)
+        private Long price;
 
         @Column(name = "selected", nullable = false)
         private boolean selected;
@@ -40,7 +39,7 @@ import java.time.LocalDateTime;
         protected CartItemJpaEntity() {
         }
 
-        public CartItemJpaEntity(Long userId, Long courseId, BigDecimal price, boolean selected, LocalDateTime createdAt) {
+        public CartItemJpaEntity(Long userId, Long courseId, Long price, boolean selected, LocalDateTime createdAt) {
             this.userId = userId;
             this.courseId = courseId;
             this.price = price;
@@ -56,7 +55,7 @@ import java.time.LocalDateTime;
             return id;
         }
 
-        public BigDecimal getPrice() {
+        public Long getPrice() {
             return price;
         }
 

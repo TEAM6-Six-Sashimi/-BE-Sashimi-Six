@@ -4,6 +4,6 @@ import java.math.BigDecimal;
 
 public record ChargeCreditCommand(
         Long userId,
-        BigDecimal amount
+        Long amount
 ) {
 }

@@ -2,14 +2,13 @@ package com.sashimi.payment.presentation.api.response;
 
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public record PaymentResponse(
         Long orderId,
         String orderNo,
         Long paymentId,
-        BigDecimal amount,
+        Long amount,
         String status,
         List<PaidCourseResponse> courses
 ) {

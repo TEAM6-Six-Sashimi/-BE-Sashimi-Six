@@ -5,9 +5,10 @@ import com.sashimi.credit.application.result.CreditBalanceResult;
 import java.math.BigDecimal;
 
 public record CreditResponse(
-        BigDecimal balance
+        Long balance
 ) {
     public static CreditResponse from(CreditBalanceResult result) {
+
         return new CreditResponse(result.balance());
     }
 }

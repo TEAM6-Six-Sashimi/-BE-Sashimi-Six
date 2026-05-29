@@ -3,6 +3,7 @@ package com.sashimi.course.infrastructure.persistence;
 import com.sashimi.course.domain.model.CourseDifficulty;
 import com.sashimi.course.domain.model.CourseStatus;
 import jakarta.persistence.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -23,8 +24,8 @@ public class CourseJpaEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
+    @Column(name = "price", nullable = false)
+    private Long price;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty", nullable = false)
@@ -74,10 +75,10 @@ public class CourseJpaEntity {
     protected CourseJpaEntity() {}
 
     public CourseJpaEntity(Long instructorId, Long categoryId, String title, String description,
-                            BigDecimal price, CourseDifficulty difficulty, String thumbnail,
-                            int totalDuration, CourseStatus status, String rejectReason,
-                            BigDecimal ratingAvg, int reviewCount, int studentCount,
-                            LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime approvedAt) {
+                           Long price, CourseDifficulty difficulty, String thumbnail,
+                           int totalDuration, CourseStatus status, String rejectReason,
+                           BigDecimal ratingAvg, int reviewCount, int studentCount,
+                           LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime approvedAt) {
         this.instructorId = instructorId;
         this.categoryId = categoryId;
         this.title = title;
@@ -96,7 +97,7 @@ public class CourseJpaEntity {
         this.approvedAt = approvedAt;
     }
 
-    public void update(Long categoryId, String title, String description, BigDecimal price,
+    public void update(Long categoryId, String title, String description, Long price,
                        CourseDifficulty difficulty, String thumbnail, int totalDuration,
                        CourseStatus status, LocalDateTime updatedAt) {
         this.categoryId = categoryId;
@@ -138,7 +139,7 @@ public class CourseJpaEntity {
     public Long getCategoryId() { return categoryId; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
-    public BigDecimal getPrice() { return price; }
+    public Long getPrice() { return price; }
     public CourseDifficulty getDifficulty() { return difficulty; }
     public String getThumbnail() { return thumbnail; }
     public int getTotalDuration() { return totalDuration; }

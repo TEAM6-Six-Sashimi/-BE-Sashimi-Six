@@ -4,7 +4,6 @@ import com.sashimi.payment.domain.model.Order;
 import com.sashimi.payment.domain.model.OrderStatus;
 import jakarta.persistence.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,13 +19,13 @@ public class OrderJpaEntity {
     private String orderNo;
 
     @Column(name = "total_amount", nullable = false)
-    private BigDecimal totalAmount;
+    private Long totalAmount;
 
     @Column(name = "discount_amount", nullable = false)
-    private BigDecimal discountAmount;
+    private Long discountAmount;
 
     @Column(name = "final_amount", nullable = false)
-    private BigDecimal finalAmount;
+    private Long finalAmount;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -41,8 +40,8 @@ public class OrderJpaEntity {
     protected OrderJpaEntity() {
     }
 
-    private OrderJpaEntity(String orderNo, BigDecimal totalAmount, BigDecimal discountAmount,
-                           BigDecimal finalAmount, OrderStatus status, LocalDateTime createdAt, Long userId) {
+    private OrderJpaEntity(String orderNo, Long totalAmount, Long discountAmount,
+                           Long finalAmount, OrderStatus status, LocalDateTime createdAt, Long userId) {
         this.orderNo = orderNo;
         this.totalAmount = totalAmount;
         this.discountAmount = discountAmount;

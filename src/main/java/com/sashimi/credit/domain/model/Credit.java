@@ -3,22 +3,20 @@ package com.sashimi.credit.domain.model;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 
-import java.math.BigDecimal;
-
 public class Credit {
 
     private Long id;
     private Long userId;
-    private BigDecimal balance;
+    private Long balance;
 
-    public Credit(Long id, Long userId, BigDecimal balance) {
+    public Credit(Long id, Long userId, Long balance) {
         if (userId == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        BigDecimal safeBalance = balance == null ? BigDecimal.ZERO : balance;
+        Long safeBalance = balance == null ? 0L : balance;
 
-        if (safeBalance.compareTo(BigDecimal.ZERO) < 0) {
+        if (safeBalance < 0) {
             throw new BusinessException(ErrorCode.CREDIT_INVALID_AMOUNT);
         }
 
@@ -27,28 +25,29 @@ public class Credit {
         this.balance = safeBalance;
     }
 
-    public static Credit create(Long userId, BigDecimal initialBalance) {
+    public static Credit create(Long userId, Long initialBalance) {
         return new Credit(null, userId, initialBalance);
     }
 
-    public void add(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(ErrorCode.CREDIT_INVALID_AMOUNT);
-        }
-
-        this.balance = this.balance.add(amount);
+    public void add(Long amount) {
+        validatePositiveAmount(amount);
+        this.balance += amount;
     }
 
-    public void use(BigDecimal amount) {
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(ErrorCode.CREDIT_INVALID_AMOUNT);
-        }
+    public void use(Long amount) {
+        validatePositiveAmount(amount);
 
-        if (this.balance.compareTo(amount) < 0) {
+        if (this.balance < amount) {
             throw new BusinessException(ErrorCode.CREDIT_INSUFFICIENT_BALANCE);
         }
 
-        this.balance = this.balance.subtract(amount);
+        this.balance -= amount;
+    }
+
+    private void validatePositiveAmount(Long amount) {
+        if (amount == null || amount <= 0) {
+            throw new BusinessException(ErrorCode.CREDIT_INVALID_AMOUNT);
+        }
     }
 
     public Long getId() {
@@ -59,7 +58,7 @@ public class Credit {
         return userId;
     }
 
-    public BigDecimal getBalance() {
+    public Long getBalance() {
         return balance;
     }
 }

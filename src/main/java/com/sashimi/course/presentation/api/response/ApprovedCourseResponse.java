@@ -8,7 +8,7 @@ public record ApprovedCourseResponse(
         Long courseId,
         Long categoryId,
         String title,
-        BigDecimal price,
+        Long price,
         BigDecimal ratingAvg,
         int studentCount
 ) {

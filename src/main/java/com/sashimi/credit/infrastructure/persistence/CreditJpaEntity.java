@@ -6,7 +6,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,8 +19,8 @@ public class CreditJpaEntity {
     @Column(name = "credit_id")
     private Long id;
 
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal balance;
+    @Column(nullable = false)
+    private Long balance;
 
     @Column(name = "updated_at", insertable = false, updatable = false)
     private LocalDateTime updatedAt;
