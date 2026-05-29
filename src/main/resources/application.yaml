@@ -7,15 +7,18 @@ spring:
 
   sql:
     init:
-      ## 개발 시 never / PR 시 always
-      mode: always
-      schema-locations: classpath:schema.sql
-      data-locations: classpath:data.sql
+      mode: never
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    encoding: UTF-8
 
   jpa:
     hibernate:
       ddl-auto: none
-    defer-datasource-initialization: true
+    defer-datasource-initialization: false
     properties:
       hibernate:
         format_sql: true
