@@ -15,20 +15,20 @@ public class UserCertification {
     private String certificationName;
     private String issuedBy;
     private LocalDate issuedDate;
-    private String fileUrl;
+    private String fileName;
     private CertificationStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime deletedAt;
 
     public static UserCertification create(Long userId, String certificationName,
                                            String issuedBy, LocalDate issuedDate,
-                                           String fileUrl) {
+                                           String fileName) {
         return UserCertification.builder()
                 .userId(userId)
                 .certificationName(certificationName)
                 .issuedBy(issuedBy)
                 .issuedDate(issuedDate)
-                .fileUrl(fileUrl)
+                .fileName(fileName)
                 .status(CertificationStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();

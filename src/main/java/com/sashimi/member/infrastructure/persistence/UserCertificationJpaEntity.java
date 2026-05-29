@@ -34,8 +34,8 @@ public class UserCertificationJpaEntity {
     @Column(name = "issued_date")
     private LocalDate issuedDate;
 
-    @Column(name = "file_url")
-    private String fileUrl;
+    @Column(name = "file_name")
+    private String fileName;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -49,7 +49,7 @@ public class UserCertificationJpaEntity {
 
     @Builder
     public UserCertificationJpaEntity(Long id, Long userId, String certificationName,
-                                      String issuedBy, LocalDate issuedDate, String fileUrl,
+                                      String issuedBy, LocalDate issuedDate, String fileName,
                                       CertificationStatus status, LocalDateTime createdAt,
                                       LocalDateTime deletedAt) {
         this.id = id;
@@ -57,7 +57,7 @@ public class UserCertificationJpaEntity {
         this.certificationName = certificationName;
         this.issuedBy = issuedBy;
         this.issuedDate = issuedDate;
-        this.fileUrl = fileUrl;
+        this.fileName = fileName;
         this.status = status;
         this.createdAt = createdAt;
         this.deletedAt = deletedAt;
@@ -70,7 +70,7 @@ public class UserCertificationJpaEntity {
                 .certificationName(domain.getCertificationName())
                 .issuedBy(domain.getIssuedBy())
                 .issuedDate(domain.getIssuedDate())
-                .fileUrl(domain.getFileUrl())
+                .fileName(domain.getFileName())
                 .status(domain.getStatus())
                 .createdAt(domain.getCreatedAt())
                 .deletedAt(domain.getDeletedAt())
@@ -84,7 +84,7 @@ public class UserCertificationJpaEntity {
                 .certificationName(certificationName)
                 .issuedBy(issuedBy)
                 .issuedDate(issuedDate)
-                .fileUrl(fileUrl)
+                .fileName(fileName)
                 .status(status)
                 .createdAt(createdAt)
                 .deletedAt(deletedAt)

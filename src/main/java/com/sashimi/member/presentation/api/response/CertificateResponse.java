@@ -12,7 +12,7 @@ public record CertificateResponse(
         String certificationName,
         String issuedBy,
         LocalDate issuedDate,
-        String fileUrl,
+        String fileName,
         CertificationStatus status,
         LocalDateTime createdAt
 ) {
@@ -23,7 +23,7 @@ public record CertificateResponse(
                 domain.getCertificationName(),
                 domain.getIssuedBy(),
                 domain.getIssuedDate(),
-                domain.getFileUrl(),
+                domain.getFileName(),
                 domain.getStatus(),
                 domain.getCreatedAt()
         );
