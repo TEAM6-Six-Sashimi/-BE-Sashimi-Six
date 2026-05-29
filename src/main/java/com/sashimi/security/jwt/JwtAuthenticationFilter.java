@@ -1,5 +1,6 @@
 package com.sashimi.security.jwt;
 
+import com.sashimi.security.blacklist.TokenBlacklistService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,6 +20,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenBlacklistService tokenBlacklistService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -29,8 +31,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
-                Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (tokenBlacklistService.isBlacklisted(accessToken)) {
+                    SecurityContextHolder.clearContext();
+                } else {
+                    Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
         } catch (JwtException | IllegalArgumentException | AuthenticationException e) {
             SecurityContextHolder.clearContext();

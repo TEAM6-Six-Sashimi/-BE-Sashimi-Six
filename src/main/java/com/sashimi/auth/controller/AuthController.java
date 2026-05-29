@@ -90,8 +90,15 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@RequestBody @Valid LogoutRequestDto request) {
-        authService.logout(request.getRefreshToken());
+    public ResponseEntity<Void> logout(
+            @RequestBody @Valid LogoutRequestDto request,
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        String accessToken = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            accessToken = authHeader.substring(7);
+        }
+        authService.logout(accessToken, request.getRefreshToken());
         return ResponseEntity.noContent().build();
     }
 
