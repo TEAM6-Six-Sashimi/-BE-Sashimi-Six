@@ -1,4 +1,4 @@
-package com.sashimi.user.infrastructure.persistence;
+package com.sashimi.architecture;
 
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.model.UserStatus;

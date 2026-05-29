@@ -1,7 +1,8 @@
-package com.sashimi.user.domain.repository;
+package com.sashimi.architecture;
 
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.model.UserStatus;
+import com.sashimi.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,6 @@ public abstract class UserRepositoryContractTest {
 
     protected UserRepository userRepository;
 
-    // 각 구현체(InMemory, JPA)를 주입하는 메서드 - 하위 클래스에서 구현
     protected abstract UserRepository createRepository();
 
     @BeforeEach
