@@ -19,6 +19,7 @@ import com.sashimi.security.jwt.JwtTokenProvider;
 import com.sashimi.token.entity.RefreshToken;
 import com.sashimi.token.service.RefreshService;
 import com.sashimi.user.application.event.UserPasswordChangedEvent;
+import com.sashimi.user.application.event.UserRegisteredEvent;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import com.sashimi.user.dto.LoginIdCheckResponseDto;
@@ -95,6 +96,10 @@ public class AuthService {
                     new CreateInitialCreditCommand(savedUser.getId(), 0L)
             );
         }
+
+        eventPublisher.publishEvent(
+                new UserRegisteredEvent(savedUser.getId(), savedUser.getName(), savedUser.getEmail())
+        );
 
         return UserResponseDto.from(savedUser);
     }
