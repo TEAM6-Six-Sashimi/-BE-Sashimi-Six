@@ -88,6 +88,7 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
     private PublicCourseView toView(Course course) {
         String instructorName = instructorPort.getInstructorName(course.getInstructorId());
         return new PublicCourseView(
+                course.getId(),
                 instructorName,
                 course.getTitle(),
                 course.getPrice(),
