@@ -7,6 +7,7 @@ import com.sashimi.course.presentation.api.request.CreateCourseRequest;
 import com.sashimi.course.presentation.api.request.UpdateCourseRequest;
 import com.sashimi.course.presentation.api.response.ApprovedCourseResponse;
 import com.sashimi.course.presentation.api.response.CourseResponse;
+import com.sashimi.course.presentation.api.response.InstructorCourseDetailResponse;
 import com.sashimi.member.presentation.api.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,11 +45,10 @@ public class InstructorCourseController {
     }
 
     @GetMapping("/{courseId}")
-    public ResponseEntity<CourseResponse> getCourseDetail(
+    public ResponseEntity<InstructorCourseDetailResponse> getCourseDetail(
             @RequestHeader("X-USER-ID") Long instructorId,
             @PathVariable Long courseId) {
-        CourseResponse response = CourseResponse.from(courseQueryUseCase.getCourseDetail(courseId, instructorId));
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(InstructorCourseDetailResponse.from(courseQueryUseCase.getCourseDetail(courseId, instructorId)));
     }
 
     @PostMapping
@@ -56,7 +56,7 @@ public class InstructorCourseController {
             @RequestHeader("X-USER-ID") Long instructorId,
             @RequestBody CreateCourseRequest request) {
         List<CreateSessionCommand> sessionCommands = request.sessions().stream()
-                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), 0, 0, false, null, null, null, null))
+                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), 0, 0, s.preview(), null, null, null, null))
                 .toList();
 
         Long courseId = courseCommandUseCase.createCourse(new CreateCourseCommand(
@@ -73,7 +73,7 @@ public class InstructorCourseController {
             @PathVariable Long courseId,
             @RequestBody UpdateCourseRequest request) {
         List<CreateSessionCommand> sessionCommands = request.sessions().stream()
-                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), 0, 0, false, null, null, null, null))
+                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), 0, 0, s.preview(), null, null, null, null))
                 .toList();
 
         courseCommandUseCase.updateCourse(new UpdateCourseCommand(

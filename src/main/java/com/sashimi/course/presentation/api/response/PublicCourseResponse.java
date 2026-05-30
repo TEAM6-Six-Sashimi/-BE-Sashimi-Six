@@ -5,6 +5,7 @@ import com.sashimi.course.application.query.PublicCourseView;
 import java.math.BigDecimal;
 
 public record PublicCourseResponse(
+        Long courseId,
         String instructorName,
         String title,
         Long price,
@@ -15,6 +16,7 @@ public record PublicCourseResponse(
 ) {
     public static PublicCourseResponse from(PublicCourseView view) {
         return new PublicCourseResponse(
+                view.courseId(),
                 view.instructorName(),
                 view.title(),
                 view.price(),
