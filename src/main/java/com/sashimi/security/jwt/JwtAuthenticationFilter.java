@@ -31,9 +31,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
-                if (tokenBlacklistService.isBlacklisted(accessToken)) {
-                    SecurityContextHolder.clearContext();
-                } else {
+                boolean blacklisted = false;
+                try {
+                    blacklisted = tokenBlacklistService.isBlacklisted(accessToken);
+                } catch (Exception e) {
+                    // Redis 연결 실패 시 블랙리스트 체크를 건너뛰고 정상 인증 처리
+                }
+                if (!blacklisted) {
                     Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }

@@ -3,8 +3,12 @@ package com.sashimi.enrollment.application.service;
 import com.sashimi.enrollment.application.port.CoursePort;
 import com.sashimi.enrollment.application.port.EnrolledCourseInfo;
 import com.sashimi.enrollment.application.port.EnrollmentPort;
+import com.sashimi.enrollment.application.port.EnrollmentSummary;
+import com.sashimi.enrollment.application.query.EnrolledCourseDetailView;
 import com.sashimi.enrollment.application.query.EnrolledCourseView;
 import com.sashimi.enrollment.application.usecase.StudentCourseQueryUseCase;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,5 +43,16 @@ public class StudentCourseQueryService implements StudentCourseQueryUseCase {
                     );
                 })
                 .toList();
+    }
+
+    @Override
+    public EnrolledCourseDetailView getEnrolledCourseDetail(Long userId, Long courseId) {
+        EnrollmentSummary summary = enrollmentPort.getEnrollmentByCourse(userId, courseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_FORBIDDEN));
+        return new EnrolledCourseDetailView(
+                coursePort.getCourseDetailInfo(courseId),
+                summary.progressRate(),
+                summary.completed()
+        );
     }
 }
