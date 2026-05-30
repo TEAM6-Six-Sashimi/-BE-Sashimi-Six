@@ -9,9 +9,12 @@ import com.sashimi.cart.application.usecase.CartQueryUseCase;
 import com.sashimi.cart.presentation.api.request.AddCartItemRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemSelectionRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemsSelectionRequest;
+import com.sashimi.cart.presentation.api.response.AddCartItemResponse;
 import com.sashimi.cart.presentation.api.response.CartResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -20,6 +23,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Cart", description = "장바구니 API")
@@ -54,13 +58,29 @@ public class CartController {
 
     @Operation(summary = "장바구니 항목 추가", description = "강의를 장바구니에 추가합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "장바구니 추가 성공"),
-            @ApiResponse(responseCode = "400", description = "구매할 수 없는 강의 또는 잘못된 요청"),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "409", description = "이미 장바구니에 있거나 이미 수강 중인 강의")
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "장바구니 추가 성공",
+                    content = @Content(schema = @Schema(implementation = AddCartItemResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "구매할 수 없는 강의 또는 잘못된 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 장바구니에 있거나 이미 수강 중인 강의",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
     @PostMapping
-    public ResponseEntity<Long> addCartItem(
+    public ResponseEntity<AddCartItemResponse> addCartItem(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody @Valid AddCartItemRequest request
     ) {
@@ -68,7 +88,9 @@ public class CartController {
                 new AddCartItemCommand(principal.getId(), request.courseId())
         );
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(cartItemId);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new AddCartItemResponse(request.courseId(), cartItemId));
     }
 
     @Operation(summary = "장바구니 항목 삭제", description = "장바구니 항목 ID로 특정 항목을 삭제합니다.")
