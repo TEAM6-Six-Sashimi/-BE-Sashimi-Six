@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
@@ -15,20 +16,18 @@ public class InstructorApplication {
     private Long userId;
     private String bio;
     private String portfolioUrl;
-    private String certificationName;
-    private String issuedBy;
+    private List<InstructorCertification> certifications;
     private ApprovalStatus approvalStatus;
     private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static InstructorApplication create(Long userId, String bio, String portfolioUrl, String certificationName, String issuedBy) {
+    public static InstructorApplication create(Long userId, String bio, String portfolioUrl, List<InstructorCertification> certifications) {
         return InstructorApplication.builder()
                 .userId(userId)
                 .bio(bio)
                 .portfolioUrl(portfolioUrl)
-                .certificationName(certificationName)
-                .issuedBy(issuedBy)
+                .certifications(certifications)
                 .approvalStatus(ApprovalStatus.PENDING)
                 .createdAt(LocalDateTime.now())
                 .build();
