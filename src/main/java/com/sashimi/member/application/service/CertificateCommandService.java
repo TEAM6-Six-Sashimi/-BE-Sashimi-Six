@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -22,24 +24,10 @@ public class CertificateCommandService implements CertificateCommandUseCase {
     private final OcrPort ocrPort;
 
     @Override
-    public CertificateResponse registerCertificate(RegisterCertificateCommand command) {
-
-        OcrPort.OcrResult result = ocrPort.extractCertificateInfo(command.fileBytes(), command.fileName());
-
-        if (!result.success()) {
-            throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
-        }
-
-        UserCertification certification = UserCertification.create(
-                command.userId(),
-                result.certificationName(),
-                result.issuedBy(),
-                result.issuedDate(),
-                command.fileName()
-        );
-        certification.verify();
-        UserCertification saved = userCertificationRepository.save(certification);
-        return CertificateResponse.from(saved);
+    public List<CertificateResponse> registerCertificates(RegisterCertificateCommand command) {
+        return command.files().stream()
+                .map(file -> registerSingle(command.userId(), file))
+                .toList();
     }
 
     @Override
@@ -54,5 +42,23 @@ public class CertificateCommandService implements CertificateCommandUseCase {
 
         certification.delete();
         userCertificationRepository.save(certification);
+    }
+
+    private CertificateResponse registerSingle(Long userId, RegisterCertificateCommand.FileEntry file) {
+        OcrPort.OcrResult result = ocrPort.extractCertificateInfo(file.fileBytes(), file.fileName());
+
+        if (!result.success()) {
+            throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
+        }
+
+        UserCertification certification = UserCertification.create(
+                userId,
+                result.certificationName(),
+                result.issuedBy(),
+                result.issuedDate(),
+                file.fileName()
+        );
+        certification.verify();
+        return CertificateResponse.from(userCertificationRepository.save(certification));
     }
 }

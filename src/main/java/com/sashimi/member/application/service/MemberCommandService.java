@@ -8,6 +8,8 @@ import com.sashimi.member.application.usecase.MemberCommandUseCase;
 import com.sashimi.member.domain.model.ApprovalStatus;
 import com.sashimi.member.domain.model.InstructorApplication;
 import com.sashimi.member.domain.repository.InstructorApplicationRepository;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberCommandService implements MemberCommandUseCase {
 
     private final InstructorApplicationRepository instructorApplicationRepository;
+    private final UserRepository userRepository;
     private final OcrPort ocrPort;
 
     @Override
@@ -61,6 +64,11 @@ public class MemberCommandService implements MemberCommandUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
         application.approve();
         instructorApplicationRepository.save(application);
+
+        User user = userRepository.findById(application.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.promoteToInstructor();
+        userRepository.save(user);
     }
 
     @Override

@@ -36,18 +36,22 @@ public class CertificateController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping(value = "/{userId}/certificates", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<CertificateResponse>> registerCertificate(
+    public ResponseEntity<ApiResponse<List<CertificateResponse>>> registerCertificates(
             @PathVariable Long userId,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("files") List<MultipartFile> files
     ) throws Exception {
-        CertificateResponse response = certificateCommandUseCase.registerCertificate(
-                new RegisterCertificateCommand(
-                        userId,
-                        file.getBytes(),
-                        file.getOriginalFilename()
-                )
+        List<RegisterCertificateCommand.FileEntry> fileEntries = new java.util.ArrayList<>();
+        for (MultipartFile file : files) {
+            fileEntries.add(new RegisterCertificateCommand.FileEntry(
+                    file.getBytes(),
+                    file.getOriginalFilename()
+            ));
+        }
+
+        List<CertificateResponse> responses = certificateCommandUseCase.registerCertificates(
+                new RegisterCertificateCommand(userId, fileEntries)
         );
-        return ResponseEntity.ok(ApiResponse.of("자격증이 등록되었습니다.", response));
+        return ResponseEntity.ok(ApiResponse.of("자격증이 등록되었습니다.", responses));
     }
 
     @Operation(summary = "자격증 삭제", description = "등록된 자격증을 삭제합니다.")

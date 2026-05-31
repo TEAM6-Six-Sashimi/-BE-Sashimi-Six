@@ -80,6 +80,10 @@ public class User {
     public List<Long> getInterestCategoryIds() { return interestCategoryIds; }
     public LocalDateTime getDeactivatedAt() { return deactivatedAt; }
 
+    public void promoteToInstructor() {
+        this.role = Role.INSTRUCTOR;
+    }
+
     public void withdraw(String maskedLoginId, String maskedEmail, String encodedPassword) {
         this.status = UserStatus.DELETED;
         if (this.deactivatedAt == null) {
