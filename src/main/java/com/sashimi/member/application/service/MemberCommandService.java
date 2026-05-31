@@ -7,12 +7,16 @@ import com.sashimi.member.application.port.OcrPort;
 import com.sashimi.member.application.usecase.MemberCommandUseCase;
 import com.sashimi.member.domain.model.ApprovalStatus;
 import com.sashimi.member.domain.model.InstructorApplication;
+import com.sashimi.member.domain.model.InstructorCertification;
 import com.sashimi.member.domain.repository.InstructorApplicationRepository;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,12 +37,16 @@ public class MemberCommandService implements MemberCommandUseCase {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
 
-        // OCR 검증 - 파일 중 하나라도 성공하면 통과
-        OcrPort.OcrResult validResult = command.files().stream()
+        // OCR 검증 - 성공한 파일들 모두 수집
+        List<InstructorCertification> certifications = command.files().stream()
                 .map(f -> ocrPort.extractCertificateInfo(f.fileBytes(), f.fileName()))
                 .filter(OcrPort.OcrResult::success)
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED));
+                .map(r -> InstructorCertification.of(r.certificationName(), r.issuedBy()))
+                .collect(Collectors.toList());
+
+        if (certifications.isEmpty()) {
+            throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
+        }
 
         // 중복 신청 방지
         boolean alreadyApplied = instructorApplicationRepository
@@ -51,8 +59,7 @@ public class MemberCommandService implements MemberCommandUseCase {
                 command.userId(),
                 command.bio(),
                 command.portfolioUrl(),
-                validResult.certificationName(),
-                validResult.issuedBy()
+                certifications
         );
 
         instructorApplicationRepository.save(application);
