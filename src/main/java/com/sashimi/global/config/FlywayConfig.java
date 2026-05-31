@@ -17,6 +17,9 @@ public class FlywayConfig {
                 .locations("classpath:db/migration")
                 .baselineOnMigrate(true)
                 .encoding(StandardCharsets.UTF_8)
+
                 .load();
+
+
     }
 }

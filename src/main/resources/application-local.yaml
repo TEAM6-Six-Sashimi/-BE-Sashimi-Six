@@ -43,3 +43,7 @@ clova:
 app:
   mail:
     from: ${MAIL_FROM:no-reply@sashimi.com}
+
+file:
+  upload-dir: uploads/
+  base-url: http://localhost:8080
