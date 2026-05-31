@@ -37,8 +37,8 @@ gemini:
 
 clova:
   ocr:
-    secret-key: TW93eU96U2RhSUpJRXR6QVpJYUVxcUJRbk50d0JrQko=
-    invoke-url: https://cnitm0kz6m.apigw.ntruss.com/custom/v1/53484/6ed598fe378e0d584cb51da89de9ba074ac75e4af008751114b74abac0481f2b/general
+    secret-key: ${CLOVA_OCR_SECRET_KEY}
+    invoke-url: ${CLOVA_OCR_INVOKE_URL}
 
 app:
   mail:

@@ -33,11 +33,12 @@ public class MemberCommandService implements MemberCommandUseCase {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
 
-        // OCR 검증
-        OcrPort.OcrResult result = ocrPort.extractCertificateInfo(command.fileBytes(), command.fileName());
-        if (!result.success()) {
-            throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
-        }
+        // OCR 검증 - 파일 중 하나라도 성공하면 통과
+        OcrPort.OcrResult validResult = command.files().stream()
+                .map(f -> ocrPort.extractCertificateInfo(f.fileBytes(), f.fileName()))
+                .filter(OcrPort.OcrResult::success)
+                .findFirst()
+                .orElseThrow(() -> new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED));
 
         // 중복 신청 방지
         boolean alreadyApplied = instructorApplicationRepository
@@ -50,8 +51,8 @@ public class MemberCommandService implements MemberCommandUseCase {
                 command.userId(),
                 command.bio(),
                 command.portfolioUrl(),
-                result.certificationName(),
-                result.issuedBy()
+                validResult.certificationName(),
+                validResult.issuedBy()
         );
 
         instructorApplicationRepository.save(application);

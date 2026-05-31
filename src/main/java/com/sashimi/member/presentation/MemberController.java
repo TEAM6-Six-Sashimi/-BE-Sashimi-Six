@@ -40,15 +40,18 @@ public class MemberController {
             @PathVariable Long userId,
             @RequestPart("bio") String bio,
             @RequestPart("portfolioUrl") String portfolioUrl,
-            @RequestPart("file") MultipartFile file
+            @RequestPart("files") List<MultipartFile> files
     ) throws Exception {
+        List<ApplyInstructorCommand.FileEntry> fileEntries = new java.util.ArrayList<>();
+        for (MultipartFile file : files) {
+            fileEntries.add(new ApplyInstructorCommand.FileEntry(file.getBytes(), file.getOriginalFilename()));
+        }
         memberCommandUseCase.applyInstructor(
                 new ApplyInstructorCommand(
                         userId,
                         bio,
                         portfolioUrl,
-                        file.getBytes(),
-                        file.getOriginalFilename()
+                        fileEntries
                 )
         );
         return ResponseEntity.ok(ApiResponse.of("강사 지원이 완료되었습니다. 결과는 사내 평가 후 이메일을 통해 일주일 이내에 발송됩니다."));
