@@ -7,10 +7,12 @@ import com.sashimi.cart.application.command.UpdateCartItemsSelectionCommand;
 import com.sashimi.cart.application.usecase.CartCommandUseCase;
 import com.sashimi.cart.application.usecase.CartQueryUseCase;
 import com.sashimi.cart.presentation.api.request.AddCartItemRequest;
+import com.sashimi.cart.presentation.api.request.DeleteCartItemsRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemSelectionRequest;
 import com.sashimi.cart.presentation.api.request.UpdateCartItemsSelectionRequest;
 import com.sashimi.cart.presentation.api.response.AddCartItemResponse;
 import com.sashimi.cart.presentation.api.response.CartResponse;
+import com.sashimi.global.exception.ErrorResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,7 +25,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.ErrorResponse;
+
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Cart", description = "장바구니 API")
@@ -93,19 +95,35 @@ public class CartController {
                 .body(new AddCartItemResponse(request.courseId(), cartItemId));
     }
 
-    @Operation(summary = "장바구니 항목 삭제", description = "장바구니 항목 ID로 특정 항목을 삭제합니다.")
+    @Operation(summary = "장바구니 항목 삭제", description = "장바구니 항목 ID 목록으로 단건 또는 다건 항목을 삭제합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "장바구니 항목 삭제 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
-            @ApiResponse(responseCode = "404", description = "장바구니 항목을 찾을 수 없음")
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "장바구니 항목 삭제 성공"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 삭제 요청",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "장바구니 항목을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            )
     })
-    @DeleteMapping("/{cartItemId}")
+    @DeleteMapping
     public ResponseEntity<Void> deleteCartItem(
             @AuthenticationPrincipal CustomUserPrincipal principal,
-            @PathVariable Long cartItemId
+            @RequestBody @Valid DeleteCartItemsRequest request
     ) {
         cartCommandUseCase.deleteCartItem(
-                new DeleteCartItemCommand(principal.getId(), cartItemId)
+                new DeleteCartItemCommand(principal.getId(), request.cartItemIds())
         );
 
         return ResponseEntity.noContent().build();

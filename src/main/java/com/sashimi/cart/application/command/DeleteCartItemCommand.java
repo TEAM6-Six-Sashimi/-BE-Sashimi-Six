@@ -1,7 +1,9 @@
 package com.sashimi.cart.application.command;
 
+import java.util.List;
+
 public record DeleteCartItemCommand(
         Long userId,
-        Long cartItemId
+        List<Long> cartItemIds
 ) {
 }

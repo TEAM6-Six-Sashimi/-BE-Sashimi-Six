@@ -37,10 +37,25 @@ Authorization: Bearer {{accessToken}}
   "selected": true
 }
 
-### 장바구니 항목 삭제
-DELETE {{baseUrl}}/cart/1
+### 장바구니 항목 삭제 - 단건
+DELETE {{baseUrl}}/cart
+Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{accessToken}}
+
+{
+  "cartItemIds": [1]
+}
+
+### 장바구니 항목 삭제 - 다건
+DELETE {{baseUrl}}/cart
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "cartItemIds": [1, 2, 3]
+}
 
 ### 장바구니 결제 전 조회
 POST {{baseUrl}}/cart/checkout

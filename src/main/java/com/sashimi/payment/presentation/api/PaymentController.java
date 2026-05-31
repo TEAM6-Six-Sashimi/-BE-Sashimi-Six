@@ -1,5 +1,6 @@
 package com.sashimi.payment.presentation.api;
 
+import com.sashimi.global.exception.ErrorResponse;
 import com.sashimi.payment.application.command.CheckoutCartCommand;
 import com.sashimi.payment.application.command.PayCourseCommand;
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase;
@@ -17,7 +18,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Payment", description = "결제 API")
