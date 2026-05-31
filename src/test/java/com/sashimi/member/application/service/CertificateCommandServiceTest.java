@@ -5,10 +5,12 @@ import com.sashimi.member.application.command.RegisterCertificateCommand;
 import com.sashimi.member.application.port.OcrPort;
 import com.sashimi.member.domain.model.UserCertification;
 import com.sashimi.member.domain.repository.UserCertificationRepository;
+import com.sashimi.member.presentation.api.response.CertificateResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -34,7 +36,10 @@ class CertificateCommandServiceTest {
         // given
         byte[] fileBytes = "test".getBytes();
         String fileName = "자격증.pdf";
-        RegisterCertificateCommand command = new RegisterCertificateCommand(1L, fileBytes, fileName);
+        RegisterCertificateCommand command = new RegisterCertificateCommand(
+                1L,
+                List.of(new RegisterCertificateCommand.FileEntry(fileBytes, fileName))
+        );
 
         OcrPort.OcrResult ocrResult = new OcrPort.OcrResult(
                 "정보처리기사",
@@ -47,11 +52,11 @@ class CertificateCommandServiceTest {
         when(userCertificationRepository.save(any(UserCertification.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        // when & then
-        assertThatNoException().isThrownBy(() ->
-                certificateCommandService.registerCertificate(command)
-        );
+        // when
+        List<CertificateResponse> results = certificateCommandService.registerCertificates(command);
 
+        // then
+        assertThat(results).hasSize(1);
         verify(ocrPort).extractCertificateInfo(fileBytes, fileName);
         verify(userCertificationRepository).save(any(UserCertification.class));
     }
@@ -61,7 +66,10 @@ class CertificateCommandServiceTest {
         // given
         byte[] fileBytes = "test".getBytes();
         String fileName = "자격증.pdf";
-        RegisterCertificateCommand command = new RegisterCertificateCommand(1L, fileBytes, fileName);
+        RegisterCertificateCommand command = new RegisterCertificateCommand(
+                1L,
+                List.of(new RegisterCertificateCommand.FileEntry(fileBytes, fileName))
+        );
 
         OcrPort.OcrResult ocrResult = new OcrPort.OcrResult(null, null, null, false);
 
@@ -69,7 +77,7 @@ class CertificateCommandServiceTest {
 
         // when & then
         assertThatThrownBy(() ->
-                certificateCommandService.registerCertificate(command)
+                certificateCommandService.registerCertificates(command)
         ).isInstanceOf(BusinessException.class);
 
         verify(ocrPort).extractCertificateInfo(fileBytes, fileName);
