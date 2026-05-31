@@ -77,7 +77,11 @@ public enum ErrorCode {
 
     RESUME_NOT_FOUND(404, "RESUME_404", "이력서를 찾을 수 없습니다."),
 
-    JOB_POSTING_RECOMMENDATION_NOT_FOUND(404, "RECOMMENDATION_404", "채용공고 추천 결과를 찾을 수 없습니다.");
+    JOB_POSTING_RECOMMENDATION_NOT_FOUND(404, "RECOMMENDATION_404", "채용공고 추천 결과를 찾을 수 없습니다."),
+
+    FILE_EMPTY(400, "FILE_001", "업로드할 파일이 없습니다."),
+    FILE_INVALID_TYPE(400, "FILE_002", "지원하지 않는 파일 형식입니다. (jpg, png, gif, webp만 허용)"),
+    FILE_UPLOAD_FAILED(500, "FILE_003", "파일 업로드에 실패했습니다.");
 
 
     private final int status;

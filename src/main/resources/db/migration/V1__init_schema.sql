@@ -1,4 +1,4 @@
--- =========================
+ㅇㅇㅇ-- =========================
 -- 1. USERS
 -- =========================
 CREATE TABLE IF NOT EXISTS users (
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 CREATE TABLE IF NOT EXISTS categories (
     category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     main_category_id INT NOT NULL,
-    name ENUM('ai·데이터', '건강·자격증', '라이프·교육', '마케팅·비즈니스', '외국어', '재테크·투자', '취미·문화') NOT NULL,
+    name ENUM('IT·정보통신', '경영·회계', '디자인', '건설·안전', '식품·조리', '부동산·금융', '어학') NOT NULL,
     sub_category VARCHAR(100) NOT NULL,
     sort_order INT NOT NULL DEFAULT 0,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,

@@ -1,104 +1,95 @@
-INSERT IGNORE INTO courses
+-- 강의 카테고리,상세정보 더이데이터 변경
+
+ALTER TABLE categories MODIFY COLUMN name VARCHAR(100) NOT NULL;
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE course_sessions;
+TRUNCATE TABLE courses;
+TRUNCATE TABLE categories;
+SET FOREIGN_KEY_CHECKS = 1;
+
+INSERT IGNORE INTO categories (main_category_id, name, sub_category, sort_order, is_active)
+VALUES
+    (1, 'IT·정보통신', '정보처리기사', 1, TRUE),
+    (1, 'IT·정보통신', '정보보안기사', 2, TRUE),
+    (1, 'IT·정보통신', '네트워크관리사', 3, TRUE),
+    (1, 'IT·정보통신', '빅데이터분석기사', 4, TRUE),
+    (1, 'IT·정보통신', 'ADsP', 5, TRUE),
+    (1, 'IT·정보통신', 'SQLD', 6, TRUE),
+    (2, '경영·회계', '전산회계', 7, TRUE),
+    (2, '경영·회계', '재경관리사', 8, TRUE),
+    (2, '경영·회계', '물류관리사', 9, TRUE),
+    (2, '경영·회계', '사회조사분석사', 10, TRUE),
+    (2, '경영·회계', '유통관리사', 11, TRUE),
+    (3, '디자인', '컴퓨터그래픽스운용기능사', 12, TRUE),
+    (3, '디자인', '시각디자인산업기사', 13, TRUE),
+    (3, '디자인', '웹디자인기능사', 14, TRUE),
+    (3, '디자인', '실내건축기능사', 15, TRUE),
+    (4, '건설·안전', '산업안전기사', 16, TRUE),
+    (4, '건설·안전', '건설안전기사', 17, TRUE),
+    (4, '건설·안전', '소방설비기사', 18, TRUE),
+    (4, '건설·안전', '위험물산업기사', 19, TRUE),
+    (5, '식품·조리', '조리기능사', 20, TRUE),
+    (5, '식품·조리', '제과기능사', 21, TRUE),
+    (5, '식품·조리', '제빵기능사', 22, TRUE),
+    (5, '식품·조리', '식품기사', 23, TRUE),
+    (5, '식품·조리', '영양사', 24, TRUE),
+    (6, '부동산·금융', '공인중개사', 25, TRUE),
+    (6, '부동산·금융', '주택관리사', 26, TRUE),
+    (6, '부동산·금융', '감정평가사', 27, TRUE),
+    (7, '어학', '한국어교원자격증', 28, TRUE),
+    (7, '어학', '관광통역안내사', 29, TRUE);
+
+
+
+INSERT INTO courses
 (title, description, price, difficulty, thumbnail, total_duration, status, reject_reason, rating_avg, review_count, student_count, created_at, approved_at, category_id, instructor_id)
 VALUES
-    -- IT·정보통신 (category_id: 1)
-    -- 정보처리기사 (sub_category 1)
+    -- IT·정보통신
     ('정보처리기사 필기 완전정복', '최신 출제기준에 맞춘 정보처리기사 필기 핵심 이론과 기출문제 풀이 강의입니다.', 55000, 'INTERMEDIATE', 'thumbnails/it_cert.jpg', 480, 'APPROVED', NULL, 4.80, 312, 2100, '2025-01-05 09:00:00', '2025-01-07 10:00:00', 1, 2),
     ('정보처리기사 실기 단기합격', '실기 시험에 자주 나오는 핵심 알고리즘과 SQL을 집중적으로 학습합니다.', 65000, 'INTERMEDIATE', 'thumbnails/it_cert2.jpg', 560, 'APPROVED', NULL, 4.75, 278, 1850, '2025-01-08 09:00:00', '2025-01-10 10:00:00', 1, 3),
-
-    -- 정보보안기사 (sub_category 2)
     ('정보보안기사 합격 로드맵', '보안 이론부터 실습까지, 정보보안기사 자격증 취득을 위한 체계적인 커리큘럼입니다.', 70000, 'ADVANCED', 'thumbnails/security_cert.jpg', 620, 'APPROVED', NULL, 4.82, 195, 980, '2025-01-12 09:00:00', '2025-01-14 10:00:00', 2, 2),
+    ('네트워크관리사 2급 한번에 끝내기', '네트워크 기초 개념부터 실전 문제까지 네트워크관리사 2급 시험 대비 완성 강의입니다.', 45000, 'BEGINNER', 'thumbnails/network_cert.jpg', 390, 'APPROVED', NULL, 4.70, 143, 760, '2025-01-15 09:00:00', '2025-01-17 10:00:00', 3, 3),
+    ('빅데이터분석기사 필기+실기 패키지', 'R과 Python을 활용한 빅데이터 분석 실무 중심의 자격증 취득 강의입니다.', 80000, 'ADVANCED', 'thumbnails/bigdata_cert.jpg', 700, 'APPROVED', NULL, 4.88, 224, 1340, '2025-01-18 09:00:00', '2025-01-20 10:00:00', 4, 2),
+    ('ADsP 데이터분석 준전문가 단기완성', 'ADsP 시험의 핵심 개념과 기출 유형을 빠르게 정리하는 단기 합격 전략 강의입니다.', 40000, 'BEGINNER', 'thumbnails/adsp_cert.jpg', 300, 'APPROVED', NULL, 4.72, 168, 920, '2025-01-20 09:00:00', '2025-01-22 10:00:00', 5, 3),
+    ('SQLD 자격증 SQL 기초부터 합격까지', 'SQL 기본 문법부터 SQLD 시험 핵심 포인트까지 한 번에 정리하는 강의입니다.', 42000, 'BEGINNER', 'thumbnails/sqld_cert.jpg', 350, 'APPROVED', NULL, 4.78, 201, 1150, '2025-01-22 09:00:00', '2025-01-24 10:00:00', 6, 2),
 
-    -- 네트워크관리사 (sub_category 3)
-    ('네트워크관리사 2급 한번에 끝내기', '네트워크 기초 개념부터 실전 문제까지 네트워크관리사 2급 시험 대비 완성 강의입니다.', 45000, 'BEGINNER', 'thumbnails/network_cert.jpg', 390, 'APPROVED', NULL, 4.70, 143, 760, '2025-01-15 09:00:00', '2025-01-17 10:00:00', 3, 4),
+    -- 경영·회계
+    ('전산회계 1급 실전 완성', 'KcLep 프로그램 실습과 함께 전산회계 1급 이론을 완벽하게 정리하는 강의입니다.', 48000, 'INTERMEDIATE', 'thumbnails/accounting_cert.jpg', 420, 'APPROVED', NULL, 4.76, 185, 1020, '2025-02-01 09:00:00', '2025-02-03 10:00:00', 7, 3),
+    ('전산회계 2급 초보자 입문', '회계 지식이 전혀 없어도 시작할 수 있는 전산회계 2급 입문 강의입니다.', 35000, 'BEGINNER', 'thumbnails/accounting_cert2.jpg', 280, 'APPROVED', NULL, 4.65, 142, 880, '2025-02-03 09:00:00', '2025-02-05 10:00:00', 7, 2),
+    ('재경관리사 재무회계·세무·원가 통합반', '재무회계, 세무회계, 원가관리회계를 한 번에 준비하는 재경관리사 합격 강의입니다.', 75000, 'ADVANCED', 'thumbnails/finance_cert.jpg', 680, 'APPROVED', NULL, 4.83, 167, 740, '2025-02-05 09:00:00', '2025-02-07 10:00:00', 8, 3),
+    ('물류관리사 한번에 합격하기', '물류 관련 법규와 실무를 체계적으로 정리한 물류관리사 자격증 대비 강의입니다.', 50000, 'INTERMEDIATE', 'thumbnails/logistics_cert.jpg', 440, 'APPROVED', NULL, 4.68, 123, 610, '2025-02-08 09:00:00', '2025-02-10 10:00:00', 9, 2),
+    ('사회조사분석사 2급 핵심정리', '설문 설계부터 데이터 분석까지, 사회조사분석사 2급 합격을 위한 핵심 강의입니다.', 45000, 'INTERMEDIATE', 'thumbnails/social_cert.jpg', 380, 'APPROVED', NULL, 4.71, 98, 520, '2025-02-10 09:00:00', '2025-02-12 10:00:00', 10, 3),
+    ('유통관리사 2급 단기 합격전략', '유통 산업의 핵심 이론과 최신 기출문제를 바탕으로 단기 합격을 목표로 하는 강의입니다.', 42000, 'BEGINNER', 'thumbnails/distribution_cert.jpg', 320, 'APPROVED', NULL, 4.66, 115, 670, '2025-02-12 09:00:00', '2025-02-14 10:00:00', 11, 2),
 
-    -- 빅데이터분석기사 (sub_category 4)
-    ('빅데이터분석기사 필기+실기 패키지', 'R과 Python을 활용한 빅데이터 분석 실무 중심의 자격증 취득 강의입니다.', 80000, 'ADVANCED', 'thumbnails/bigdata_cert.jpg', 700, 'APPROVED', NULL, 4.88, 224, 1340, '2025-01-18 09:00:00', '2025-01-20 10:00:00', 4, 3),
+    -- 디자인
+    ('컴퓨터그래픽스운용기능사 실기 완성', '포토샵·일러스트레이터를 활용한 컴퓨터그래픽스운용기능사 실기 합격 강의입니다.', 55000, 'INTERMEDIATE', 'thumbnails/cg_cert.jpg', 500, 'APPROVED', NULL, 4.79, 178, 890, '2025-03-01 09:00:00', '2025-03-03 10:00:00', 12, 3),
+    ('시각디자인산업기사 이론+실기 패키지', '시각디자인의 이론 기초부터 실기 작품 제작까지 완성하는 종합 강의입니다.', 65000, 'INTERMEDIATE', 'thumbnails/visual_cert.jpg', 580, 'APPROVED', NULL, 4.74, 134, 620, '2025-03-05 09:00:00', '2025-03-07 10:00:00', 13, 2),
+    ('웹디자인기능사 HTML·CSS 실전', 'HTML, CSS, 자바스크립트를 활용한 웹디자인기능사 실기 완벽 대비 강의입니다.', 50000, 'BEGINNER', 'thumbnails/web_cert.jpg', 420, 'APPROVED', NULL, 4.81, 209, 1100, '2025-03-08 09:00:00', '2025-03-10 10:00:00', 14, 3),
+    ('실내건축기능사 도면 실기 완성', '실내 공간 설계와 도면 작성법을 중심으로 실내건축기능사 합격을 준비하는 강의입니다.', 58000, 'INTERMEDIATE', 'thumbnails/interior_cert.jpg', 460, 'APPROVED', NULL, 4.69, 112, 530, '2025-03-12 09:00:00', '2025-03-14 10:00:00', 15, 2),
 
-    -- ADsP (sub_category 5)
-    ('ADsP 데이터분석 준전문가 단기완성', 'ADsP 시험의 핵심 개념과 기출 유형을 빠르게 정리하는 단기 합격 전략 강의입니다.', 40000, 'BEGINNER', 'thumbnails/adsp_cert.jpg', 300, 'APPROVED', NULL, 4.72, 168, 920, '2025-01-20 09:00:00', '2025-01-22 10:00:00', 5, 2),
+    -- 건설·안전
+    ('산업안전기사 필기 핵심 요약', '산업안전 법규와 기준을 빠르게 정리하고 기출 문제로 실전 감각을 키우는 강의입니다.', 52000, 'INTERMEDIATE', 'thumbnails/safety_cert.jpg', 430, 'APPROVED', NULL, 4.77, 156, 840, '2025-04-01 09:00:00', '2025-04-03 10:00:00', 16, 3),
+    ('건설안전기사 이론 완전정복', '건설현장 안전관리 이론과 관계 법령을 체계적으로 학습하는 강의입니다.', 55000, 'INTERMEDIATE', 'thumbnails/construction_cert.jpg', 470, 'APPROVED', NULL, 4.72, 132, 680, '2025-04-05 09:00:00', '2025-04-07 10:00:00', 17, 2),
+    ('소방설비기사 전기·기계 통합반', '소방설비기사 전기분야와 기계분야를 함께 준비하는 통합 합격 전략 강의입니다.', 70000, 'ADVANCED', 'thumbnails/fire_cert.jpg', 640, 'APPROVED', NULL, 4.80, 148, 720, '2025-04-08 09:00:00', '2025-04-10 10:00:00', 18, 3),
+    ('위험물산업기사 단기 합격 전략', '위험물 관련 법규와 화학 이론을 집중 정리한 위험물산업기사 대비 강의입니다.', 45000, 'INTERMEDIATE', 'thumbnails/hazmat_cert.jpg', 360, 'APPROVED', NULL, 4.67, 104, 510, '2025-04-12 09:00:00', '2025-04-14 10:00:00', 19, 2),
 
-    -- SQLD (sub_category 6)
-    ('SQLD 자격증 SQL 기초부터 합격까지', 'SQL 기본 문법부터 SQLD 시험 핵심 포인트까지 한 번에 정리하는 강의입니다.', 42000, 'BEGINNER', 'thumbnails/sqld_cert.jpg', 350, 'APPROVED', NULL, 4.78, 201, 1150, '2025-01-22 09:00:00', '2025-01-24 10:00:00', 6, 4),
+    -- 식품·조리
+    ('한식조리기능사 실기 완성', '한식 조리 실기 시험의 20가지 과제를 하나씩 완벽하게 정복하는 강의입니다.', 48000, 'BEGINNER', 'thumbnails/korean_cook.jpg', 400, 'APPROVED', NULL, 4.85, 267, 1580, '2025-05-01 09:00:00', '2025-05-03 10:00:00', 20, 3),
+    ('양식조리기능사 실기 마스터', '양식 조리 실기 과제 전 메뉴를 반복 실습하며 합격 실력을 키우는 강의입니다.', 48000, 'BEGINNER', 'thumbnails/western_cook.jpg', 380, 'APPROVED', NULL, 4.78, 198, 1120, '2025-05-03 09:00:00', '2025-05-05 10:00:00', 20, 2),
+    ('제과기능사 실기 완벽 대비', '제과 실기 시험 과제별 레시피와 핵심 포인트를 집중 정리한 합격 강의입니다.', 50000, 'BEGINNER', 'thumbnails/confectionery_cert.jpg', 410, 'APPROVED', NULL, 4.82, 215, 1230, '2025-05-05 09:00:00', '2025-05-07 10:00:00', 21, 3),
+    ('제빵기능사 실기 한번에 합격', '빵 반죽부터 완성까지, 제빵기능사 실기 전 과제를 체계적으로 학습하는 강의입니다.', 50000, 'BEGINNER', 'thumbnails/baking_cert.jpg', 410, 'APPROVED', NULL, 4.80, 187, 1050, '2025-05-08 09:00:00', '2025-05-10 10:00:00', 22, 2),
+    ('식품기사 필기 핵심이론 총정리', '식품화학, 식품위생, 식품가공 등 필기 핵심 이론을 체계적으로 정리하는 강의입니다.', 58000, 'INTERMEDIATE', 'thumbnails/food_cert.jpg', 490, 'APPROVED', NULL, 4.73, 143, 710, '2025-05-12 09:00:00', '2025-05-14 10:00:00', 23, 3),
+    ('영양사 국가시험 합격 전략', '영양사 국가시험 전 과목을 체계적으로 정리하고 기출문제로 실전 대비하는 강의입니다.', 75000, 'ADVANCED', 'thumbnails/nutritionist_cert.jpg', 660, 'APPROVED', NULL, 4.84, 176, 820, '2025-05-15 09:00:00', '2025-05-17 10:00:00', 24, 2),
 
-    -- 경영·회계 (category_id: 2)
-    -- 전산회계 (sub_category 7)
-    ('전산회계 1급 실전 완성', 'KcLep 프로그램 실습과 함께 전산회계 1급 이론을 완벽하게 정리하는 강의입니다.', 48000, 'INTERMEDIATE', 'thumbnails/accounting_cert.jpg', 420, 'APPROVED', NULL, 4.76, 185, 1020, '2025-02-01 09:00:00', '2025-02-03 10:00:00', 7, 5),
-    ('전산회계 2급 초보자 입문', '회계 지식이 전혀 없어도 시작할 수 있는 전산회계 2급 입문 강의입니다.', 35000, 'BEGINNER', 'thumbnails/accounting_cert2.jpg', 280, 'APPROVED', NULL, 4.65, 142, 880, '2025-02-03 09:00:00', '2025-02-05 10:00:00', 7, 5),
+    -- 부동산·금융
+    ('공인중개사 1차 민법 완전정복', '공인중개사 1차 시험의 핵심 과목인 민법 및 민사특별법을 집중 학습하는 강의입니다.', 80000, 'ADVANCED', 'thumbnails/realtor_cert1.jpg', 720, 'APPROVED', NULL, 4.86, 345, 2300, '2025-06-01 09:00:00', '2025-06-03 10:00:00', 25, 3),
+    ('공인중개사 2차 부동산공법 완성', '공인중개사 2차 시험 부동산공법과 중개사법을 핵심 위주로 정리하는 강의입니다.', 80000, 'ADVANCED', 'thumbnails/realtor_cert2.jpg', 700, 'APPROVED', NULL, 4.83, 312, 2100, '2025-06-03 09:00:00', '2025-06-05 10:00:00', 25, 2),
+    ('주택관리사 1차 회계원리·시설개론', '주택관리사 1차 시험 핵심 과목을 한 번에 정리하는 단기 합격 강의입니다.', 72000, 'ADVANCED', 'thumbnails/housing_cert.jpg', 650, 'APPROVED', NULL, 4.79, 198, 1050, '2025-06-08 09:00:00', '2025-06-10 10:00:00', 26, 3),
+    ('감정평가사 1차 경제학원론 기초', '감정평가사 1차 시험 경제학원론을 기초부터 심화까지 완벽하게 준비하는 강의입니다.', 90000, 'ADVANCED', 'thumbnails/appraiser_cert.jpg', 780, 'APPROVED', NULL, 4.87, 134, 580, '2025-06-12 09:00:00', '2025-06-14 10:00:00', 27, 2),
 
-    -- 재경관리사 (sub_category 8)
-    ('재경관리사 재무회계·세무·원가 통합반', '재무회계, 세무회계, 원가관리회계를 한 번에 준비하는 재경관리사 합격 강의입니다.', 75000, 'ADVANCED', 'thumbnails/finance_cert.jpg', 680, 'APPROVED', NULL, 4.83, 167, 740, '2025-02-05 09:00:00', '2025-02-07 10:00:00', 8, 5),
-
-    -- 물류관리사 (sub_category 9)
-    ('물류관리사 한번에 합격하기', '물류 관련 법규와 실무를 체계적으로 정리한 물류관리사 자격증 대비 강의입니다.', 50000, 'INTERMEDIATE', 'thumbnails/logistics_cert.jpg', 440, 'APPROVED', NULL, 4.68, 123, 610, '2025-02-08 09:00:00', '2025-02-10 10:00:00', 9, 6),
-
-    -- 사회조사분석사 (sub_category 10)
-    ('사회조사분석사 2급 핵심정리', '설문 설계부터 데이터 분석까지, 사회조사분석사 2급 합격을 위한 핵심 강의입니다.', 45000, 'INTERMEDIATE', 'thumbnails/social_cert.jpg', 380, 'APPROVED', NULL, 4.71, 98, 520, '2025-02-10 09:00:00', '2025-02-12 10:00:00', 10, 6),
-
-    -- 유통관리사 (sub_category 11)
-    ('유통관리사 2급 단기 합격전략', '유통 산업의 핵심 이론과 최신 기출문제를 바탕으로 단기 합격을 목표로 하는 강의입니다.', 42000, 'BEGINNER', 'thumbnails/distribution_cert.jpg', 320, 'APPROVED', NULL, 4.66, 115, 670, '2025-02-12 09:00:00', '2025-02-14 10:00:00', 11, 6),
-
-    -- 디자인 (category_id: 3)
-    -- 컴퓨터그래픽스운용기능사 (sub_category 12)
-    ('컴퓨터그래픽스운용기능사 실기 완성', '포토샵·일러스트레이터를 활용한 컴퓨터그래픽스운용기능사 실기 합격 강의입니다.', 55000, 'INTERMEDIATE', 'thumbnails/cg_cert.jpg', 500, 'APPROVED', NULL, 4.79, 178, 890, '2025-03-01 09:00:00', '2025-03-03 10:00:00', 12, 7),
-
-    -- 시각디자인산업기사 (sub_category 13)
-    ('시각디자인산업기사 이론+실기 패키지', '시각디자인의 이론 기초부터 실기 작품 제작까지 완성하는 종합 강의입니다.', 65000, 'INTERMEDIATE', 'thumbnails/visual_cert.jpg', 580, 'APPROVED', NULL, 4.74, 134, 620, '2025-03-05 09:00:00', '2025-03-07 10:00:00', 13, 7),
-
-    -- 웹디자인기능사 (sub_category 14)
-    ('웹디자인기능사 HTML·CSS 실전', 'HTML, CSS, 자바스크립트를 활용한 웹디자인기능사 실기 완벽 대비 강의입니다.', 50000, 'BEGINNER', 'thumbnails/web_cert.jpg', 420, 'APPROVED', NULL, 4.81, 209, 1100, '2025-03-08 09:00:00', '2025-03-10 10:00:00', 14, 7),
-
-    -- 실내건축기능사 (sub_category 15)
-    ('실내건축기능사 도면 실기 완성', '실내 공간 설계와 도면 작성법을 중심으로 실내건축기능사 합격을 준비하는 강의입니다.', 58000, 'INTERMEDIATE', 'thumbnails/interior_cert.jpg', 460, 'APPROVED', NULL, 4.69, 112, 530, '2025-03-12 09:00:00', '2025-03-14 10:00:00', 15, 7),
-
-    -- 건설·안전 (category_id: 4)
-    -- 산업안전기사 (sub_category 16)
-    ('산업안전기사 필기 핵심 요약', '산업안전 법규와 기준을 빠르게 정리하고 기출 문제로 실전 감각을 키우는 강의입니다.', 52000, 'INTERMEDIATE', 'thumbnails/safety_cert.jpg', 430, 'APPROVED', NULL, 4.77, 156, 840, '2025-04-01 09:00:00', '2025-04-03 10:00:00', 16, 8),
-
-    -- 건설안전기사 (sub_category 17)
-    ('건설안전기사 이론 완전정복', '건설현장 안전관리 이론과 관계 법령을 체계적으로 학습하는 강의입니다.', 55000, 'INTERMEDIATE', 'thumbnails/construction_cert.jpg', 470, 'APPROVED', NULL, 4.72, 132, 680, '2025-04-05 09:00:00', '2025-04-07 10:00:00', 17, 8),
-
-    -- 소방설비기사 (sub_category 18)
-    ('소방설비기사 전기·기계 통합반', '소방설비기사 전기분야와 기계분야를 함께 준비하는 통합 합격 전략 강의입니다.', 70000, 'ADVANCED', 'thumbnails/fire_cert.jpg', 640, 'APPROVED', NULL, 4.80, 148, 720, '2025-04-08 09:00:00', '2025-04-10 10:00:00', 18, 8),
-
-    -- 위험물산업기사 (sub_category 19)
-    ('위험물산업기사 단기 합격 전략', '위험물 관련 법규와 화학 이론을 집중 정리한 위험물산업기사 대비 강의입니다.', 45000, 'INTERMEDIATE', 'thumbnails/hazmat_cert.jpg', 360, 'APPROVED', NULL, 4.67, 104, 510, '2025-04-12 09:00:00', '2025-04-14 10:00:00', 19, 8),
-
-    -- 식품·조리 (category_id: 5)
-    -- 조리기능사 (sub_category 20)
-    ('한식조리기능사 실기 완성', '한식 조리 실기 시험의 20가지 과제를 하나씩 완벽하게 정복하는 강의입니다.', 48000, 'BEGINNER', 'thumbnails/korean_cook.jpg', 400, 'APPROVED', NULL, 4.85, 267, 1580, '2025-05-01 09:00:00', '2025-05-03 10:00:00', 20, 9),
-    ('양식조리기능사 실기 마스터', '양식 조리 실기 과제 전 메뉴를 반복 실습하며 합격 실력을 키우는 강의입니다.', 48000, 'BEGINNER', 'thumbnails/western_cook.jpg', 380, 'APPROVED', NULL, 4.78, 198, 1120, '2025-05-03 09:00:00', '2025-05-05 10:00:00', 20, 9),
-
-    -- 제과기능사 (sub_category 21)
-    ('제과기능사 실기 완벽 대비', '제과 실기 시험 과제별 레시피와 핵심 포인트를 집중 정리한 합격 강의입니다.', 50000, 'BEGINNER', 'thumbnails/confectionery_cert.jpg', 410, 'APPROVED', NULL, 4.82, 215, 1230, '2025-05-05 09:00:00', '2025-05-07 10:00:00', 21, 9),
-
-    -- 제빵기능사 (sub_category 22)
-    ('제빵기능사 실기 한번에 합격', '빵 반죽부터 완성까지, 제빵기능사 실기 전 과제를 체계적으로 학습하는 강의입니다.', 50000, 'BEGINNER', 'thumbnails/baking_cert.jpg', 410, 'APPROVED', NULL, 4.80, 187, 1050, '2025-05-08 09:00:00', '2025-05-10 10:00:00', 22, 9),
-
-    -- 식품기사 (sub_category 23)
-    ('식품기사 필기 핵심이론 총정리', '식품화학, 식품위생, 식품가공 등 필기 핵심 이론을 체계적으로 정리하는 강의입니다.', 58000, 'INTERMEDIATE', 'thumbnails/food_cert.jpg', 490, 'APPROVED', NULL, 4.73, 143, 710, '2025-05-12 09:00:00', '2025-05-14 10:00:00', 23, 9),
-
-    -- 영양사 (sub_category 24)
-    ('영양사 국가시험 합격 전략', '영양사 국가시험 전 과목을 체계적으로 정리하고 기출문제로 실전 대비하는 강의입니다.', 75000, 'ADVANCED', 'thumbnails/nutritionist_cert.jpg', 660, 'APPROVED', NULL, 4.84, 176, 820, '2025-05-15 09:00:00', '2025-05-17 10:00:00', 24, 9),
-
-    -- 부동산·금융 (category_id: 6)
-    -- 공인중개사 (sub_category 25)
-    ('공인중개사 1차 민법 완전정복', '공인중개사 1차 시험의 핵심 과목인 민법 및 민사특별법을 집중 학습하는 강의입니다.', 80000, 'ADVANCED', 'thumbnails/realtor_cert1.jpg', 720, 'APPROVED', NULL, 4.86, 345, 2300, '2025-06-01 09:00:00', '2025-06-03 10:00:00', 25, 10),
-    ('공인중개사 2차 부동산공법 완성', '공인중개사 2차 시험 부동산공법과 중개사법을 핵심 위주로 정리하는 강의입니다.', 80000, 'ADVANCED', 'thumbnails/realtor_cert2.jpg', 700, 'APPROVED', NULL, 4.83, 312, 2100, '2025-06-03 09:00:00', '2025-06-05 10:00:00', 25, 10),
-
-    -- 주택관리사 (sub_category 26)
-    ('주택관리사 1차 회계원리·시설개론', '주택관리사 1차 시험 핵심 과목을 한 번에 정리하는 단기 합격 강의입니다.', 72000, 'ADVANCED', 'thumbnails/housing_cert.jpg', 650, 'APPROVED', NULL, 4.79, 198, 1050, '2025-06-08 09:00:00', '2025-06-10 10:00:00', 26, 10),
-
-    -- 감정평가사 (sub_category 27)
-    ('감정평가사 1차 경제학원론 기초', '감정평가사 1차 시험 경제학원론을 기초부터 심화까지 완벽하게 준비하는 강의입니다.', 90000, 'ADVANCED', 'thumbnails/appraiser_cert.jpg', 780, 'APPROVED', NULL, 4.87, 134, 580, '2025-06-12 09:00:00', '2025-06-14 10:00:00', 27, 10),
-
-    -- 어학 (category_id: 7)
-    -- 한국어교원자격증 (sub_category 28)
-    ('한국어교원자격증 2급 취득 완성', '외국어로서의 한국어 교육 이론과 실습을 통해 한국어교원자격증 2급을 취득하는 강의입니다.', 68000, 'INTERMEDIATE', 'thumbnails/korean_teacher.jpg', 580, 'APPROVED', NULL, 4.81, 167, 780, '2025-07-01 09:00:00', '2025-07-03 10:00:00', 28, 11),
-
-    -- 관광통역안내사 (sub_category 29)
-    ('관광통역안내사 영어 필기+면접 완성', '관광법규, 관광학개론부터 영어 면접까지 관광통역안내사 합격의 모든 것을 담은 강의입니다.', 75000, 'ADVANCED', 'thumbnails/tour_guide.jpg', 640, 'APPROVED', NULL, 4.83, 145, 670, '2025-07-05 09:00:00', '2025-07-07 10:00:00', 29, 11);
-
+    -- 어학
+    ('한국어교원자격증 2급 취득 완성', '외국어로서의 한국어 교육 이론과 실습을 통해 한국어교원자격증 2급을 취득하는 강의입니다.', 68000, 'INTERMEDIATE', 'thumbnails/korean_teacher.jpg', 580, 'APPROVED', NULL, 4.81, 167, 780, '2025-07-01 09:00:00', '2025-07-03 10:00:00', 28, 3),
+    ('관광통역안내사 영어 필기+면접 완성', '관광법규, 관광학개론부터 영어 면접까지 관광통역안내사 합격의 모든 것을 담은 강의입니다.', 75000, 'ADVANCED', 'thumbnails/tour_guide.jpg', 640, 'APPROVED', NULL, 4.83, 145, 670, '2025-07-05 09:00:00', '2025-07-07 10:00:00', 29, 2);
 
 INSERT IGNORE INTO course_sessions
 (session_uid, title, video_url, duration_seconds, session_order, is_preview, course_id)
@@ -285,41 +276,3 @@ VALUES
     (UUID(), '관광학개론 이론 완성', '/videos/course33/session2.mp4', 2400, 2, FALSE, 33),
     (UUID(), '영어 면접 실전 대비', '/videos/course33/session3.mp4', 2700, 3, FALSE, 33),
     (UUID(), '모의 면접 특강', '/videos/course33/session4.mp4', 2100, 4, FALSE, 33);
-
-INSERT IGNORE INTO orders
-(order_no, total_amount, discount_amount, final_amount, status, user_id)
-VALUES
-    ('ORD-20260521-0001', 108000, 10000, 98000, 'PAID', 4),
-    ('ORD-20260521-0002', 59000, 0, 59000, 'PAID', 5),
-    ('ORD-20260521-0003', 39000, 0, 39000, 'PENDING', 6);
-
-INSERT IGNORE INTO order_items
-(course_title, price, discount_amount, final_price, order_id, course_id)
-VALUES
-    ('ChatGPT로 업무 자동화 완성하기', 49000, 5000, 44000, 1, 1),
-    ('프롬프트 엔지니어링 마스터 클래스', 59000, 5000, 54000, 1, 2),
-    ('Midjourney로 AI 이미지 생성 입문', 39000, 0, 39000, 2, 3),
-    ('ChatGPT로 업무 자동화 완성하기', 49000, 0, 49000, 3, 1);
-
-INSERT IGNORE INTO payments
-(amount, status, paid_at, order_id, user_id)
-VALUES
-    (98000, 'PAID', NOW(), 1, 4),
-    (39000, 'PAID', NOW(), 2, 5),
-    (39000, 'READY', NULL, 3, 6);
-
-INSERT IGNORE INTO enrollments
-(enrollment_type, progress_rate, is_completed, enrolled_at, completed_at, order_item_id, course_id, user_id)
-VALUES
-    ('PAID', 66.67, FALSE, NOW(), NULL, 1, 1, 4),
-    ('PAID', 20.00, FALSE, NOW(), NULL, 2, 2, 4),
-    ('PAID', 100.00, TRUE, NOW(), NOW(), 3, 3, 5);
-
-INSERT IGNORE INTO notification_settings
-(qna_notification, payment_notification, marketing_notification, email_enabled, push_enabled, user_id)
-VALUES
-    (TRUE, TRUE, FALSE, TRUE, TRUE, 4),
-    (TRUE, TRUE, TRUE, TRUE, TRUE, 5),
-    (TRUE, FALSE, FALSE, TRUE, FALSE, 6),
-    (TRUE, TRUE, FALSE, TRUE, TRUE, 2),
-    (TRUE, TRUE, FALSE, TRUE, TRUE, 3);
