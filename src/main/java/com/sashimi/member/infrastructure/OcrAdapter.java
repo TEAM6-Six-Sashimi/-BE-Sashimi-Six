@@ -134,7 +134,7 @@ public class OcrAdapter implements OcrPort {
     private LocalDate extractIssueDate(String text) {
         // 띄어쓰기 포함한 "합격일자" 패턴
         Pattern passPattern = Pattern.compile(
-                "합\\s*격\\s*일\\s*자\\s*(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일"
+                "합\\s*격\\s*일\\s*자\\s*:?\\s*(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일"
         );
         Matcher passMatcher = passPattern.matcher(text);
         if (passMatcher.find()) {
