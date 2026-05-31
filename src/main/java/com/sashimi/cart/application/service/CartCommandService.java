@@ -56,10 +56,24 @@ public class CartCommandService implements CartCommandUseCase {
 
     @Override
     public void deleteCartItem(DeleteCartItemCommand command) {
-        CartItem cartItem = cartItemRepository.findByIdAndUserId(command.cartItemId(), command.userId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.CART_ITEM_NOT_FOUND));
+        if (command.userId() == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
 
-        cartItemRepository.delete(cartItem);
+        if (command.cartItemIds() == null || command.cartItemIds().isEmpty()) {
+            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
+        }
+
+        for (Long cartItemId : command.cartItemIds()) {
+            if (cartItemId == null) {
+                throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
+            }
+
+            CartItem cartItem = cartItemRepository.findByIdAndUserId(cartItemId, command.userId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.CART_ITEM_NOT_FOUND));
+
+            cartItemRepository.delete(cartItem);
+        }
     }
 
     @Override
