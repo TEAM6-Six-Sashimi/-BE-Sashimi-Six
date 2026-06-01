@@ -7,6 +7,7 @@ TRUNCATE TABLE courses;
 TRUNCATE TABLE categories;
 SET FOREIGN_KEY_CHECKS = 1;
 
+
 INSERT IGNORE INTO categories (main_category_id, name, sub_category, sort_order, is_active)
 VALUES
     (1, 'IT·정보통신', '정보처리기사', 1, TRUE),
