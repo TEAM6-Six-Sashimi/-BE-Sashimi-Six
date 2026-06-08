@@ -1,0 +1,62 @@
+### 아이디 중복 확인
+GET http://localhost:8080/auth/login-id/check?loginId=user123
+Accept: application/json
+
+
+### 회원가입
+POST http://localhost:8080/auth/signup
+Content-Type: application/json
+Accept: application/json
+
+{
+  "loginId": "testuser01",
+  "password": "Password1!",
+  "passwordConfirm": "Password1!",
+  "email": "barkmin9@naver.com",
+  "name": "박민서",
+  "phone": "010-1234-5678",
+  "birthDate": "2007-03-27",
+  "interestCategoryIds": [1, 3],
+  "referralCode": "STD001"
+}
+
+
+
+
+### 로그인
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "loginId": "testuser01",
+  "password": "Password1!"
+
+}
+### 토큰 재발급
+POST http://localhost:8080/auth/reissue
+Content-Type: application/json
+Accept: application/json
+
+{
+"refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdHVkZW50MDEiLCJpYXQiOjE3Nzk4Njc5ODIsImV4cCI6MTc4MTA3NzU4Mn0.IS876j2OO1n242g31wjPW5HpgGA6NjsrXDSLXfogkbdKU3W_YgD9YjV0GdR82u7O"
+}
+
+
+### 로그아웃
+POST http://localhost:8080/auth/logout
+Content-Type: application/json
+Accept: application/json
+
+{
+  "refreshToken": "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdHVkZW50MDEiLCJpYXQiOjE3Nzk4NjgwMTQsImV4cCI6MTc4MTA3NzYxNH0.fPa-yKIiImpg3Cif08Z1FrDunxvjcs5-yMV2OUWtzZi4mt4xwgS7jQnnQNeOJswK"
+}
+
+### 관리자 API - 토큰 없음이면 401 정상
+GET http://localhost:8080/admin/test
+Accept: application/json
+
+### 관리자 API - 학생 토큰이면 403 정상
+GET http://localhost:8080/admin/test
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTYxOTQ4NCwiZXhwIjoxNzc5NjIzMDg0fQ.KT3YFOcmvS2GwVIdrZNsmUH_mS7sm0nccjKCaXrN3KN-rNN0HjjpWjHzv5BkbpnW
+Accept: application/json

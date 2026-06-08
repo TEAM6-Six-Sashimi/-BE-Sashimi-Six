@@ -1,0 +1,66 @@
+package com.sashimi.user.dto;
+
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Getter
+@NoArgsConstructor
+public class SignupRequestDto {
+
+    @NotBlank
+    @Pattern(
+            regexp = "^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9]{6,20}$",
+            message = "아이디는 영문과 숫자를 포함한 6~20자여야 합니다."
+    )
+    private String loginId;
+
+    @NotBlank
+    @Pattern(
+            regexp = "^(?=.*[A-Za-z])(?=.*[0-9])[A-Za-z0-9\\p{Punct}]{8,16}$",
+            message = "비밀번호는 영문과 숫자를 포함한 8~16자여야 합니다."
+    )
+    @NotBlank
+    private String password;
+
+
+    @NotBlank
+    private String passwordConfirm;
+
+    @NotBlank
+    @Email
+    private String email;
+
+    @NotBlank
+    private String name;
+
+    @NotNull(message = "생년월일은 필수입니다.")
+    @Past(message = "생년월일은 과거 날짜여야 합니다.")
+    private LocalDate birthDate;
+
+
+    private List<@NotNull Long> interestCategoryIds;
+
+    // 추천인 코드는 나중에 확장 가능하게 일단 선택값으로 둬도 됨
+    private String referralCode;
+
+    @AssertTrue(message = "비밀번호와 비밀번호 확인이 일치하지 않습니다.")
+    public boolean isPasswordMatched() {
+        return password != null && password.equals(passwordConfirm);
+    }
+
+    @NotBlank(message = "전화번호는 필수입니다.")
+    @Pattern(
+            regexp = "^010-\\d{4}-\\d{4}$",
+            message = "전화번호 형식은 010-0000-0000이어야 합니다."
+    )
+    private String phone;
+}

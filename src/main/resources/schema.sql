@@ -7,18 +7,40 @@ USE sixsashimi_db;
 -- =========================
 CREATE TABLE users (
                        user_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+
+                       login_id VARCHAR(20) NOT NULL UNIQUE,
+
                        email VARCHAR(255) NOT NULL UNIQUE,
                        password VARCHAR(255) NOT NULL,
                        name VARCHAR(100) NOT NULL,
+                       birth_date DATE,
+                       interest_category_ids VARCHAR(255),
                        phone VARCHAR(20),
+
                        role ENUM('STUDENT', 'INSTRUCTOR', 'ADMIN') NOT NULL DEFAULT 'STUDENT',
                        status ENUM('ACTIVE', 'INACTIVE', 'DELETED', 'SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
+
                        email_verified BOOLEAN NOT NULL DEFAULT FALSE,
                        profile_image VARCHAR(500),
                        referral_code VARCHAR(50) UNIQUE,
+
                        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                        updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
                        deleted_at DATETIME NULL
+);
+
+CREATE TABLE refresh_tokens (
+                                refresh_token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                user_id BIGINT NOT NULL,
+                                token VARCHAR(512) NOT NULL UNIQUE,
+                                expiry_date DATETIME NOT NULL,
+                                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+                                CONSTRAINT fk_refresh_tokens_user
+                                    FOREIGN KEY (user_id) REFERENCES users(user_id),
+
+                                CONSTRAINT uq_refresh_tokens_user
+                                    UNIQUE (user_id)
 );
 
 -- =========================
@@ -26,12 +48,14 @@ CREATE TABLE users (
 -- =========================
 CREATE TABLE categories (
                             category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                            name VARCHAR(100) NOT NULL,
-                            type ENUM('COURSE', 'CERTIFICATION', 'JOB') NOT NULL DEFAULT 'COURSE',
+                            main_category_id INT NOT NULL,
+                            name ENUM('IT·정보통신', '경영·회계', '디자인', '건설·안전', '식품·조리', '부동산·금융', '어학') NOT NULL,
+                            sub_category VARCHAR(100) NOT NULL,
                             sort_order INT NOT NULL DEFAULT 0,
                             is_active BOOLEAN NOT NULL DEFAULT TRUE,
                             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- =========================
 -- 3. COURSES
@@ -63,6 +87,7 @@ CREATE TABLE courses (
 -- =========================
 CREATE TABLE course_sessions (
                                  session_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                 session_uid      VARCHAR(36)     NOT NULL,
                                  title VARCHAR(255) NOT NULL,
                                  video_url VARCHAR(500),
                                  duration_seconds INT NOT NULL DEFAULT 0,
@@ -135,7 +160,8 @@ CREATE TABLE payments (
                           order_id BIGINT NOT NULL,
                           user_id BIGINT NOT NULL,
                           CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders(order_id),
-                          CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+                          CONSTRAINT fk_payments_user FOREIGN KEY (user_id) REFERENCES users(user_id),
+                          CONSTRAINT uq_payment_order UNIQUE (order_id)
 );
 
 -- =========================
@@ -300,14 +326,17 @@ CREATE TABLE credits (
 -- =========================
 -- 19. INSTRUCTOR_PROFILES
 -- =========================
+-- 테이블 생성
 CREATE TABLE instructor_profiles (
                                      instructor_profile_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                                      bio TEXT,
-                                     career TEXT,
-                                     certifications TEXT,
                                      portfolio_url VARCHAR(500),
+                                     certification_name VARCHAR(255),
+                                     issued_by VARCHAR(255),
                                      approval_status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
                                      approved_at DATETIME NULL,
+                                     created_at DATETIME DEFAULT NOW(),
+                                     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
                                      user_id BIGINT NOT NULL UNIQUE,
                                      CONSTRAINT fk_instructor_profiles_user FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
@@ -411,7 +440,6 @@ CREATE TABLE ai_prompts (
 CREATE TABLE resumes (
                          resume_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                          title VARCHAR(255) NOT NULL,
-                         template_type VARCHAR(50),
                          content JSON,
                          is_default BOOLEAN NOT NULL DEFAULT FALSE,
                          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -492,7 +520,7 @@ CREATE TABLE ai_resume_evaluations (
                                        ai_result JSON,
                                        evaluated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                        resume_id BIGINT NOT NULL,
-                                       job_posting_id BIGINT NOT NULL,
+                                       job_posting_id BIGINT NULL,
                                        prompt_id BIGINT NOT NULL,
                                        CONSTRAINT fk_resume_evaluations_resume FOREIGN KEY (resume_id) REFERENCES resumes(resume_id) ON DELETE CASCADE,
                                        CONSTRAINT fk_resume_evaluations_job FOREIGN KEY (job_posting_id) REFERENCES job_postings(job_posting_id),
@@ -707,3 +735,16 @@ CREATE TABLE d_days (
                         user_id BIGINT NOT NULL,
                         CONSTRAINT fk_d_days_user FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
+
+CREATE TABLE IF NOT EXISTS user_certifications (
+                                                   user_certification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                                                   user_id               BIGINT NOT NULL,
+                                                   certification_name    VARCHAR(255) NOT NULL,
+    issued_by             VARCHAR(255),
+    issued_date           DATE,
+    file_name             VARCHAR(500),
+    status                ENUM('PENDING', 'VERIFIED', 'REJECTED') DEFAULT 'PENDING',
+    created_at            DATETIME DEFAULT NOW(),
+    deleted_at            DATETIME NULL,
+    CONSTRAINT fk_user_cert_user FOREIGN KEY (user_id) REFERENCES users(user_id)
+    );

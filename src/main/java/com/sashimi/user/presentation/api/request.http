@@ -1,0 +1,70 @@
+### 내 정보 수정
+PATCH http://localhost:8080/users/me
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcwNDUyNywiZXhwIjoxNzc5NzA4MTI3fQ.KYy4UfL28RgeEaAtzkMQ1UAdEtA0NqX9GxHNLMS1WajKatd3MpjmLWC-5wbgJ_01
+
+{
+  "currentPassword": "Password123!",
+  "name": "박민서",
+  "email": "bark9@test.com"
+}
+
+### 내 추천인 코드 확인
+GET http://localhost:8080/users/me
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcwNDUyNywiZXhwIjoxNzc5NzA4MTI3fQ.KYy4UfL28RgeEaAtzkMQ1UAdEtA0NqX9GxHNLMS1WajKatd3MpjmLWC-5wbgJ_01
+
+### 비밀번호 수정
+PATCH http://localhost:8080/users/me/password
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcyMzc1MywiZXhwIjoxNzc5NzI3MzUzfQ.sln0BrQ3pjr5c0b1CVpgSvS8bRcVoGM3C4DN-eERhcQBp5xVRhjvFDtNUqWFm9QL
+
+{
+  "currentPassword": "Password123!",
+  "newPassword": "NewPassword123!",
+  "newPasswordConfirm": "NewPassword123!"
+}
+
+### 비밀번호 찾기 - 인증 코드 요청
+POST http://localhost:8080/auth/password-reset/request
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "student1@test.com"
+}
+
+### 비밀번호 찾기 - 새 비밀번호 설정
+POST http://localhost:8080/auth/password-reset/confirm
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "student1@test.com",
+  "code": "64Z7FJA9",
+  "newPassword": "student123!",
+  "newPasswordConfirm": "student123!"
+}
+
+### 바꾼걸로 로그인 해보기
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+"loginId": "user123",
+"password": "Reset123!"
+}
+
+
+### 회원 탈퇴
+DELETE http://localhost:8080/users/me
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJ1c2VyMTIzIiwiYXV0aCI6IlJPTEVfU1RVREVOVCIsImlhdCI6MTc3OTcyMTY2OSwiZXhwIjoxNzc5NzI1MjY5fQ.baXXO4LHQLAYv08FjVHSwp2ejEn2d1Cq9gdnA9Qb_SrLwDvwjXZLG2-gZWJ8CKId
+
+{
+  "currentPassword": "Reset123!"
+}
