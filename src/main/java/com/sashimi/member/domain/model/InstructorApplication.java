@@ -15,18 +15,31 @@ public class InstructorApplication {
     private Long id;
     private Long userId;
     private String bio;
+    private String motivationLetter;
+    private Long categoryId;
     private String portfolioUrl;
+    private String profileImagePath;
+    private String resumeFilePath;
+    private List<String> mainCareers;
     private List<InstructorCertification> certifications;
     private ApprovalStatus approvalStatus;
     private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public static InstructorApplication create(Long userId, String bio, String portfolioUrl, List<InstructorCertification> certifications) {
+    public static InstructorApplication create(
+            Long userId, String bio, String motivationLetter, Long categoryId,
+            String portfolioUrl, String profileImagePath, String resumeFilePath,
+            List<String> mainCareers, List<InstructorCertification> certifications) {
         return InstructorApplication.builder()
                 .userId(userId)
                 .bio(bio)
+                .motivationLetter(motivationLetter)
+                .categoryId(categoryId)
                 .portfolioUrl(portfolioUrl)
+                .profileImagePath(profileImagePath)
+                .resumeFilePath(resumeFilePath)
+                .mainCareers(mainCareers)
                 .certifications(certifications)
                 .approvalStatus(ApprovalStatus.PENDING)
                 .createdAt(LocalDateTime.now())

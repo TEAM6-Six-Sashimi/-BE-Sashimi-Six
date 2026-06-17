@@ -9,7 +9,12 @@ import java.util.stream.Collectors;
 
 public record InstructorApplicationDetailResponse(
         String bio,
+        String motivationLetter,
+        Long categoryId,
         String portfolioUrl,
+        String profileImagePath,
+        String resumeFilePath,
+        List<String> mainCareers,
         List<CertificationInfo> certifications,
         ApprovalStatus approvalStatus,
         LocalDateTime approvedAt,
@@ -24,7 +29,12 @@ public record InstructorApplicationDetailResponse(
 
         return new InstructorApplicationDetailResponse(
                 application.getBio(),
+                application.getMotivationLetter(),
+                application.getCategoryId(),
                 application.getPortfolioUrl(),
+                application.getProfileImagePath(),
+                application.getResumeFilePath(),
+                application.getMainCareers(),
                 certInfos,
                 application.getApprovalStatus(),
                 application.getApprovedAt(),

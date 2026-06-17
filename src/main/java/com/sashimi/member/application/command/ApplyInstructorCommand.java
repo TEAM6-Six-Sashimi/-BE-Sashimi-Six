@@ -5,8 +5,12 @@ import java.util.List;
 public record ApplyInstructorCommand(
         Long userId,
         String bio,
+        String motivationLetter,
+        Long categoryId,
         String portfolioUrl,
-        List<FileEntry> files
+        FileEntry profileImage,
+        List<FileEntry> certificateFiles,
+        FileEntry resumeFile
 ) {
     public record FileEntry(byte[] fileBytes, String fileName) {}
 }
