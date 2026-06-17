@@ -17,6 +17,8 @@ public interface CartQueryUseCase {
 
     record CartItemView(
             Long cartItemId,
+            String itemType,
+            Long itemId,
             Long courseId,
             String title,
             String thumbnail,

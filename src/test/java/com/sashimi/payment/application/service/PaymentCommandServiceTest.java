@@ -1,6 +1,6 @@
 package com.sashimi.payment.application.service;
 
-import com.sashimi.cart.application.policy.CoursePurchasePolicy;
+import com.sashimi.order.application.policy.CoursePurchasePolicy;
 import com.sashimi.cart.application.port.CourseInfo;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
@@ -9,13 +9,14 @@ import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.order.domain.model.OrderStatus;
 import com.sashimi.payment.application.command.CheckoutCartCommand;
 import com.sashimi.payment.application.command.PayCourseCommand;
-import com.sashimi.payment.domain.model.Order;
-import com.sashimi.payment.domain.model.OrderItem;
+import com.sashimi.order.domain.model.Order;
+import com.sashimi.order.domain.model.OrderItem;
 import com.sashimi.payment.domain.model.Payment;
-import com.sashimi.payment.domain.repository.OrderItemRepository;
-import com.sashimi.payment.domain.repository.OrderRepository;
+import com.sashimi.order.domain.repository.OrderItemRepository;
+import com.sashimi.order.domain.repository.OrderRepository;
 import com.sashimi.payment.domain.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,7 +88,7 @@ class PaymentCommandServiceTest {
                 30000L,
                 0L,
                 30000L,
-                com.sashimi.payment.domain.model.OrderStatus.PAID,
+                OrderStatus.PAID,
                 LocalDateTime.now(),
                 1L
         );
@@ -144,7 +145,7 @@ class PaymentCommandServiceTest {
     }
 
     @Test
-    void 단일_강의를_바로_결제_시__수강등록_후_같은_강의_장바구니_항목_삭제() {
+    void 단일_강의를_바로_결제_시_수강등록_후_같은_강의_장바구니_항목_삭제() {
         CourseInfo courseInfo = new CourseInfo(
                 100L,
                 "Spring Boot Basic",
@@ -160,7 +161,7 @@ class PaymentCommandServiceTest {
                 30000L,
                 0L,
                 30000L,
-                com.sashimi.payment.domain.model.OrderStatus.PAID,
+                OrderStatus.PAID,
                 LocalDateTime.now(),
                 1L
         );
@@ -243,7 +244,7 @@ class PaymentCommandServiceTest {
                 30000L,
                 0L,
                 30000L,
-                com.sashimi.payment.domain.model.OrderStatus.PAID,
+                OrderStatus.PAID,
                 LocalDateTime.now(),
                 1L
         );

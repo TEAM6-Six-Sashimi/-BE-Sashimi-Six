@@ -14,6 +14,7 @@ import com.sashimi.cart.presentation.api.response.AddCartItemResponse;
 import com.sashimi.cart.presentation.api.response.CartResponse;
 import com.sashimi.global.exception.ErrorResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
+import com.sashimi.cart.domain.model.CartItemType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,6 +26,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 
 import org.springframework.web.bind.annotation.*;
 
@@ -92,7 +94,12 @@ public class CartController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(new AddCartItemResponse(request.courseId(), cartItemId));
+                .body(new AddCartItemResponse(
+                        request.courseId(),
+                        cartItemId,
+                        CartItemType.COURSE.name(),
+                        request.courseId()
+                ));
     }
 
     @Operation(summary = "장바구니 항목 삭제", description = "장바구니 항목 ID 목록으로 단건 또는 다건 항목을 삭제합니다.")

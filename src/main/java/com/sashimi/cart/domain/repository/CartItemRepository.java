@@ -4,6 +4,7 @@ import com.sashimi.cart.domain.model.CartItem;
 
 import java.util.List;
 import java.util.Optional;
+import com.sashimi.cart.domain.model.CartItemType;
 
 public interface CartItemRepository {
 
@@ -24,4 +25,8 @@ public interface CartItemRepository {
     void deleteAllByUserId(Long userId);
 
     void deleteByUserIdAndCourseId(Long userId, Long courseId);
+
+    boolean existsByUserIdAndItemTypeAndItemId(Long userId, CartItemType itemType, Long itemId);
+
+    void deleteByUserIdAndItemTypeAndItemId(Long userId, CartItemType itemType, Long itemId);
 }
