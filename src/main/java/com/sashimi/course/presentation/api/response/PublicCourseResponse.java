@@ -3,6 +3,7 @@ package com.sashimi.course.presentation.api.response;
 import com.sashimi.course.application.query.PublicCourseView;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public record PublicCourseResponse(
         Long courseId,
@@ -12,7 +13,9 @@ public record PublicCourseResponse(
         String thumbnail,
         int totalDuration,
         BigDecimal ratingAvg,
-        int studentCount
+        int studentCount,
+        LocalDateTime approvedAt,
+        String label
 ) {
     public static PublicCourseResponse from(PublicCourseView view) {
         return new PublicCourseResponse(
@@ -23,7 +26,9 @@ public record PublicCourseResponse(
                 view.thumbnail(),
                 view.totalDuration(),
                 view.ratingAvg(),
-                view.studentCount()
+                view.studentCount(),
+                view.approvedAt(),
+                view.label()
         );
     }
 }

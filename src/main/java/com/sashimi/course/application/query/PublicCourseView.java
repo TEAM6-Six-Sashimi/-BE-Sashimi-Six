@@ -1,6 +1,7 @@
 package com.sashimi.course.application.query;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public record PublicCourseView(
         Long courseId,
@@ -10,5 +11,7 @@ public record PublicCourseView(
         String thumbnail,
         int totalDuration,
         BigDecimal ratingAvg,
-        int studentCount
+        int studentCount,
+        LocalDateTime approvedAt,
+        String label
 ) {}

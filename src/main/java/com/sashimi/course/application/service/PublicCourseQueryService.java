@@ -13,7 +13,11 @@ import com.sashimi.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -33,27 +37,24 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
 
     @Override
     public List<PublicCourseView> getAllApprovedCourses() {
-        return courseRepository.findByStatus(CourseStatus.APPROVED)
-                .stream()
-                .map(this::toView)
-                .toList();
+        List<Course> courses = courseRepository.findByStatus(CourseStatus.APPROVED);
+        Set<Long> popularIds = resolvePopularIds(courses);
+        return courses.stream().map(c -> toView(c, popularIds)).toList();
     }
 
     @Override
     public List<PublicCourseView> getCoursesByCategory(String categoryName) {
         List<Long> categoryIds = categoryPort.getCategoryIdsByName(categoryName);
-        return courseRepository.findByStatusAndCategoryIdIn(CourseStatus.APPROVED, categoryIds)
-                .stream()
-                .map(this::toView)
-                .toList();
+        List<Course> courses = courseRepository.findByStatusAndCategoryIdIn(CourseStatus.APPROVED, categoryIds);
+        Set<Long> popularIds = resolvePopularIds(courses);
+        return courses.stream().map(c -> toView(c, popularIds)).toList();
     }
 
     @Override
     public List<PublicCourseView> getCoursesBySubCategory(Long categoryId) {
-        return courseRepository.findByStatusAndCategoryId(CourseStatus.APPROVED, categoryId)
-                .stream()
-                .map(this::toView)
-                .toList();
+        List<Course> courses = courseRepository.findByStatusAndCategoryId(CourseStatus.APPROVED, categoryId);
+        Set<Long> popularIds = resolvePopularIds(courses);
+        return courses.stream().map(c -> toView(c, popularIds)).toList();
     }
 
     @Override
@@ -85,7 +86,25 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
         );
     }
 
-    private PublicCourseView toView(Course course) {
+    private Set<Long> resolvePopularIds(List<Course> courses) {
+        return courses.stream()
+                .collect(Collectors.groupingBy(Course::getCategoryId))
+                .values().stream()
+                .flatMap(group -> group.stream()
+                        .sorted(Comparator.comparingInt(Course::getStudentCount).reversed())
+                        .limit(3))
+                .map(Course::getId)
+                .collect(Collectors.toSet());
+    }
+
+    private String resolveLabel(Course course, Set<Long> popularIds) {
+        if (popularIds.contains(course.getId())) return "POPULAR";
+        if (course.getApprovedAt() != null &&
+                course.getApprovedAt().isAfter(LocalDateTime.now().minusDays(30))) return "NEW";
+        return null;
+    }
+
+    private PublicCourseView toView(Course course, Set<Long> popularIds) {
         String instructorName = instructorPort.getInstructorName(course.getInstructorId());
         return new PublicCourseView(
                 course.getId(),
@@ -95,7 +114,9 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                 course.getThumbnail(),
                 course.getTotalDuration(),
                 course.getRatingAvg(),
-                course.getStudentCount()
+                course.getStudentCount(),
+                course.getApprovedAt(),
+                resolveLabel(course, popularIds)
         );
     }
 }
