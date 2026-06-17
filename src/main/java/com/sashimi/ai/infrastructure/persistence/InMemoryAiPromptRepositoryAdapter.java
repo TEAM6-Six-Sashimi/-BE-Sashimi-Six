@@ -24,10 +24,23 @@ public class InMemoryAiPromptRepositoryAdapter implements AiPromptRepository {
             true
     );
 
+    private final AiPrompt jobPostingAnalysisPrompt = new AiPrompt(
+            2L,
+            "채용공고 분석 프롬프트",
+            AiPromptType.JOB_POSTING_ANALYSIS,
+            "채용공고를 분석해 주세요. 이력서 기반 여부: {resumeBased}, 채용공고 내용: {jobPostingContent}",
+            1,
+            true
+    );
+
     @Override
     public Optional<AiPrompt> findActiveByType(AiPromptType promptType) {
         if (resumeReviewPrompt.promptType() == promptType && resumeReviewPrompt.isActive()) {
             return Optional.of(resumeReviewPrompt);
+        }
+
+        if (jobPostingAnalysisPrompt.promptType() == promptType && jobPostingAnalysisPrompt.isActive()) {
+            return Optional.of(jobPostingAnalysisPrompt);
         }
 
         return Optional.empty();
