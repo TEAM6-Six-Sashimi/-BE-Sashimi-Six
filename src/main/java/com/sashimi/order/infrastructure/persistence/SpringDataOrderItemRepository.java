@@ -1,4 +1,4 @@
-package com.sashimi.payment.infrastructure.persistence;
+package com.sashimi.order.infrastructure.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

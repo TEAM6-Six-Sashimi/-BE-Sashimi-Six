@@ -2,7 +2,7 @@ package com.sashimi.cart.application.service;
 
 import com.sashimi.cart.application.command.AddCartItemCommand;
 import com.sashimi.cart.application.command.DeleteCartItemCommand;
-import com.sashimi.cart.application.policy.CoursePurchasePolicy;
+import com.sashimi.order.application.policy.CoursePurchasePolicy;
 import com.sashimi.cart.application.port.CourseInfo;
 import com.sashimi.cart.application.usecase.CartCommandUseCase;
 import com.sashimi.cart.domain.model.CartItem;
@@ -17,7 +17,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 @Transactional
-public class CartCommandService implements CartCommandUseCase {
+public class    CartCommandService implements CartCommandUseCase {
 
     private final CartItemRepository cartItemRepository;
     private final CoursePurchasePolicy coursePurchasePolicy;
@@ -41,7 +41,7 @@ public class CartCommandService implements CartCommandUseCase {
             throw new BusinessException(ErrorCode.CART_ITEM_ALREADY_EXISTS);
         }
 
-        CartItem cartItem = CartItem.create(
+        CartItem cartItem = CartItem.createCourse(
                 command.userId(),
                 command.courseId(),
                 courseInfo.price()

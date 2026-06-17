@@ -1,7 +1,7 @@
-package com.sashimi.payment.infrastructure.persistence;
+package com.sashimi.order.infrastructure.persistence;
 
-import com.sashimi.payment.domain.model.Order;
-import com.sashimi.payment.domain.model.OrderStatus;
+import com.sashimi.order.domain.model.Order;
+import com.sashimi.order.domain.model.OrderStatus;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -52,8 +52,17 @@ public class OrderJpaEntity {
     }
 
     public static OrderJpaEntity from(Order order) {
-        return new OrderJpaEntity(order.getOrderNo(), order.getTotalAmount(), order.getDiscountAmount(),
-                order.getFinalAmount(), order.getStatus(), order.getCreatedAt(), order.getUserId());
+        OrderJpaEntity entity = new OrderJpaEntity(
+                order.getOrderNo(),
+                order.getTotalAmount(),
+                order.getDiscountAmount(),
+                order.getFinalAmount(),
+                order.getStatus(),
+                order.getCreatedAt(),
+                order.getUserId()
+        );
+        entity.id = order.getId();
+        return entity;
     }
 
     public Order toDomain() {

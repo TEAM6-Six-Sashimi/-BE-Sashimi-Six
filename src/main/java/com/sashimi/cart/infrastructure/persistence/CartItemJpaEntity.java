@@ -3,6 +3,7 @@ package com.sashimi.cart.infrastructure.persistence;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import com.sashimi.cart.domain.model.CartItemType;
 
 @Entity
     @Table(
@@ -21,6 +22,13 @@ import java.time.LocalDateTime;
         @Column(name = "cart_item_id")
         private Long id;
 
+        @Enumerated(EnumType.STRING)
+        @Column(name = "item_type", nullable = false)
+        private CartItemType itemType;
+
+        @Column(name = "item_id", nullable = false)
+        private Long itemId;
+
         @Column(name = "price", nullable = false)
         private Long price;
 
@@ -33,19 +41,22 @@ import java.time.LocalDateTime;
         @Column(name = "user_id", nullable = false)
         private Long userId;
 
-        @Column(name = "course_id", nullable = false)
+        @Column(name = "course_id")
         private Long courseId;
 
         protected CartItemJpaEntity() {
         }
 
-        public CartItemJpaEntity(Long userId, Long courseId, Long price, boolean selected, LocalDateTime createdAt) {
-            this.userId = userId;
-            this.courseId = courseId;
-            this.price = price;
-            this.selected = selected;
-            this.createdAt = createdAt;
-        }
+    public CartItemJpaEntity(Long userId, CartItemType itemType, Long itemId,
+                             Long courseId, Long price, boolean selected, LocalDateTime createdAt) {
+        this.userId = userId;
+        this.itemType = itemType;
+        this.itemId = itemId;
+        this.courseId = courseId;
+        this.price = price;
+        this.selected = selected;
+        this.createdAt = createdAt;
+    }
 
     public void changeSelected(boolean selected) {
         this.selected = selected;
@@ -74,5 +85,9 @@ import java.time.LocalDateTime;
         public Long getCourseId() {
             return courseId;
         }
+
+        public CartItemType getItemType() {return itemType; }
+
+        public Long getItemId() {return itemId; }
     }
 
