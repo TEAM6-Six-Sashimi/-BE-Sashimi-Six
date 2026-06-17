@@ -7,6 +7,7 @@ import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.cart.domain.model.CartItemType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,16 +68,22 @@ public class CartQueryService implements CartQueryUseCase {
     }
 
     private CartItemView toView(CartItem cartItem) {
-        CourseInfo courseInfo = coursePort.getCourseInfo(cartItem.getCourseId());
+        if (cartItem.getItemType() == CartItemType.COURSE) {
+            CourseInfo courseInfo = coursePort.getCourseInfo(cartItem.getCourseId());
 
-        return new CartItemView(
-                cartItem.getId(),
-                cartItem.getCourseId(),
-                courseInfo.title(),
-                courseInfo.thumbnail(),
-                courseInfo.instructorName(),
-                cartItem.getPrice(),
-                cartItem.isSelected()
-        );
+            return new CartItemView(
+                    cartItem.getId(),
+                    cartItem.getItemType().name(),
+                    cartItem.getItemId(),
+                    cartItem.getCourseId(),
+                    courseInfo.title(),
+                    courseInfo.thumbnail(),
+                    courseInfo.instructorName(),
+                    cartItem.getPrice(),
+                    cartItem.isSelected()
+            );
+        }
+
+        throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
     }
 }

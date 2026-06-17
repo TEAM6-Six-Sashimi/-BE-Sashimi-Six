@@ -1,7 +1,7 @@
-package com.sashimi.payment.infrastructure.persistence;
+package com.sashimi.order.infrastructure.persistence;
 
-import com.sashimi.payment.domain.model.Order;
-import com.sashimi.payment.domain.repository.OrderRepository;
+import com.sashimi.order.domain.model.Order;
+import com.sashimi.order.domain.repository.OrderRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;

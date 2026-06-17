@@ -56,8 +56,16 @@ public class PaymentJpaEntity {
     }
 
     public static PaymentJpaEntity from(Payment payment) {
-        return new PaymentJpaEntity(payment.getAmount(), payment.getStatus(), payment.getPaidAt(),
-                payment.getCreatedAt(), payment.getOrderId(), payment.getUserId());
+        PaymentJpaEntity entity = new PaymentJpaEntity(
+                payment.getAmount(),
+                payment.getStatus(),
+                payment.getPaidAt(),
+                payment.getCreatedAt(),
+                payment.getOrderId(),
+                payment.getUserId()
+        );
+        entity.id = payment.getId();
+        return entity;
     }
 
     public Payment toDomain() {

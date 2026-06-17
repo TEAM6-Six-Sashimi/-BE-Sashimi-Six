@@ -1,4 +1,4 @@
-package com.sashimi.payment.domain.model;
+package com.sashimi.order.domain.model;
 
 import java.time.LocalDateTime;
 
@@ -28,6 +28,45 @@ public class Order {
     public static Order paid(String orderNo, Long totalAmount, Long userId) {
         return new Order(null, orderNo, totalAmount, 0L, totalAmount,
                 OrderStatus.PAID, LocalDateTime.now(), userId);
+    }
+
+    public static Order pending(String orderNo, Long totalAmount, Long userId) {
+        return new Order(
+                null,
+                orderNo,
+                totalAmount,
+                0L,
+                totalAmount,
+                OrderStatus.PENDING,
+                LocalDateTime.now(),
+                userId
+        );
+    }
+
+    public Order markPaid() {
+        return new Order(
+                id,
+                orderNo,
+                totalAmount,
+                discountAmount,
+                finalAmount,
+                OrderStatus.PAID,
+                createdAt,
+                userId
+        );
+    }
+
+    public Order markCancelled() {
+        return new Order(
+                id,
+                orderNo,
+                totalAmount,
+                discountAmount,
+                finalAmount,
+                OrderStatus.CANCELLED,
+                createdAt,
+                userId
+        );
     }
 
     public static Order restore(Long id, String orderNo, Long totalAmount, Long discountAmount,

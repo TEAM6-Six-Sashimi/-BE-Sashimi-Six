@@ -1,4 +1,4 @@
-package com.sashimi.cart.application.policy;
+package com.sashimi.order.application.policy;
 
 import com.sashimi.cart.application.port.CourseInfo;
 import com.sashimi.cart.application.port.CoursePort;

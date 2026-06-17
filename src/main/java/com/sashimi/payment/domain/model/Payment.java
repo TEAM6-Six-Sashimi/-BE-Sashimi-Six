@@ -28,6 +28,54 @@ public class Payment {
         return new Payment(null, amount, PaymentStatus.PAID, now, now, orderId, userId);
     }
 
+    public static Payment ready(Long amount, Long orderId, Long userId) {
+        return new Payment(
+                null,
+                amount,
+                PaymentStatus.READY,
+                null,
+                LocalDateTime.now(),
+                orderId,
+                userId
+        );
+    }
+
+    public Payment markPaid() {
+        return new Payment(
+                id,
+                amount,
+                PaymentStatus.PAID,
+                LocalDateTime.now(),
+                createdAt,
+                orderId,
+                userId
+        );
+    }
+
+    public Payment markFailed() {
+        return new Payment(
+                id,
+                amount,
+                PaymentStatus.FAILED,
+                paidAt,
+                createdAt,
+                orderId,
+                userId
+        );
+    }
+
+    public Payment markCancelled() {
+        return new Payment(
+                id,
+                amount,
+                PaymentStatus.CANCELLED,
+                paidAt,
+                createdAt,
+                orderId,
+                userId
+        );
+    }
+
     public static Payment restore(Long id, Long amount, PaymentStatus status, LocalDateTime paidAt,
                                   LocalDateTime createdAt, Long orderId, Long userId) {
         return new Payment(id, amount, status, paidAt, createdAt, orderId, userId);

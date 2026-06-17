@@ -1,6 +1,6 @@
-package com.sashimi.payment.domain.repository;
+package com.sashimi.order.domain.repository;
 
-import com.sashimi.payment.domain.model.OrderItem;
+import com.sashimi.order.domain.model.OrderItem;
 
 import java.util.List;
 
