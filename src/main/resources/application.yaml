@@ -32,3 +32,8 @@ gemini:
   model: gemini-2.0-flash
   base-url: https://generativelanguage.googleapis.com/v1beta
   timeout-seconds: 30
+
+toss:
+  payments:
+    base-url: https://api.tosspayments.com
+    secret-key: ${TOSS_PAYMENTS_SECRET_KEY:}
