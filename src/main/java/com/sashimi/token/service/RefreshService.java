@@ -44,4 +44,8 @@ public class RefreshService {
     public void deleteByUser(User user) {
         refreshTokenRepository.deleteByUserId(user.getId());
     }
+
+    public void deleteExpiredTokens() {
+        refreshTokenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
+    }
 }
