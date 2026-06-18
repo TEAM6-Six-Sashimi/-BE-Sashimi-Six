@@ -6,15 +6,15 @@ import java.time.LocalDateTime;
 import com.sashimi.cart.domain.model.CartItemType;
 
 @Entity
-    @Table(
-            name = "cart_items",
-            uniqueConstraints = {
-                    @UniqueConstraint(
-                            name = "uq_cart_user_course",
-                            columnNames = {"user_id", "course_id"}
-                    )
-            }
-    )
+@Table(
+        name = "cart_items",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_cart_user_item",
+                        columnNames = {"user_id", "item_type", "item_id"}
+                )
+        }
+)
     public class CartItemJpaEntity {
 
         @Id
