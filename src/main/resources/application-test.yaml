@@ -32,3 +32,7 @@ clova:
 app:
   mail:
     from: test@sashimi.com
+
+file:
+  upload-dir: uploads/
+  base-url: http://localhost:8080
