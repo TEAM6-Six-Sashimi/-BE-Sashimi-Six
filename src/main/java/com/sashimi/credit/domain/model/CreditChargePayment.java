@@ -11,6 +11,7 @@ public class CreditChargePayment {
     private Long userId;
     private String orderId;
     private String paymentKey;
+    private String paymentMethod;
     private Long amount;
     private CreditChargePaymentStatus status;
     private String failureReason;
@@ -22,6 +23,7 @@ public class CreditChargePayment {
             Long userId,
             String orderId,
             String paymentKey,
+            String paymentMethod,
             Long amount,
             CreditChargePaymentStatus status,
             String failureReason,
@@ -37,6 +39,7 @@ public class CreditChargePayment {
         this.userId = userId;
         this.orderId = orderId;
         this.paymentKey = paymentKey;
+        this.paymentMethod = paymentMethod;
         this.amount = amount;
         this.status = status;
         this.failureReason = failureReason;
@@ -49,6 +52,7 @@ public class CreditChargePayment {
                 null,
                 userId,
                 orderId,
+                null,
                 null,
                 amount,
                 CreditChargePaymentStatus.READY,
@@ -63,6 +67,7 @@ public class CreditChargePayment {
             Long userId,
             String orderId,
             String paymentKey,
+            String paymentMethod,
             Long amount,
             CreditChargePaymentStatus status,
             String failureReason,
@@ -74,6 +79,7 @@ public class CreditChargePayment {
                 userId,
                 orderId,
                 paymentKey,
+                paymentMethod,
                 amount,
                 status,
                 failureReason,
@@ -94,18 +100,27 @@ public class CreditChargePayment {
         }
     }
 
-    public void markDone(String paymentKey) {
-        if (status == CreditChargePaymentStatus.DONE) {
-            throw new BusinessException(ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED);
+    public void markDone(
+            String paymentKey,
+            String paymentMethod,
+            LocalDateTime approvedAt
+    ) {
+        if (status != CreditChargePaymentStatus.READY) {
+            throw new BusinessException(
+                    ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED
+            );
         }
 
-        if (status != CreditChargePaymentStatus.READY) {
-            throw new BusinessException(ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED);
+        if (paymentKey == null || paymentKey.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         this.paymentKey = paymentKey;
+        this.paymentMethod = paymentMethod;
         this.status = CreditChargePaymentStatus.DONE;
-        this.approvedAt = LocalDateTime.now();
+        this.approvedAt = approvedAt == null
+                ? LocalDateTime.now()
+                : approvedAt;
     }
 
     public void markFailed(String failureReason) {
@@ -156,4 +171,6 @@ public class CreditChargePayment {
     public LocalDateTime getApprovedAt() {
         return approvedAt;
     }
+
+    public String getPaymentMethod() {return paymentMethod; }
 }

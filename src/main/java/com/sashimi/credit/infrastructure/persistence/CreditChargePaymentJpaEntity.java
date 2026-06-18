@@ -35,6 +35,9 @@ public class CreditChargePaymentJpaEntity {
     @Column(name = "payment_key", length = 200)
     private String paymentKey;
 
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
+
     @Column(name = "amount", nullable = false)
     private Long amount;
 
@@ -57,6 +60,7 @@ public class CreditChargePaymentJpaEntity {
         entity.userId = payment.getUserId();
         entity.orderId = payment.getOrderId();
         entity.paymentKey = payment.getPaymentKey();
+        entity.paymentMethod = payment.getPaymentMethod();
         entity.amount = payment.getAmount();
         entity.status = payment.getStatus();
         entity.failureReason = payment.getFailureReason();
@@ -71,6 +75,7 @@ public class CreditChargePaymentJpaEntity {
                 userId,
                 orderId,
                 paymentKey,
+                paymentMethod,
                 amount,
                 status,
                 failureReason,
