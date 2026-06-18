@@ -14,7 +14,6 @@ import com.sashimi.cart.presentation.api.response.AddCartItemResponse;
 import com.sashimi.cart.presentation.api.response.CartResponse;
 import com.sashimi.global.exception.ErrorResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
-import com.sashimi.cart.domain.model.CartItemType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -96,9 +95,7 @@ public class CartController {
                 .status(HttpStatus.CREATED)
                 .body(new AddCartItemResponse(
                         request.courseId(),
-                        cartItemId,
-                        CartItemType.COURSE.name(),
-                        request.courseId()
+                        cartItemId
                 ));
     }
 
