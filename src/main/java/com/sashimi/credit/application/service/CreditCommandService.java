@@ -159,7 +159,13 @@ public class CreditCommandService implements CreditCommandUseCase {
             throw new BusinessException(ErrorCode.CREDIT_CHARGE_PAYMENT_AMOUNT_MISMATCH);
         }
 
-        payment.markDone(tossResponse.paymentKey());
+        payment.markDone(
+                tossResponse.paymentKey(),
+                tossResponse.method(),
+                tossResponse.approvedAt() == null
+                        ? null
+                        : tossResponse.approvedAt().toLocalDateTime()
+        );
         creditChargePaymentRepository.save(payment);
 
         Credit credit = getOrCreateCreditForUpdate(command.userId());
@@ -167,12 +173,15 @@ public class CreditCommandService implements CreditCommandUseCase {
 
         Credit savedCredit = creditRepository.save(credit);
 
-        log.info("크레딧 토스 충전 완료 - userId={}, orderId={}, paymentKey={}, amount={}, balance={}",
+        log.info(
+                "크레딧 토스 충전 완료 - userId={}, orderId={}, paymentKey={}, paymentMethod={}, amount={}, balance={}",
                 command.userId(),
                 payment.getOrderId(),
                 payment.getPaymentKey(),
+                payment.getPaymentMethod(),
                 payment.getAmount(),
-                savedCredit.getBalance());
+                savedCredit.getBalance()
+        );
 
         return new CreditChargeConfirmResult(
                 savedCredit.getBalance(),
