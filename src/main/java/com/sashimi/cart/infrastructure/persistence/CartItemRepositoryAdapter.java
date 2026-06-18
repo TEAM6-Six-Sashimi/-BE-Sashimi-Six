@@ -5,6 +5,7 @@ import com.sashimi.cart.domain.repository.CartItemRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import org.springframework.stereotype.Repository;
+import com.sashimi.cart.domain.model.CartItemType;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +24,8 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
         CartItemJpaEntity entity = cartItem.getId() == null
                 ? new CartItemJpaEntity(
                 cartItem.getUserId(),
+                cartItem.getItemType(),
+                cartItem.getItemId(),
                 cartItem.getCourseId(),
                 cartItem.getPrice(),
                 cartItem.isSelected(),
@@ -46,13 +49,18 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
 
     @Override
     public boolean existsByUserIdAndCourseId(Long userId, Long courseId) {
-        return repository.existsByUserIdAndCourseId(userId, courseId);
+        return existsByUserIdAndItemTypeAndItemId(userId, CartItemType.COURSE, courseId);
     }
 
     @Override
     public Optional<CartItem> findByIdAndUserId(Long cartItemId, Long userId) {
         return repository.findByIdAndUserId(cartItemId, userId)
                 .map(this::toDomain);
+    }
+
+    @Override
+    public boolean existsByUserIdAndItemTypeAndItemId(Long userId, CartItemType itemType, Long itemId) {
+        return repository.existsByUserIdAndItemTypeAndItemId(userId, itemType, itemId);
     }
 
     @Override
@@ -64,6 +72,8 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
         return CartItem.restore(
                 entity.getId(),
                 entity.getUserId(),
+                entity.getItemType(),
+                entity.getItemId(),
                 entity.getCourseId(),
                 entity.getPrice(),
                 entity.isSelected(),
@@ -91,7 +101,12 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
 
     @Override
     public void deleteByUserIdAndCourseId(Long userId, Long courseId) {
-        repository.deleteByUserIdAndCourseId(userId, courseId);
+        deleteByUserIdAndItemTypeAndItemId(userId, CartItemType.COURSE, courseId);
+    }
+
+    @Override
+    public void deleteByUserIdAndItemTypeAndItemId(Long userId, CartItemType itemType, Long itemId) {
+        repository.deleteByUserIdAndItemTypeAndItemId(userId, itemType, itemId);
     }
     
 }

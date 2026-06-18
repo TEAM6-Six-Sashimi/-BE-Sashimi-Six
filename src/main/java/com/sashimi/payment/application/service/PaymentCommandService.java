@@ -1,6 +1,6 @@
 package com.sashimi.payment.application.service;
 
-import com.sashimi.cart.application.policy.CoursePurchasePolicy;
+import com.sashimi.order.application.policy.CoursePurchasePolicy;
 import com.sashimi.cart.application.port.CourseInfo;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
@@ -12,11 +12,11 @@ import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.payment.application.command.CheckoutCartCommand;
 import com.sashimi.payment.application.command.PayCourseCommand;
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase;
-import com.sashimi.payment.domain.model.Order;
-import com.sashimi.payment.domain.model.OrderItem;
+import com.sashimi.order.domain.model.Order;
+import com.sashimi.order.domain.model.OrderItem;
 import com.sashimi.payment.domain.model.Payment;
-import com.sashimi.payment.domain.repository.OrderItemRepository;
-import com.sashimi.payment.domain.repository.OrderRepository;
+import com.sashimi.order.domain.repository.OrderItemRepository;
+import com.sashimi.order.domain.repository.OrderRepository;
 import com.sashimi.payment.domain.repository.PaymentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -124,7 +124,7 @@ public class PaymentCommandService implements PaymentCommandUseCase {
 
         List<OrderItem> orderItems = courses.stream()
                 .map(course -> orderItemRepository.save(
-                        OrderItem.create(course.title(), course.price(), order.getId(), course.courseId())
+                        OrderItem.createCourse(course.title(), course.price(), order.getId(), course.courseId())
                 ))
                 .toList();
 

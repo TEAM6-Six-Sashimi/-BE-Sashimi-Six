@@ -57,9 +57,21 @@ public enum ErrorCode {
 
     PAYMENT_ORDER_NOT_FOUND(404, "PAYMENT_001", "주문을 찾을 수 없습니다."),
     PAYMENT_EMPTY_COURSE(400, "PAYMENT_002", "결제할 강의가 없습니다."),
+    PAYMENT_NOT_FOUND(404, "PAYMENT_003", "결제 정보를 찾을 수 없습니다."),
+    PAYMENT_ALREADY_PROCESSED(409, "PAYMENT_004", "이미 처리된 결제입니다."),
+    PAYMENT_INVALID_STATUS(400, "PAYMENT_005", "처리할 수 없는 결제 상태입니다."),
+    PAYMENT_AMOUNT_MISMATCH(400, "PAYMENT_006", "결제 금액이 일치하지 않습니다."),
+    PAYMENT_APPROVAL_FAILED(502, "PAYMENT_007", "외부 결제 승인에 실패했습니다."),
 
     CREDIT_INVALID_AMOUNT(400, "CREDIT_001", "크레딧 금액이 올바르지 않습니다."),
     CREDIT_INSUFFICIENT_BALANCE(400, "CREDIT_002", "크레딧 잔액이 부족합니다."),
+    CREDIT_CHARGE_AMOUNT_TOO_SMALL(400, "CREDIT_003", "최소 충전 금액보다 작습니다."),
+    CREDIT_CHARGE_AMOUNT_UNIT_INVALID(400, "CREDIT_004", "충전 금액 단위가 올바르지 않습니다."),
+
+    SUBSCRIPTION_NOT_FOUND(404, "SUBSCRIPTION_001", "구독권을 찾을 수 없습니다."),
+    SUBSCRIPTION_ALREADY_ACTIVE(409, "SUBSCRIPTION_002", "이미 활성화된 구독권이 있습니다."),
+    SUBSCRIPTION_INVALID_PLAN(400, "SUBSCRIPTION_003", "올바르지 않은 구독권 상품입니다."),
+    SUBSCRIPTION_RENEWAL_FAILED(400, "SUBSCRIPTION_004", "구독권 자동 갱신에 실패했습니다."),
 
     INVALID_INPUT(400, "MEMBER_001", "입력값이 올바르지 않습니다."),
     ALREADY_APPLIED(400, "MEMBER_002","이미 강사 신청이 진행 중입니다."),

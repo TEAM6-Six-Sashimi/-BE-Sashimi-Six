@@ -4,6 +4,7 @@ import com.sashimi.credit.application.command.ChargeCreditCommand;
 import com.sashimi.credit.application.command.CreateInitialCreditCommand;
 import com.sashimi.credit.application.command.GrantReferralSignupRewardCommand;
 import com.sashimi.credit.application.command.UseCreditCommand;
+import com.sashimi.credit.application.policy.CreditChargePolicy;
 import com.sashimi.credit.application.result.CreditBalanceResult;
 import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.credit.domain.model.Credit;
@@ -26,6 +27,7 @@ public class CreditCommandService implements CreditCommandUseCase {
     public static final Long REFERRER_REWARD = 1000L;
 
     private final CreditRepository creditRepository;
+    private final CreditChargePolicy creditChargePolicy;
 
     @Override
     public void createInitialCredit(CreateInitialCreditCommand command) {
@@ -44,6 +46,8 @@ public class CreditCommandService implements CreditCommandUseCase {
 
     @Override
     public CreditBalanceResult chargeCredit(ChargeCreditCommand command) {
+        creditChargePolicy.validate(command.amount());
+
         Credit credit = getOrCreateCreditForUpdate(command.userId());
 
         credit.add(command.amount());
