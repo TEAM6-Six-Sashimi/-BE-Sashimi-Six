@@ -84,7 +84,7 @@ public class Course {
     public Course update(Long categoryId, Long ncsInfoId, String title, String description, Long price,
                          CourseDifficulty difficulty, String thumbnail, CourseStatus targetStatus,
                          List<CourseSession> sessions) {
-        if (!canModify()) throw new IllegalStateException("?섏젙?????녿뒗 ?곹깭??媛뺤쓽?낅땲??");
+        if (!canModify()) throw new IllegalStateException("수정할 수 없는 상태의 강의입니다.");
         validateWritableStatus(targetStatus);
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
         return new Course(this.id, this.instructorId, categoryId, ncsInfoId, title, description,
@@ -94,7 +94,7 @@ public class Course {
     }
 
     public Course approve() {
-        if (this.status != CourseStatus.PENDING) throw new IllegalStateException("?뱀씤 ?湲??곹깭媛 ?꾨땶 媛뺤쓽?낅땲??");
+        if (this.status != CourseStatus.PENDING) throw new IllegalStateException("승인 대기 상태가 아닌 강의입니다.");
         return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.APPROVED, null,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
@@ -102,7 +102,7 @@ public class Course {
     }
 
     public Course reject(String reason) {
-        if (this.status != CourseStatus.PENDING) throw new IllegalStateException("?뱀씤 ?湲??곹깭媛 ?꾨땶 媛뺤쓽?낅땲??");
+        if (this.status != CourseStatus.PENDING) throw new IllegalStateException("승인 대기 상태가 아닌 강의입니다.");
         return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.REJECTED, reason,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
