@@ -38,6 +38,31 @@ public class NcsInfoJpaEntity {
 
     protected NcsInfoJpaEntity() {}
 
+    public NcsInfoJpaEntity(String ncsCode, String categoryPath, String jobName,
+                            String jobDescription, String abilityUnitCode, String abilityUnitName,
+                            String abilityUnitDescription, LocalDateTime lastSyncedAt) {
+        this.ncsCode = ncsCode;
+        this.categoryPath = categoryPath;
+        this.jobName = jobName;
+        this.jobDescription = jobDescription;
+        this.abilityUnitCode = abilityUnitCode;
+        this.abilityUnitName = abilityUnitName;
+        this.abilityUnitDescription = abilityUnitDescription;
+        this.lastSyncedAt = lastSyncedAt;
+    }
+
+    public void updateFromSync(String categoryPath, String jobName, String jobDescription,
+                               String abilityUnitCode, String abilityUnitName,
+                               String abilityUnitDescription, LocalDateTime lastSyncedAt) {
+        this.categoryPath = categoryPath;
+        this.jobName = jobName;
+        this.jobDescription = jobDescription;
+        this.abilityUnitCode = abilityUnitCode;
+        this.abilityUnitName = abilityUnitName;
+        this.abilityUnitDescription = abilityUnitDescription;
+        this.lastSyncedAt = lastSyncedAt;
+    }
+
     public Long getId() {
         return id;
     }

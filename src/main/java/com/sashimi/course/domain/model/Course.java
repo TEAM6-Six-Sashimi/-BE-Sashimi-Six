@@ -62,6 +62,7 @@ public class Course {
                                 String title, String description, Long price,
                                 CourseDifficulty difficulty, String thumbnail,
                                 CourseStatus initialStatus, List<CourseSession> sessions) {
+        validateWritableStatus(initialStatus);
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
         return new Course(null, instructorId, categoryId, ncsInfoId, title, description, price,
                 difficulty, thumbnail, totalDuration, initialStatus, null,
@@ -84,6 +85,7 @@ public class Course {
                          CourseDifficulty difficulty, String thumbnail, CourseStatus targetStatus,
                          List<CourseSession> sessions) {
         if (!canModify()) throw new IllegalStateException("?섏젙?????녿뒗 ?곹깭??媛뺤쓽?낅땲??");
+        validateWritableStatus(targetStatus);
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
         return new Course(this.id, this.instructorId, categoryId, ncsInfoId, title, description,
                 price, difficulty, thumbnail, totalDuration, targetStatus, null,
@@ -105,6 +107,12 @@ public class Course {
                 difficulty, thumbnail, totalDuration, CourseStatus.REJECTED, reason,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 null, sessions);
+    }
+
+    private static void validateWritableStatus(CourseStatus status) {
+        if (status != CourseStatus.DRAFT && status != CourseStatus.PENDING) {
+            throw new IllegalArgumentException("Course status must be DRAFT or PENDING.");
+        }
     }
 
     public boolean canModify() {
