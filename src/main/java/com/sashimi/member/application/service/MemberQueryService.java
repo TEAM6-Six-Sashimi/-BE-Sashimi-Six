@@ -8,6 +8,8 @@ import com.sashimi.member.domain.model.InstructorApplication;
 import com.sashimi.member.domain.repository.InstructorApplicationRepository;
 import com.sashimi.member.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.member.presentation.api.response.InstructorApplicationListResponse;
+import com.sashimi.member.presentation.api.response.MyInstructorApplicationDetailResponse;
+import com.sashimi.member.presentation.api.response.MyInstructorApplicationListResponse;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,5 +43,25 @@ public class MemberQueryService implements MemberQueryUseCase {
         InstructorApplication application = instructorApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
         return InstructorApplicationDetailResponse.from(application);
+    }
+
+    @Override
+    public List<MyInstructorApplicationListResponse> getMyInstructorApplications(Long userId) {
+        return instructorApplicationRepository.findAllByUserId(userId)
+                .stream()
+                .map(MyInstructorApplicationListResponse::from)
+                .toList();
+    }
+
+    @Override
+    public MyInstructorApplicationDetailResponse getMyInstructorApplicationDetail(Long userId, Long applicationId) {
+        InstructorApplication application = instructorApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
+        if (!application.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        return MyInstructorApplicationDetailResponse.of(application, user);
     }
 }

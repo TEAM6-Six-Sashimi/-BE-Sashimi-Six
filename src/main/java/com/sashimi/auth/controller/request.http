@@ -29,8 +29,8 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "loginId": "testuser01",
-  "password": "Password1!"
+  "loginId": "student01",
+  "password": "student"
 
 }
 ### 토큰 재발급

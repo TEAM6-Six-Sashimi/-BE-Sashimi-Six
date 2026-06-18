@@ -14,6 +14,8 @@ public interface InstructorApplicationRepository {
 
     Optional<InstructorApplication> findByUserId(Long userId);
 
+    List<InstructorApplication> findAllByUserId(Long userId);
+
     List<InstructorApplication> findAllByStatus(ApprovalStatus status);
 
     boolean existsByUserIdAndApprovalStatus(Long userId, ApprovalStatus status);

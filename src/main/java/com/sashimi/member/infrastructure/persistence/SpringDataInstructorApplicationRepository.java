@@ -11,6 +11,8 @@ public interface SpringDataInstructorApplicationRepository
 
     Optional<InstructorApplicationJpaEntity> findByUserId(Long userId);
 
+    List<InstructorApplicationJpaEntity> findAllByUserId(Long userId);
+
     List<InstructorApplicationJpaEntity> findAllByApprovalStatus(ApprovalStatus approvalStatus);
 
     boolean existsByUserIdAndApprovalStatus(Long userId, ApprovalStatus approvalStatus);
