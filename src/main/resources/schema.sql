@@ -115,7 +115,7 @@ CREATE TABLE cart_items (
                             course_id BIGINT NOT NULL,
                             CONSTRAINT fk_cart_user FOREIGN KEY (user_id) REFERENCES users(user_id),
                             CONSTRAINT fk_cart_course FOREIGN KEY (course_id) REFERENCES courses(course_id),
-                            CONSTRAINT uq_cart_user_course UNIQUE (user_id, course_id)
+                            CONSTRAINT uq_cart_user_item UNIQUE (user_id, item_type, item_id)
 );
 
 -- =========================

@@ -47,3 +47,7 @@ app:
 file:
   upload-dir: uploads/
   base-url: http://localhost:8080
+
+toss:
+  payments:
+    secret-key: ${TOSS_PAYMENTS_SECRET_KEY:}

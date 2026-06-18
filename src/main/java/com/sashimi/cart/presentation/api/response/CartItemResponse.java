@@ -4,8 +4,6 @@ import com.sashimi.cart.application.usecase.CartQueryUseCase;
 
 public record CartItemResponse(
         Long cartItemId,
-        String itemType,
-        Long itemId,
         Long courseId,
         String title,
         String thumbnail,
@@ -16,8 +14,6 @@ public record CartItemResponse(
     public static CartItemResponse from(CartQueryUseCase.CartItemView view) {
         return new CartItemResponse(
                 view.cartItemId(),
-                view.itemType(),
-                view.itemId(),
                 view.courseId(),
                 view.title(),
                 view.thumbnail(),

@@ -1,10 +1,10 @@
 package com.sashimi.credit.presentation.api;
 
-import com.sashimi.credit.application.command.ChargeCreditCommand;
+
 import com.sashimi.credit.application.result.CreditBalanceResult;
 import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.credit.application.usecase.CreditQueryUseCase;
-import com.sashimi.credit.presentation.api.request.ChargeCreditRequest;
+
 import com.sashimi.credit.presentation.api.response.CreditResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +16,14 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.sashimi.credit.application.command.ConfirmCreditChargeCommand;
+import com.sashimi.credit.application.command.ReadyCreditChargeCommand;
+import com.sashimi.credit.application.result.CreditChargeConfirmResult;
+import com.sashimi.credit.application.result.CreditChargeReadyResult;
+import com.sashimi.credit.presentation.api.request.ConfirmCreditChargeRequest;
+import com.sashimi.credit.presentation.api.request.ReadyCreditChargeRequest;
+import com.sashimi.credit.presentation.api.response.CreditChargeConfirmResponse;
+import com.sashimi.credit.presentation.api.response.CreditChargeReadyResponse;
 
 @Tag(name = "Credit", description = "크레딧 API")
 @SecurityRequirement(name = "bearerAuth")
@@ -42,21 +50,34 @@ public class CreditController {
         return ResponseEntity.ok(CreditResponse.from(result));
     }
 
-    @Operation(summary = "크레딧 충전", description = "로그인한 사용자의 크레딧을 충전합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "크레딧 충전 성공"),
-            @ApiResponse(responseCode = "400", description = "충전 금액이 올바르지 않음"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
-    })
-    @PostMapping("/charge")
-    public ResponseEntity<CreditResponse> chargeCredit(
+    @PostMapping("/toss/ready")
+    public ResponseEntity<CreditChargeReadyResponse> readyCreditCharge(
             @AuthenticationPrincipal CustomUserPrincipal principal,
-            @RequestBody @Valid ChargeCreditRequest request
+            @RequestBody @Valid ReadyCreditChargeRequest request
     ) {
-        CreditBalanceResult result = creditCommandUseCase.chargeCredit(
-                new ChargeCreditCommand(principal.getId(), request.amount())
+        CreditChargeReadyResult result = creditCommandUseCase.readyCreditCharge(
+                new ReadyCreditChargeCommand(principal.getId(), request.amount())
         );
 
-        return ResponseEntity.ok(CreditResponse.from(result));
+        return ResponseEntity.ok(CreditChargeReadyResponse.from(result));
     }
+
+    @PostMapping("/toss/confirm")
+    public ResponseEntity<CreditChargeConfirmResponse> confirmCreditCharge(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @RequestBody @Valid ConfirmCreditChargeRequest request
+    ) {
+        CreditChargeConfirmResult result = creditCommandUseCase.confirmCreditCharge(
+                new ConfirmCreditChargeCommand(
+                        principal.getId(),
+                        request.paymentKey(),
+                        request.orderId(),
+                        request.amount()
+                )
+        );
+
+        return ResponseEntity.ok(CreditChargeConfirmResponse.from(result));
+    }
+
+
 }
