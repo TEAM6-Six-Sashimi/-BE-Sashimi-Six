@@ -35,9 +35,9 @@ public class CourseCommandService implements CourseCommandUseCase {
                         s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
                 .toList();
 
-        Course course = Course.create(command.instructorId(), categoryId, command.title(),
-                command.description(), command.price(), command.difficulty(), command.thumbnail(),
-                command.initialStatus(), sessions);
+        Course course = Course.create(command.instructorId(), categoryId, command.ncsInfoId(),
+                command.title(), command.description(), command.price(), command.difficulty(),
+                command.thumbnail(), command.initialStatus(), sessions);
 
         return courseRepository.save(course).getId();
     }
@@ -61,9 +61,9 @@ public class CourseCommandService implements CourseCommandUseCase {
                         s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
                 .toList();
 
-        Course updated = course.update(command.categoryId(), command.title(), command.description(),
-                command.price(), command.difficulty(), command.thumbnail(),
-                command.targetStatus(), sessions);
+        Course updated = course.update(command.categoryId(), command.ncsInfoId(),
+                command.title(), command.description(), command.price(), command.difficulty(),
+                command.thumbnail(), command.targetStatus(), sessions);
 
         courseRepository.save(updated);
     }

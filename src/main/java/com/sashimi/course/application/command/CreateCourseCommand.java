@@ -13,6 +13,7 @@ public record CreateCourseCommand(
         Long price,
         CourseDifficulty difficulty,
         String thumbnail,
+        Long ncsInfoId,
         CourseStatus initialStatus,
         List<CreateSessionCommand> sessions
 ) {}
