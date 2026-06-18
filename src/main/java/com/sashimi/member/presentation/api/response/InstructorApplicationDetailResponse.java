@@ -2,6 +2,7 @@ package com.sashimi.member.presentation.api.response;
 
 import com.sashimi.member.domain.model.ApprovalStatus;
 import com.sashimi.member.domain.model.InstructorApplication;
+import com.sashimi.member.domain.model.RejectionCategory;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +18,8 @@ public record InstructorApplicationDetailResponse(
         List<String> mainCareers,
         List<CertificationInfo> certifications,
         ApprovalStatus approvalStatus,
+        RejectionCategory rejectionCategory,
+        String rejectionReason,
         LocalDateTime approvedAt,
         LocalDateTime createdAt
 ) {
@@ -37,6 +40,8 @@ public record InstructorApplicationDetailResponse(
                 application.getMainCareers(),
                 certInfos,
                 application.getApprovalStatus(),
+                application.getRejectionCategory(),
+                application.getRejectionReason(),
                 application.getApprovedAt(),
                 application.getCreatedAt()
         );

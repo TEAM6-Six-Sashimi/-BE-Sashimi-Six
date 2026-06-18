@@ -32,3 +32,12 @@ clova:
 app:
   mail:
     from: test@sashimi.com
+
+file:
+  upload-dir: uploads/
+  base-url: http://localhost:8080
+
+toss:
+  payments:
+    base-url: https://api.tosspayments.com
+    secret-key: test_sk_dummy

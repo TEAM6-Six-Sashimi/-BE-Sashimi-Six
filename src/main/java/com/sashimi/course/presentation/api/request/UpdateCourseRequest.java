@@ -12,6 +12,7 @@ public record UpdateCourseRequest(
         Long price,
         CourseDifficulty difficulty,
         String thumbnail,
+        Long ncsInfoId,
         CourseStatus targetStatus,
         List<CreateSessionRequest> sessions
 ) {}

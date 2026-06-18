@@ -67,6 +67,11 @@ public enum ErrorCode {
     CREDIT_INSUFFICIENT_BALANCE(400, "CREDIT_002", "크레딧 잔액이 부족합니다."),
     CREDIT_CHARGE_AMOUNT_TOO_SMALL(400, "CREDIT_003", "최소 충전 금액보다 작습니다."),
     CREDIT_CHARGE_AMOUNT_UNIT_INVALID(400, "CREDIT_004", "충전 금액 단위가 올바르지 않습니다."),
+    CREDIT_CHARGE_PAYMENT_NOT_FOUND(404, "CREDIT_005", "크레딧 충전 결제 요청을 찾을 수 없습니다."),
+    CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED(409, "CREDIT_006", "이미 처리된 크레딧 충전 결제입니다."),
+    CREDIT_CHARGE_PAYMENT_AMOUNT_MISMATCH(400, "CREDIT_007", "크레딧 충전 결제 금액이 일치하지 않습니다."),
+    CREDIT_CHARGE_PAYMENT_FORBIDDEN(403, "CREDIT_008", "해당 크레딧 충전 결제에 접근할 수 없습니다."),
+    CREDIT_EXTERNAL_PAYMENT_FAILED(502, "CREDIT_009", "외부 결제 승인에 실패했습니다."),
 
     SUBSCRIPTION_NOT_FOUND(404, "SUBSCRIPTION_001", "구독권을 찾을 수 없습니다."),
     SUBSCRIPTION_ALREADY_ACTIVE(409, "SUBSCRIPTION_002", "이미 활성화된 구독권이 있습니다."),

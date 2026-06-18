@@ -3,9 +3,13 @@ package com.sashimi.member.presentation;
 import com.sashimi.member.application.command.ApplyInstructorCommand;
 import com.sashimi.member.application.usecase.MemberCommandUseCase;
 import com.sashimi.member.application.usecase.MemberQueryUseCase;
+import com.sashimi.member.presentation.api.request.RejectInstructorRequest;
 import com.sashimi.member.presentation.api.response.ApiResponse;
 import com.sashimi.member.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.member.presentation.api.response.InstructorApplicationListResponse;
+import com.sashimi.member.presentation.api.response.MyInstructorApplicationDetailResponse;
+import com.sashimi.member.presentation.api.response.MyInstructorApplicationListResponse;
+import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -103,9 +107,28 @@ public class MemberController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PatchMapping("/instructor-applications/{applicationId}/reject")
-    public ResponseEntity<ApiResponse<Void>> rejectInstructor(@PathVariable Long applicationId) {
-        memberCommandUseCase.rejectInstructor(applicationId);
+    public ResponseEntity<ApiResponse<Void>> rejectInstructor(
+            @PathVariable Long applicationId,
+            @Valid @RequestBody RejectInstructorRequest request) {
+        memberCommandUseCase.rejectInstructor(applicationId, request.rejectionCategory(), request.rejectionReason());
         return ResponseEntity.ok(ApiResponse.of("강사 요청을 반려했습니다."));
+    }
+
+    @Operation(summary = "나의 강사 지원 내역 목록 조회", description = "본인의 강사 지원 내역 목록을 조회합니다.")
+    @GetMapping("/{userId}/instructor-applications")
+    public ResponseEntity<ApiResponse<List<MyInstructorApplicationListResponse>>> getMyInstructorApplications(
+            @PathVariable Long userId) {
+        List<MyInstructorApplicationListResponse> responses = memberQueryUseCase.getMyInstructorApplications(userId);
+        return ResponseEntity.ok(ApiResponse.of("강사 지원 내역 조회 성공", responses));
+    }
+
+    @Operation(summary = "나의 강사 지원 상세 조회", description = "본인의 강사 지원 상세 정보 및 반려 사유를 조회합니다.")
+    @GetMapping("/{userId}/instructor-applications/{applicationId}")
+    public ResponseEntity<ApiResponse<MyInstructorApplicationDetailResponse>> getMyInstructorApplicationDetail(
+            @PathVariable Long userId,
+            @PathVariable Long applicationId) {
+        MyInstructorApplicationDetailResponse response = memberQueryUseCase.getMyInstructorApplicationDetail(userId, applicationId);
+        return ResponseEntity.ok(ApiResponse.of("강사 지원 상세 조회 성공", response));
     }
 
     @Operation(summary = "강사 신청 대기 목록 조회 [ADMIN 전용]", description = "관리자만 승인 대기 중인 강사 신청 목록을 조회할 수 있습니다. ROLE_ADMIN 권한 필요.")

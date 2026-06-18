@@ -35,6 +35,14 @@ public class InstructorApplicationRepositoryAdapter implements InstructorApplica
     }
 
     @Override
+    public List<InstructorApplication> findAllByUserId(Long userId) {
+        return springDataRepository.findAllByUserId(userId)
+                .stream()
+                .map(InstructorApplicationJpaEntity::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<InstructorApplication> findAllByStatus(ApprovalStatus status) {
         return springDataRepository.findAllByApprovalStatus(status)
                 .stream()

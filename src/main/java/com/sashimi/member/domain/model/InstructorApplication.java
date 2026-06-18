@@ -23,6 +23,8 @@ public class InstructorApplication {
     private List<String> mainCareers;
     private List<InstructorCertification> certifications;
     private ApprovalStatus approvalStatus;
+    private RejectionCategory rejectionCategory;
+    private String rejectionReason;
     private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -54,11 +56,13 @@ public class InstructorApplication {
         this.approvedAt = LocalDateTime.now();
     }
 
-    public void reject() {
+    public void reject(RejectionCategory rejectionCategory, String rejectionReason) {
         if (this.approvalStatus != ApprovalStatus.PENDING) {
             throw new BusinessException(ErrorCode.INVALID_APPLICATION_STATUS);
         }
         this.approvalStatus = ApprovalStatus.REJECTED;
+        this.rejectionCategory = rejectionCategory;
+        this.rejectionReason = rejectionReason;
         this.updatedAt = LocalDateTime.now();
     }
 }

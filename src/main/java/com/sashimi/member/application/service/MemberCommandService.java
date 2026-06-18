@@ -9,6 +9,7 @@ import com.sashimi.member.application.usecase.MemberCommandUseCase;
 import com.sashimi.member.domain.model.ApprovalStatus;
 import com.sashimi.member.domain.model.InstructorApplication;
 import com.sashimi.member.domain.model.InstructorCertification;
+import com.sashimi.member.domain.model.RejectionCategory;
 import com.sashimi.member.domain.repository.InstructorApplicationRepository;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
@@ -100,11 +101,11 @@ public class MemberCommandService implements MemberCommandUseCase {
     }
 
     @Override
-    public void rejectInstructor(Long applicationId) {
+    public void rejectInstructor(Long applicationId, RejectionCategory rejectionCategory, String rejectionReason) {
         InstructorApplication application = instructorApplicationRepository
                 .findById(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
-        application.reject();
+        application.reject(rejectionCategory, rejectionReason);
         instructorApplicationRepository.save(application);
     }
 }

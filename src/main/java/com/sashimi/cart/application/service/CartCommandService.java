@@ -41,7 +41,7 @@ public class    CartCommandService implements CartCommandUseCase {
             throw new BusinessException(ErrorCode.CART_ITEM_ALREADY_EXISTS);
         }
 
-        CartItem cartItem = CartItem.createCourse(
+        CartItem cartItem = CartItem.create(
                 command.userId(),
                 command.courseId(),
                 courseInfo.price()
