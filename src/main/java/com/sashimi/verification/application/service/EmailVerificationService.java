@@ -116,7 +116,6 @@ public class EmailVerificationService implements EmailVerificationUseCase {
         return switch (purpose) {
             case SIGNUP -> "[Sashimi Six] 회원가입 이메일 인증 코드";
             case PASSWORD_RESET -> "[Sashimi Six] 비밀번호 재설정 인증 코드";
-            case EMAIL_CHANGE -> "[Sashimi Six] 이메일 변경 인증 코드";
         };
     }
 

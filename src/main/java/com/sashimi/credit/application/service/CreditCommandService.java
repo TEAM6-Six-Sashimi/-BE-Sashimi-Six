@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class CreditCommandService implements CreditCommandUseCase {
 
-    public static final Long NEW_USER_REFERRAL_REWARD = 5000L;
+    public static final Long NEW_USER_REFERRAL_REWARD = 1000L;
     public static final Long REFERRER_REWARD = 1000L;
 
     private final CreditRepository creditRepository;
