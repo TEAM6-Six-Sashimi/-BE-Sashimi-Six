@@ -3,6 +3,7 @@ package com.sashimi.member.infrastructure.persistence;
 import com.sashimi.member.domain.model.ApprovalStatus;
 import com.sashimi.member.domain.model.InstructorApplication;
 import com.sashimi.member.domain.model.InstructorCertification;
+import com.sashimi.member.domain.model.RejectionCategory;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -41,6 +42,13 @@ public class InstructorApplicationJpaEntity {
     @Column(name = "approval_status")
     private ApprovalStatus approvalStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rejection_category")
+    private RejectionCategory rejectionCategory;
+
+    @Column(name = "rejection_reason", length = 100)
+    private String rejectionReason;
+
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
@@ -53,6 +61,7 @@ public class InstructorApplicationJpaEntity {
     @Builder
     public InstructorApplicationJpaEntity(Long id, Long userId, String bio,
                                           String portfolioUrl, ApprovalStatus approvalStatus,
+                                          RejectionCategory rejectionCategory, String rejectionReason,
                                           LocalDateTime approvedAt, LocalDateTime createdAt,
                                           LocalDateTime updatedAt) {
         this.id = id;
@@ -60,6 +69,8 @@ public class InstructorApplicationJpaEntity {
         this.bio = bio;
         this.portfolioUrl = portfolioUrl;
         this.approvalStatus = approvalStatus;
+        this.rejectionCategory = rejectionCategory;
+        this.rejectionReason = rejectionReason;
         this.approvedAt = approvedAt;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -72,6 +83,8 @@ public class InstructorApplicationJpaEntity {
                 .bio(domain.getBio())
                 .portfolioUrl(domain.getPortfolioUrl())
                 .approvalStatus(domain.getApprovalStatus())
+                .rejectionCategory(domain.getRejectionCategory())
+                .rejectionReason(domain.getRejectionReason())
                 .approvedAt(domain.getApprovedAt())
                 .createdAt(domain.getCreatedAt())
                 .updatedAt(domain.getUpdatedAt())
@@ -101,6 +114,8 @@ public class InstructorApplicationJpaEntity {
                 .portfolioUrl(portfolioUrl)
                 .certifications(certDomains)
                 .approvalStatus(approvalStatus)
+                .rejectionCategory(rejectionCategory)
+                .rejectionReason(rejectionReason)
                 .approvedAt(approvedAt)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)

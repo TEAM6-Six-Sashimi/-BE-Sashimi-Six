@@ -84,6 +84,7 @@ public enum ErrorCode {
     INVALID_APPLICATION_STATUS(400, "MEMBER_004", "처리할 수 없는 신청 상태입니다."),
     CERTIFICATE_OCR_FAILED(400, "MEMBER_005", "자격증 OCR 검증에 실패했습니다."),
     CERTIFICATE_NOT_FOUND(404, "MEMBER_006", "자격증을 찾을 수 없습니다."),
+    RESUME_OCR_FAILED(400, "MEMBER_007", "이력서 OCR 처리에 실패했습니다. 주요 이력 항목을 확인해주세요."),
 
     AI_API_KEY_MISSING(500, "AI_001", "AI API Key가 설정되지 않았습니다."),
     AI_API_KEY_NOT_RESOLVED(500, "AI_002", "AI API Key 환경변수가 정상적으로 치환되지 않았습니다."),

@@ -1,6 +1,7 @@
 package com.sashimi.member.application.usecase;
 
 import com.sashimi.member.application.command.ApplyInstructorCommand;
+import com.sashimi.member.domain.model.RejectionCategory;
 
 public interface MemberCommandUseCase {
 
@@ -8,5 +9,5 @@ public interface MemberCommandUseCase {
 
     void approveInstructor(Long applicationId);
 
-    void rejectInstructor(Long applicationId);
+    void rejectInstructor(Long applicationId, RejectionCategory rejectionCategory, String rejectionReason);
 }
