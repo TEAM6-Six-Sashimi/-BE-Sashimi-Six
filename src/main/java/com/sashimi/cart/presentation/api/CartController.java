@@ -172,19 +172,5 @@ public class CartController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "장바구니 결제 전 조회", description = "결제 대상으로 선택된 장바구니 항목과 총 금액을 조회합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "결제 대상 조회 성공"),
-            @ApiResponse(responseCode = "400", description = "선택된 장바구니 항목이 없음"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
-    })
-    @PostMapping("/checkout")
-    public ResponseEntity<CartResponse> checkout(
-            @AuthenticationPrincipal CustomUserPrincipal principal
-    ) {
-        CartQueryUseCase.CartView cartView =
-                cartQueryUseCase.getCheckoutCart(principal.getId());
 
-        return ResponseEntity.ok(CartResponse.from(cartView));
-    }
 }

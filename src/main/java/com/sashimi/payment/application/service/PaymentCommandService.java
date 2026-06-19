@@ -9,8 +9,7 @@ import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
-import com.sashimi.payment.application.command.CheckoutCartCommand;
-import com.sashimi.payment.application.command.PayCourseCommand;
+import com.sashimi.payment.application.command.PaymentCheckoutCommand;
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase;
 import com.sashimi.order.domain.model.Order;
 import com.sashimi.order.domain.model.OrderItem;
@@ -59,53 +58,57 @@ public class PaymentCommandService implements PaymentCommandUseCase {
     }
 
     @Override
-    public PaymentResult checkoutCart(CheckoutCartCommand command) {
-        log.info("장바구니 결제 요청 - userId={}", command.userId());
+    public PaymentResult checkout(PaymentCheckoutCommand command) {
+        if (!Boolean.TRUE.equals(command.agreed())) {
+            throw new BusinessException(ErrorCode.PAYMENT_AGREEMENT_REQUIRED);
+        }
 
-        List<CartItem> cartItems = cartItemRepository.findAllSelectedByUserId(command.userId());
+        if (command.purchaseType() == null) {
+            throw new BusinessException(ErrorCode.PAYMENT_INVALID_CHECKOUT_REQUEST);
+        }
+
+        return switch (command.purchaseType()) {
+            case COURSE -> checkoutCourse(command.userId(), command.courseId());
+            case CART -> checkoutCart(command.userId(), command.courseId());
+        };
+    }
+
+    private PaymentResult checkoutCourse(Long userId, Long courseId) {
+        if (courseId == null || courseId <= 0) {
+            throw new BusinessException(ErrorCode.PAYMENT_COURSE_ID_REQUIRED);
+        }
+
+        CourseInfo course = coursePurchasePolicy.validatePurchasable(userId, courseId);
+
+        PaymentResult result = pay(userId, List.of(
+                new PaymentCourse(course.courseId(), course.title(), course.price())
+        ), PaymentSource.DIRECT);
+
+        cartItemRepository.deleteByUserIdAndCourseId(userId, courseId);
+        return result;
+    }
+
+    private PaymentResult checkoutCart(Long userId, Long courseId) {
+        if (courseId != null) {
+            throw new BusinessException(ErrorCode.PAYMENT_CART_COURSE_ID_NOT_ALLOWED);
+        }
+
+        List<CartItem> cartItems = cartItemRepository.findAllSelectedByUserId(userId);
 
         if (cartItems.isEmpty()) {
             throw new BusinessException(ErrorCode.CART_EMPTY_SELECTION);
         }
 
         List<PaymentCourse> courses = cartItems.stream()
-                .map(cartItem -> {
-                    CourseInfo courseInfo = coursePurchasePolicy.validatePurchasable(
-                            command.userId(),
-                            cartItem.getCourseId()
-                    );
-
-                    return new PaymentCourse(
-                            courseInfo.courseId(),
-                            courseInfo.title(),
-                            courseInfo.price()
-                    );
-                })
+                .map(item -> coursePurchasePolicy.validatePurchasable(
+                        userId, item.getCourseId()
+                ))
+                .map(course -> new PaymentCourse(
+                        course.courseId(), course.title(), course.price()
+                ))
                 .toList();
 
-        return pay(command.userId(), courses, PaymentSource.CART);
-    }
-
-    @Override
-    public PaymentResult payCourse(PayCourseCommand command) {
-        log.info("단일 강의 결제 요청 - userId={}, courseId={}",
-                command.userId(), command.courseId());
-
-        CourseInfo courseInfo = coursePurchasePolicy.validatePurchasable(
-                command.userId(),
-                command.courseId()
-        );
-
-        PaymentResult result = pay(command.userId(), List.of(
-                new PaymentCourse(courseInfo.courseId(), courseInfo.title(), courseInfo.price())
-        ), PaymentSource.DIRECT);
-
-        cartItemRepository.deleteByUserIdAndCourseId(
-                command.userId(),
-                command.courseId()
-        );
-
-        return result;
+        return pay(userId, courses, PaymentSource.CART);
     }
 
     private PaymentResult pay(Long userId, List<PaymentCourse> courses, PaymentSource source) {

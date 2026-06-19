@@ -12,6 +12,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class PublicCourseQueryService implements PublicCourseQueryUseCase {
 
     private final CourseRepository courseRepository;

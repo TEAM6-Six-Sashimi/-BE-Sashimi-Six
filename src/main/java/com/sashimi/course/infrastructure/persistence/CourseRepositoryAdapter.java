@@ -6,6 +6,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -87,6 +88,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findByStatusIn(List<CourseStatus> statuses) {
+        return springDataCourseRepository.findByStatusIn(statuses)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<Course> findByStatusAndCategoryId(CourseStatus status, Long categoryId) {
         return springDataCourseRepository.findByStatusAndCategoryId(status, categoryId)
                 .stream().map(this::toDomain).toList();
@@ -95,6 +102,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     @Override
     public List<Course> findByStatusAndCategoryIdIn(CourseStatus status, List<Long> categoryIds) {
         return springDataCourseRepository.findByStatusAndCategoryIdIn(status, categoryIds)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<Course> findByStatusAndApprovedAtBefore(CourseStatus status, LocalDateTime cutoff) {
+        return springDataCourseRepository.findByStatusAndApprovedAtBefore(status, cutoff)
                 .stream().map(this::toDomain).toList();
     }
 

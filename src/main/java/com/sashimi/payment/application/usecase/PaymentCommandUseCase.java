@@ -1,15 +1,13 @@
 package com.sashimi.payment.application.usecase;
 
-import com.sashimi.payment.application.command.CheckoutCartCommand;
-import com.sashimi.payment.application.command.PayCourseCommand;
+
+import com.sashimi.payment.application.command.PaymentCheckoutCommand;
 
 import java.util.List;
 
 public interface PaymentCommandUseCase {
 
-    PaymentResult checkoutCart(CheckoutCartCommand command);
-
-    PaymentResult payCourse(PayCourseCommand command);
+    PaymentResult checkout(PaymentCheckoutCommand command);
 
     record PaymentResult(
             Long orderId,

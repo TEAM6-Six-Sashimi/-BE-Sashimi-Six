@@ -189,6 +189,7 @@ public class AuthService {
 
     public TokenResponseDto reissue(String refreshTokenValue) {
         RefreshToken refreshToken = refreshService.findValidRefreshToken(refreshTokenValue);
+        refreshToken.markUsed(LocalDateTime.now());
 
         User user = userRepository.findById(refreshToken.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

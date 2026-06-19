@@ -6,7 +6,6 @@ public interface CartQueryUseCase {
 
     CartView getCart(Long userId);
 
-    CartView getCheckoutCart(Long userId);
 
     record CartView(
             List<CartItemView> items,
