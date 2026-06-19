@@ -1,6 +1,5 @@
 package com.sashimi.payment.application.service;
 
-import com.sashimi.order.application.policy.CoursePurchasePolicy;
 import com.sashimi.cart.application.port.CourseInfo;
 import com.sashimi.cart.domain.model.CartItem;
 import com.sashimi.cart.domain.repository.CartItemRepository;
@@ -9,14 +8,16 @@ import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
-import com.sashimi.order.domain.model.OrderStatus;
-import com.sashimi.payment.application.command.CheckoutCartCommand;
-import com.sashimi.payment.application.command.PayCourseCommand;
+import com.sashimi.order.application.policy.CoursePurchasePolicy;
 import com.sashimi.order.domain.model.Order;
 import com.sashimi.order.domain.model.OrderItem;
-import com.sashimi.payment.domain.model.Payment;
+import com.sashimi.order.domain.model.OrderStatus;
 import com.sashimi.order.domain.repository.OrderItemRepository;
 import com.sashimi.order.domain.repository.OrderRepository;
+import com.sashimi.payment.application.command.PaymentCheckoutCommand;
+import com.sashimi.payment.application.command.PaymentPurchaseType;
+import com.sashimi.payment.domain.model.Payment;
+import com.sashimi.payment.domain.model.PaymentStatus;
 import com.sashimi.payment.domain.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,9 +28,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class PaymentCommandServiceTest {
+
+    private static final Long USER_ID = 1L;
+    private static final Long COURSE_ID = 100L;
+    private static final Long COURSE_PRICE = 30_000L;
+    private static final Long ORDER_ID = 1L;
+    private static final Long ORDER_ITEM_ID = 11L;
+    private static final Long PAYMENT_ID = 20L;
 
     private CartItemRepository cartItemRepository;
     private CoursePurchasePolicy coursePurchasePolicy;
@@ -63,59 +73,16 @@ class PaymentCommandServiceTest {
     }
 
     @Test
-    void 장바구니_선택_강의를_결제하면_크레딧을_차감하고_수강등록_후_선택항목_삭제() {
-        CartItem cartItem = CartItem.restore(
-                10L,
-                1L,
-                100L,
-                30000L,
-                true,
-                LocalDateTime.now()
-        );
+    void 장바구니에서_선택한_강의를_결제하면_크레딧을_차감하고_수강_등록한_뒤_선택_항목을_삭제한다() {
+        CartItem cartItem = createCartItem();
+        CourseInfo courseInfo = createCourseInfo();
+        Order savedOrder = createSavedOrder();
+        OrderItem savedOrderItem = createSavedOrderItem();
+        Payment savedPayment = createSavedPayment();
 
-        CourseInfo courseInfo = new CourseInfo(
-                100L,
-                "Spring Boot Basic",
-                30000L,
-                "thumbnail.png",
-                "Instructor",
-                true
-        );
-
-        Order savedOrder = Order.restore(
-                1L,
-                "ORD-TEST",
-                30000L,
-                0L,
-                30000L,
-                OrderStatus.PAID,
-                LocalDateTime.now(),
-                1L
-        );
-
-        OrderItem savedOrderItem = OrderItem.restore(
-                11L,
-                "Spring Boot Basic",
-                30000L,
-                0L,
-                30000L,
-                1L,
-                100L
-        );
-
-        Payment savedPayment = Payment.restore(
-                20L,
-                30000L,
-                com.sashimi.payment.domain.model.PaymentStatus.PAID,
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                1L,
-                1L
-        );
-
-        when(cartItemRepository.findAllSelectedByUserId(1L))
+        when(cartItemRepository.findAllSelectedByUserId(USER_ID))
                 .thenReturn(List.of(cartItem));
-        when(coursePurchasePolicy.validatePurchasable(1L, 100L))
+        when(coursePurchasePolicy.validatePurchasable(USER_ID, COURSE_ID))
                 .thenReturn(courseInfo);
         when(orderRepository.save(any(Order.class)))
                 .thenReturn(savedOrder);
@@ -124,69 +91,53 @@ class PaymentCommandServiceTest {
         when(paymentRepository.save(any(Payment.class)))
                 .thenReturn(savedPayment);
 
-        var result = paymentCommandService.checkoutCart(new CheckoutCartCommand(1L));
+        var result = paymentCommandService.checkout(
+                new PaymentCheckoutCommand(
+                        USER_ID,
+                        PaymentPurchaseType.CART,
+                        null,
+                        true
+                )
+        );
 
-        assertThat(result.orderId()).isEqualTo(1L);
-        assertThat(result.paymentId()).isEqualTo(20L);
-        assertThat(result.amount()).isEqualTo(30000L);
+        assertThat(result.orderId()).isEqualTo(ORDER_ID);
+        assertThat(result.orderNo()).isEqualTo("ORD-TEST");
+        assertThat(result.paymentId()).isEqualTo(PAYMENT_ID);
+        assertThat(result.amount()).isEqualTo(COURSE_PRICE);
+        assertThat(result.status()).isEqualTo("PAID");
         assertThat(result.courses()).hasSize(1);
-        assertThat(result.courses().get(0).courseId()).isEqualTo(100L);
+        assertThat(result.courses().get(0).courseId())
+                .isEqualTo(COURSE_ID);
+        assertThat(result.courses().get(0).title())
+                .isEqualTo("Spring Boot Basic");
+        assertThat(result.courses().get(0).price())
+                .isEqualTo(COURSE_PRICE);
 
         ArgumentCaptor<UseCreditCommand> creditCaptor =
                 ArgumentCaptor.forClass(UseCreditCommand.class);
 
         verify(creditCommandUseCase).useCredit(creditCaptor.capture());
-        assertThat(creditCaptor.getValue().userId()).isEqualTo(1L);
-        assertThat(creditCaptor.getValue().amount()).isEqualTo(30000L);
+        assertThat(creditCaptor.getValue().userId()).isEqualTo(USER_ID);
+        assertThat(creditCaptor.getValue().amount()).isEqualTo(COURSE_PRICE);
 
-        verify(enrollmentPort).enrollPaidCourse(1L, 100L, 11L);
-        verify(cartItemRepository).deleteAllSelectedByUserId(1L);
-        verify(cartItemRepository, never()).deleteByUserIdAndCourseId(anyLong(), anyLong());
+        verify(coursePurchasePolicy)
+                .validatePurchasable(USER_ID, COURSE_ID);
+        verify(enrollmentPort)
+                .enrollPaidCourse(USER_ID, COURSE_ID, ORDER_ITEM_ID);
+        verify(cartItemRepository)
+                .deleteAllSelectedByUserId(USER_ID);
+        verify(cartItemRepository, never())
+                .deleteByUserIdAndCourseId(anyLong(), anyLong());
     }
 
     @Test
-    void 단일_강의를_바로_결제_시_수강등록_후_같은_강의_장바구니_항목_삭제() {
-        CourseInfo courseInfo = new CourseInfo(
-                100L,
-                "Spring Boot Basic",
-                30000L,
-                "thumbnail.png",
-                "Instructor",
-                true
-        );
+    void 단일_강의를_결제하면_크레딧을_차감하고_수강_등록한_뒤_같은_강의를_장바구니에서_삭제한다() {
+        CourseInfo courseInfo = createCourseInfo();
+        Order savedOrder = createSavedOrder();
+        OrderItem savedOrderItem = createSavedOrderItem();
+        Payment savedPayment = createSavedPayment();
 
-        Order savedOrder = Order.restore(
-                1L,
-                "ORD-TEST",
-                30000L,
-                0L,
-                30000L,
-                OrderStatus.PAID,
-                LocalDateTime.now(),
-                1L
-        );
-
-        OrderItem savedOrderItem = OrderItem.restore(
-                11L,
-                "Spring Boot Basic",
-                30000L,
-                0L,
-                30000L,
-                1L,
-                100L
-        );
-
-        Payment savedPayment = Payment.restore(
-                20L,
-                30000L,
-                com.sashimi.payment.domain.model.PaymentStatus.PAID,
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                1L,
-                1L
-        );
-
-        when(coursePurchasePolicy.validatePurchasable(1L, 100L))
+        when(coursePurchasePolicy.validatePurchasable(USER_ID, COURSE_ID))
                 .thenReturn(courseInfo);
         when(orderRepository.save(any(Order.class)))
                 .thenReturn(savedOrder);
@@ -195,30 +146,137 @@ class PaymentCommandServiceTest {
         when(paymentRepository.save(any(Payment.class)))
                 .thenReturn(savedPayment);
 
-        var result = paymentCommandService.payCourse(new PayCourseCommand(1L, 100L));
+        var result = paymentCommandService.checkout(
+                new PaymentCheckoutCommand(
+                        USER_ID,
+                        PaymentPurchaseType.COURSE,
+                        COURSE_ID,
+                        true
+                )
+        );
 
-        assertThat(result.orderId()).isEqualTo(1L);
-        assertThat(result.paymentId()).isEqualTo(20L);
+        assertThat(result.orderId()).isEqualTo(ORDER_ID);
+        assertThat(result.orderNo()).isEqualTo("ORD-TEST");
+        assertThat(result.paymentId()).isEqualTo(PAYMENT_ID);
+        assertThat(result.amount()).isEqualTo(COURSE_PRICE);
+        assertThat(result.status()).isEqualTo("PAID");
         assertThat(result.courses()).hasSize(1);
+        assertThat(result.courses().get(0).courseId())
+                .isEqualTo(COURSE_ID);
 
-        verify(creditCommandUseCase).useCredit(any(UseCreditCommand.class));
-        verify(enrollmentPort).enrollPaidCourse(1L, 100L, 11L);
-        verify(cartItemRepository).deleteByUserIdAndCourseId(1L, 100L);
-        verify(cartItemRepository, never()).deleteAllSelectedByUserId(anyLong());
+        ArgumentCaptor<UseCreditCommand> creditCaptor =
+                ArgumentCaptor.forClass(UseCreditCommand.class);
+
+        verify(creditCommandUseCase).useCredit(creditCaptor.capture());
+        assertThat(creditCaptor.getValue().userId()).isEqualTo(USER_ID);
+        assertThat(creditCaptor.getValue().amount()).isEqualTo(COURSE_PRICE);
+
+        verify(coursePurchasePolicy)
+                .validatePurchasable(USER_ID, COURSE_ID);
+        verify(enrollmentPort)
+                .enrollPaidCourse(USER_ID, COURSE_ID, ORDER_ITEM_ID);
+        verify(cartItemRepository)
+                .deleteByUserIdAndCourseId(USER_ID, COURSE_ID);
+        verify(cartItemRepository, never())
+                .deleteAllSelectedByUserId(anyLong());
     }
 
     @Test
-    void 선택된_장바구니_항목이_없으면_결제_진행_X() {
-        when(cartItemRepository.findAllSelectedByUserId(1L))
+    void 선택한_장바구니_항목이_없으면_결제를_진행하지_않는다() {
+        when(cartItemRepository.findAllSelectedByUserId(USER_ID))
                 .thenReturn(List.of());
 
         BusinessException exception = catchThrowableOfType(
-                () -> paymentCommandService.checkoutCart(new CheckoutCartCommand(1L)),
+                () -> paymentCommandService.checkout(
+                        new PaymentCheckoutCommand(
+                                USER_ID,
+                                PaymentPurchaseType.CART,
+                                null,
+                                true
+                        )
+                ),
                 BusinessException.class
         );
 
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CART_EMPTY_SELECTION);
+        assertThat(exception.getErrorCode())
+                .isEqualTo(ErrorCode.CART_EMPTY_SELECTION);
 
+        verify(cartItemRepository)
+                .findAllSelectedByUserId(USER_ID);
+        verifyNoInteractions(coursePurchasePolicy);
+        verifyNoInteractions(orderRepository);
+        verifyNoInteractions(orderItemRepository);
+        verifyNoInteractions(paymentRepository);
+        verifyNoInteractions(creditCommandUseCase);
+        verifyNoInteractions(enrollmentPort);
+
+        verify(cartItemRepository, never())
+                .deleteAllSelectedByUserId(anyLong());
+    }
+
+    @Test
+    void 크레딧이_부족하면_수강_등록과_장바구니_삭제를_진행하지_않는다() {
+        CourseInfo courseInfo = createCourseInfo();
+        Order savedOrder = createSavedOrder();
+        OrderItem savedOrderItem = createSavedOrderItem();
+        Payment savedPayment = createSavedPayment();
+
+        when(coursePurchasePolicy.validatePurchasable(USER_ID, COURSE_ID))
+                .thenReturn(courseInfo);
+        when(orderRepository.save(any(Order.class)))
+                .thenReturn(savedOrder);
+        when(orderItemRepository.save(any(OrderItem.class)))
+                .thenReturn(savedOrderItem);
+        when(paymentRepository.save(any(Payment.class)))
+                .thenReturn(savedPayment);
+
+        doThrow(new BusinessException(ErrorCode.CREDIT_INSUFFICIENT_BALANCE))
+                .when(creditCommandUseCase)
+                .useCredit(any(UseCreditCommand.class));
+
+        BusinessException exception = catchThrowableOfType(
+                () -> paymentCommandService.checkout(
+                        new PaymentCheckoutCommand(
+                                USER_ID,
+                                PaymentPurchaseType.COURSE,
+                                COURSE_ID,
+                                true
+                        )
+                ),
+                BusinessException.class
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(ErrorCode.CREDIT_INSUFFICIENT_BALANCE);
+
+        verify(creditCommandUseCase)
+                .useCredit(any(UseCreditCommand.class));
+        verify(enrollmentPort, never())
+                .enrollPaidCourse(anyLong(), anyLong(), anyLong());
+        verify(cartItemRepository, never())
+                .deleteByUserIdAndCourseId(anyLong(), anyLong());
+        verify(cartItemRepository, never())
+                .deleteAllSelectedByUserId(anyLong());
+    }
+
+    @Test
+    void 결제에_동의하지_않으면_결제를_진행하지_않는다() {
+        BusinessException exception = catchThrowableOfType(
+                () -> paymentCommandService.checkout(
+                        new PaymentCheckoutCommand(
+                                USER_ID,
+                                PaymentPurchaseType.COURSE,
+                                COURSE_ID,
+                                false
+                        )
+                ),
+                BusinessException.class
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(ErrorCode.PAYMENT_AGREEMENT_REQUIRED);
+
+        verifyNoInteractions(cartItemRepository);
         verifyNoInteractions(coursePurchasePolicy);
         verifyNoInteractions(orderRepository);
         verifyNoInteractions(orderItemRepository);
@@ -228,68 +286,165 @@ class PaymentCommandServiceTest {
     }
 
     @Test
-    void 크레딧이_부족하면_수강등록과_장바구니_삭제_X() {
-        CourseInfo courseInfo = new CourseInfo(
-                100L,
+    void 구매_유형이_없으면_결제를_진행하지_않는다() {
+        BusinessException exception = catchThrowableOfType(
+                () -> paymentCommandService.checkout(
+                        new PaymentCheckoutCommand(
+                                USER_ID,
+                                null,
+                                COURSE_ID,
+                                true
+                        )
+                ),
+                BusinessException.class
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(ErrorCode.PAYMENT_INVALID_CHECKOUT_REQUEST);
+
+        verifyNoInteractions(cartItemRepository);
+        verifyNoInteractions(coursePurchasePolicy);
+        verifyNoInteractions(orderRepository);
+        verifyNoInteractions(orderItemRepository);
+        verifyNoInteractions(paymentRepository);
+        verifyNoInteractions(creditCommandUseCase);
+        verifyNoInteractions(enrollmentPort);
+    }
+
+    @Test
+    void 단일_강의_결제에는_courseId가_필요하다() {
+        BusinessException exception = catchThrowableOfType(
+                () -> paymentCommandService.checkout(
+                        new PaymentCheckoutCommand(
+                                USER_ID,
+                                PaymentPurchaseType.COURSE,
+                                null,
+                                true
+                        )
+                ),
+                BusinessException.class
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(ErrorCode.PAYMENT_COURSE_ID_REQUIRED);
+
+        verifyNoInteractions(cartItemRepository);
+        verifyNoInteractions(coursePurchasePolicy);
+        verifyNoInteractions(orderRepository);
+        verifyNoInteractions(orderItemRepository);
+        verifyNoInteractions(paymentRepository);
+        verifyNoInteractions(creditCommandUseCase);
+        verifyNoInteractions(enrollmentPort);
+    }
+
+    @Test
+    void 단일_강의_결제의_courseId가_양수가_아니면_결제할_수_없다() {
+        BusinessException exception = catchThrowableOfType(
+                () -> paymentCommandService.checkout(
+                        new PaymentCheckoutCommand(
+                                USER_ID,
+                                PaymentPurchaseType.COURSE,
+                                0L,
+                                true
+                        )
+                ),
+                BusinessException.class
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(ErrorCode.PAYMENT_COURSE_ID_REQUIRED);
+
+        verifyNoInteractions(cartItemRepository);
+        verifyNoInteractions(coursePurchasePolicy);
+        verifyNoInteractions(orderRepository);
+        verifyNoInteractions(orderItemRepository);
+        verifyNoInteractions(paymentRepository);
+        verifyNoInteractions(creditCommandUseCase);
+        verifyNoInteractions(enrollmentPort);
+    }
+
+    @Test
+    void 장바구니_결제에는_courseId를_전달할_수_없다() {
+        BusinessException exception = catchThrowableOfType(
+                () -> paymentCommandService.checkout(
+                        new PaymentCheckoutCommand(
+                                USER_ID,
+                                PaymentPurchaseType.CART,
+                                COURSE_ID,
+                                true
+                        )
+                ),
+                BusinessException.class
+        );
+
+        assertThat(exception.getErrorCode())
+                .isEqualTo(ErrorCode.PAYMENT_CART_COURSE_ID_NOT_ALLOWED);
+
+        verifyNoInteractions(cartItemRepository);
+        verifyNoInteractions(coursePurchasePolicy);
+        verifyNoInteractions(orderRepository);
+        verifyNoInteractions(orderItemRepository);
+        verifyNoInteractions(paymentRepository);
+        verifyNoInteractions(creditCommandUseCase);
+        verifyNoInteractions(enrollmentPort);
+    }
+
+    private CartItem createCartItem() {
+        return CartItem.restore(
+                10L,
+                USER_ID,
+                COURSE_ID,
+                COURSE_PRICE,
+                true,
+                LocalDateTime.now()
+        );
+    }
+
+    private CourseInfo createCourseInfo() {
+        return new CourseInfo(
+                COURSE_ID,
                 "Spring Boot Basic",
-                30000L,
+                COURSE_PRICE,
                 "thumbnail.png",
                 "Instructor",
                 true
         );
+    }
 
-        Order savedOrder = Order.restore(
-                1L,
+    private Order createSavedOrder() {
+        return Order.restore(
+                ORDER_ID,
                 "ORD-TEST",
-                30000L,
+                COURSE_PRICE,
                 0L,
-                30000L,
+                COURSE_PRICE,
                 OrderStatus.PAID,
                 LocalDateTime.now(),
-                1L
+                USER_ID
         );
+    }
 
-        OrderItem savedOrderItem = OrderItem.restore(
-                11L,
+    private OrderItem createSavedOrderItem() {
+        return OrderItem.restore(
+                ORDER_ITEM_ID,
                 "Spring Boot Basic",
-                30000L,
+                COURSE_PRICE,
                 0L,
-                30000L,
-                1L,
-                100L
+                COURSE_PRICE,
+                ORDER_ID,
+                COURSE_ID
         );
+    }
 
-        Payment savedPayment = Payment.restore(
-                20L,
-                30000L,
-                com.sashimi.payment.domain.model.PaymentStatus.PAID,
+    private Payment createSavedPayment() {
+        return Payment.restore(
+                PAYMENT_ID,
+                COURSE_PRICE,
+                PaymentStatus.PAID,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                1L,
-                1L
+                ORDER_ID,
+                USER_ID
         );
-
-        when(coursePurchasePolicy.validatePurchasable(1L, 100L))
-                .thenReturn(courseInfo);
-        when(orderRepository.save(any(Order.class)))
-                .thenReturn(savedOrder);
-        when(orderItemRepository.save(any(OrderItem.class)))
-                .thenReturn(savedOrderItem);
-        when(paymentRepository.save(any(Payment.class)))
-                .thenReturn(savedPayment);
-        doThrow(new BusinessException(ErrorCode.CREDIT_INSUFFICIENT_BALANCE))
-                .when(creditCommandUseCase)
-                .useCredit(any(UseCreditCommand.class));
-
-        BusinessException exception = catchThrowableOfType(
-                () -> paymentCommandService.payCourse(new PayCourseCommand(1L, 100L)),
-                BusinessException.class
-        );
-
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.CREDIT_INSUFFICIENT_BALANCE);
-
-        verify(enrollmentPort, never()).enrollPaidCourse(anyLong(), anyLong(), anyLong());
-        verify(cartItemRepository, never()).deleteByUserIdAndCourseId(anyLong(), anyLong());
-        verify(cartItemRepository, never()).deleteAllSelectedByUserId(anyLong());
     }
 }

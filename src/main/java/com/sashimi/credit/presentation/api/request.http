@@ -1,27 +1,29 @@
 @baseUrl = http://localhost:8080
-@accessToken = eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiJzdHVkZW50MDEiLCJhdXRoIjoiUk9MRV9TVFVERU5UIiwiaWF0IjoxNzgwMDI2MTcyLCJleHAiOjE3ODAwMzY5NzJ9.SIOmYTR2cChmC1yLPoDonJd0bBKCBjx_CFKFgTFbMGLR4sQxfUiG87HtAKcvpVxL
-
-### 로그인
-POST {{baseUrl}}/auth/login
-Content-Type: application/json
-Accept: application/json
-
-{
-  "loginId": "student01",
-  "password": "student"
-}
+@accessToken = 로그인 후 발급받은 accessToken
 
 ### 내 크레딧 조회
 GET {{baseUrl}}/credits/me
 Accept: application/json
 Authorization: Bearer {{accessToken}}
 
-### 크레딧 충전
-POST {{baseUrl}}/credits/charge
+### Toss 크레딧 충전 준비
+POST {{baseUrl}}/credits/toss/ready
 Content-Type: application/json
 Accept: application/json
 Authorization: Bearer {{accessToken}}
 
 {
-  "amount": 100000
+  "amount": 30000
+}
+
+### Toss 크레딧 충전 승인
+POST {{baseUrl}}/credits/toss/confirm
+Content-Type: application/json
+Accept: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+  "paymentKey": "TOSS가 전달한 paymentKey",
+  "orderId": "ready 응답의 orderId",
+  "amount": 30000
 }
