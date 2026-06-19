@@ -9,6 +9,7 @@ import com.sashimi.enrollment.application.query.EnrolledCourseView;
 import com.sashimi.enrollment.application.usecase.StudentCourseQueryUseCase;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,15 +19,11 @@ import java.util.List;
 @Slf4j
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class StudentCourseQueryService implements StudentCourseQueryUseCase {
 
     private final EnrollmentPort enrollmentPort;
     private final CoursePort coursePort;
-
-    public StudentCourseQueryService(EnrollmentPort enrollmentPort, CoursePort coursePort) {
-        this.enrollmentPort = enrollmentPort;
-        this.coursePort = coursePort;
-    }
 
     @Override
     public List<EnrolledCourseView> getEnrolledCourses(Long userId) {

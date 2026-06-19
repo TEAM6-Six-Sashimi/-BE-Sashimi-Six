@@ -3,7 +3,9 @@ package com.sashimi.enrollment.presentation.api;
 import com.sashimi.enrollment.application.usecase.StudentCourseQueryUseCase;
 import com.sashimi.enrollment.presentation.api.response.EnrolledCourseDetailResponse;
 import com.sashimi.enrollment.presentation.api.response.EnrolledCourseResponse;
+import com.sashimi.security.principal.CustomUserPrincipal;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,18 +22,18 @@ public class StudentCourseController {
 
     @GetMapping
     public ResponseEntity<List<EnrolledCourseResponse>> getEnrolledCourses(
-            @RequestHeader("X-USER-ID") Long userId) {
-        List<EnrolledCourseResponse> response = studentCourseQueryUseCase.getEnrolledCourses(userId)
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        List<EnrolledCourseResponse> response = studentCourseQueryUseCase.getEnrolledCourses(principal.getId())
                 .stream().map(EnrolledCourseResponse::from).toList();
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{courseId}")
     public ResponseEntity<EnrolledCourseDetailResponse> getEnrolledCourseDetail(
-            @RequestHeader("X-USER-ID") Long userId,
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long courseId) {
         return ResponseEntity.ok(EnrolledCourseDetailResponse.from(
-                studentCourseQueryUseCase.getEnrolledCourseDetail(userId, courseId)
+                studentCourseQueryUseCase.getEnrolledCourseDetail(principal.getId(), courseId)
         ));
     }
 }

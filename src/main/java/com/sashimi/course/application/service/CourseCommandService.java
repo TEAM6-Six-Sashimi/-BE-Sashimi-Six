@@ -8,6 +8,7 @@ import com.sashimi.course.domain.model.CourseSession;
 import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,15 +16,11 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class CourseCommandService implements CourseCommandUseCase {
 
     private final CourseRepository courseRepository;
     private final CategoryPort categoryPort;
-
-    public CourseCommandService(CourseRepository courseRepository, CategoryPort categoryPort) {
-        this.courseRepository = courseRepository;
-        this.categoryPort = categoryPort;
-    }
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
@@ -49,10 +46,6 @@ public class CourseCommandService implements CourseCommandUseCase {
 
         if (!course.getInstructorId().equals(command.instructorId())) {
             throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
-        }
-
-        if (!course.canModify()) {
-            throw new BusinessException(ErrorCode.COURSE_NOT_MODIFIABLE);
         }
 
         List<CourseSession> sessions = command.sessions().stream()
