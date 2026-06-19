@@ -6,6 +6,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,13 +14,10 @@ import java.util.List;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class CourseQueryService implements CourseQueryUseCase {
 
     private final CourseRepository courseRepository;
-
-    public CourseQueryService(CourseRepository courseRepository) {
-        this.courseRepository = courseRepository;
-    }
 
     @Override
     public List<Course> getApprovedCoursesByInstructor(Long instructorId) {
@@ -30,6 +28,11 @@ public class CourseQueryService implements CourseQueryUseCase {
     public List<Course> getInProgressCoursesByInstructor(Long instructorId) {
         return courseRepository.findByInstructorIdAndStatusIn(instructorId,
                 List.of(CourseStatus.DRAFT, CourseStatus.PENDING, CourseStatus.REJECTED));
+    }
+
+    @Override
+    public List<Course> getClosedCoursesByInstructor(Long instructorId) {
+        return courseRepository.findByInstructorIdAndStatus(instructorId, CourseStatus.CLOSED);
     }
 
     @Override
@@ -45,8 +48,8 @@ public class CourseQueryService implements CourseQueryUseCase {
     }
 
     @Override
-    public List<Course> getApprovedCoursesForAdmin() {
-        return courseRepository.findByStatus(CourseStatus.APPROVED);
+    public List<Course> getAllCoursesForAdmin() {
+        return courseRepository.findByStatusIn(List.of(CourseStatus.APPROVED, CourseStatus.CLOSED));
     }
 
     @Override
@@ -57,5 +60,10 @@ public class CourseQueryService implements CourseQueryUseCase {
     @Override
     public List<Course> getRejectedCoursesForAdmin() {
         return courseRepository.findByStatus(CourseStatus.REJECTED);
+    }
+
+    @Override
+    public List<Course> getClosedCoursesForAdmin() {
+        return courseRepository.findByStatus(CourseStatus.CLOSED);
     }
 }

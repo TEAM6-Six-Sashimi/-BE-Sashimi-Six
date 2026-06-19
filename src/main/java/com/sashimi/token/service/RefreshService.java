@@ -34,6 +34,10 @@ public class RefreshService {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN));
 
+        if (refreshToken.isRevoked()) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
         if (refreshToken.isExpired()) {
             throw new BusinessException(ErrorCode.EXPIRED_REFRESH_TOKEN);
         }
