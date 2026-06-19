@@ -62,6 +62,10 @@ public enum ErrorCode {
     PAYMENT_INVALID_STATUS(400, "PAYMENT_005", "처리할 수 없는 결제 상태입니다."),
     PAYMENT_AMOUNT_MISMATCH(400, "PAYMENT_006", "결제 금액이 일치하지 않습니다."),
     PAYMENT_APPROVAL_FAILED(502, "PAYMENT_007", "외부 결제 승인에 실패했습니다."),
+    PAYMENT_INVALID_CHECKOUT_REQUEST(400, "PAYMENT_008", "결제 요청 정보가 올바르지 않습니다."),
+    PAYMENT_AGREEMENT_REQUIRED(400, "PAYMENT_009", "결제 진행을 위해 결제 동의가 필요합니다."),
+    PAYMENT_COURSE_ID_REQUIRED(400, "PAYMENT_010", "단일 강의 결제에는 강의 ID가 필요합니다."),
+    PAYMENT_CART_COURSE_ID_NOT_ALLOWED(400, "PAYMENT_011", "장바구니 결제에는 강의 ID를 전달할 수 없습니다."),
 
     CREDIT_INVALID_AMOUNT(400, "CREDIT_001", "크레딧 금액이 올바르지 않습니다."),
     CREDIT_INSUFFICIENT_BALANCE(400, "CREDIT_002", "크레딧 잔액이 부족합니다."),
