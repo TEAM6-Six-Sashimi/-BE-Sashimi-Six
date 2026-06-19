@@ -6,6 +6,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +29,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
 
     private Course saveNew(Course course) {
         CourseJpaEntity entity = new CourseJpaEntity(
-                course.getInstructorId(), course.getCategoryId(), course.getNcsInfoId(), course.getTitle(),                course.getDescription(), course.getPrice(), course.getDifficulty(),
+                course.getInstructorId(), course.getCategoryId(),course.getTitle(),
+                course.getDescription(), course.getPrice(), course.getDifficulty(),
                 course.getThumbnail(), course.getTotalDuration(), course.getStatus(),
                 course.getRejectReason(), course.getRatingAvg(), course.getReviewCount(),
                 course.getStudentCount(), course.getCreatedAt(), course.getUpdatedAt(),
@@ -44,7 +46,7 @@ public class CourseRepositoryAdapter implements CourseRepository {
         CourseJpaEntity entity = springDataCourseRepository.findById(course.getId())
                 .orElseThrow(() -> new IllegalStateException("Course not found: " + course.getId()));
 
-        entity.update(course.getCategoryId(), course.getNcsInfoId(), course.getTitle(), course.getDescription(),
+        entity.update(course.getCategoryId(), course.getTitle(), course.getDescription(),
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getTotalDuration(), course.getStatus(), course.getUpdatedAt());
 
@@ -86,6 +88,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findByStatusIn(List<CourseStatus> statuses) {
+        return springDataCourseRepository.findByStatusIn(statuses)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<Course> findByStatusAndCategoryId(CourseStatus status, Long categoryId) {
         return springDataCourseRepository.findByStatusAndCategoryId(status, categoryId)
                 .stream().map(this::toDomain).toList();
@@ -94,6 +102,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     @Override
     public List<Course> findByStatusAndCategoryIdIn(CourseStatus status, List<Long> categoryIds) {
         return springDataCourseRepository.findByStatusAndCategoryIdIn(status, categoryIds)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<Course> findByStatusAndApprovedAtBefore(CourseStatus status, LocalDateTime cutoff) {
+        return springDataCourseRepository.findByStatusAndApprovedAtBefore(status, cutoff)
                 .stream().map(this::toDomain).toList();
     }
 
@@ -110,7 +124,7 @@ public class CourseRepositoryAdapter implements CourseRepository {
                         s.getAttachmentType(), s.getAttachmentSize(), s.getCreatedAt(), s.getUpdatedAt()))
                 .toList();
 
-        return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(), entity.getNcsInfoId(),
+        return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(),
                 entity.getTitle(), entity.getDescription(), entity.getPrice(), entity.getDifficulty(),
                 entity.getThumbnail(), entity.getTotalDuration(), entity.getStatus(),
                 entity.getRejectReason(), entity.getRatingAvg(), entity.getReviewCount(),

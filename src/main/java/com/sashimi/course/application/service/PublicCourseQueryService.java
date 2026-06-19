@@ -2,6 +2,8 @@ package com.sashimi.course.application.service;
 
 import com.sashimi.course.application.port.CategoryPort;
 import com.sashimi.course.application.port.InstructorPort;
+import com.sashimi.course.application.port.NcsInfoQueryPort;
+import com.sashimi.course.application.port.NcsInfoView;
 import com.sashimi.course.application.query.PublicCourseDetailView;
 import com.sashimi.course.application.query.PublicCourseView;
 import com.sashimi.course.application.usecase.PublicCourseQueryUseCase;
@@ -10,6 +12,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,19 +24,13 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class PublicCourseQueryService implements PublicCourseQueryUseCase {
 
     private final CourseRepository courseRepository;
     private final CategoryPort categoryPort;
     private final InstructorPort instructorPort;
-
-    public PublicCourseQueryService(CourseRepository courseRepository,
-                                    CategoryPort categoryPort,
-                                    InstructorPort instructorPort) {
-        this.courseRepository = courseRepository;
-        this.categoryPort = categoryPort;
-        this.instructorPort = instructorPort;
-    }
+    private final NcsInfoQueryPort ncsInfoQueryPort;
 
     @Override
     public List<PublicCourseView> getAllApprovedCourses() {
@@ -67,6 +64,9 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
         String instructorName = instructorPort.getInstructorName(course.getInstructorId());
         String categoryName = categoryPort.getCategoryNameById(course.getCategoryId());
 
+        Long ncsInfoId = categoryPort.getNcsInfoIdByCategoryId(course.getCategoryId());
+        NcsInfoView ncs = ncsInfoId == null ? null : ncsInfoQueryPort.findViewByRepresentativeId(ncsInfoId).orElse(null);
+
         List<PublicCourseDetailView.SessionView> sessions = course.getSessions().stream()
                 .map(s -> new PublicCourseDetailView.SessionView(
                         s.getId(),
@@ -82,7 +82,7 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                 course.getId(), course.getTitle(), course.getDescription(),
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getTotalDuration(), course.getRatingAvg(), course.getReviewCount(),
-                course.getStudentCount(), instructorName, categoryName, sessions
+                course.getStudentCount(), instructorName, categoryName, ncs, sessions
         );
     }
 

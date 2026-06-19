@@ -43,10 +43,10 @@ public class InstructorApplicationJpaEntity {
     @Column(name = "portfolio_url")
     private String portfolioUrl;
 
-    @Column(name = "profile_image_path")
+    @Column(name = "profile_image_path", length = 500)
     private String profileImagePath;
 
-    @Column(name = "resume_file_path")
+    @Column(name = "resume_file_path", length = 500)
     private String resumeFilePath;
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -123,11 +123,11 @@ public class InstructorApplicationJpaEntity {
 
         if (domain.getCertifications() != null) {
             domain.getCertifications().forEach(cert ->
-                entity.certifications.add(InstructorCertificationJpaEntity.builder()
-                        .certificationName(cert.getCertificationName())
-                        .issuedBy(cert.getIssuedBy())
-                        .application(entity)
-                        .build())
+                    entity.certifications.add(InstructorCertificationJpaEntity.builder()
+                            .certificationName(cert.getCertificationName())
+                            .issuedBy(cert.getIssuedBy())
+                            .application(entity)
+                            .build())
             );
         }
         return entity;
@@ -158,3 +158,4 @@ public class InstructorApplicationJpaEntity {
                 .build();
     }
 }
+

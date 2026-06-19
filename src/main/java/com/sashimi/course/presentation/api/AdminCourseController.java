@@ -36,8 +36,21 @@ public class AdminCourseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AdminCourseListResponse>> getApprovedCourses() {
-        List<AdminCourseListResponse> courses = courseQueryUseCase.getApprovedCoursesForAdmin()
+    public ResponseEntity<List<AdminCourseListResponse>> getAllCourses() {
+        List<AdminCourseListResponse> courses = courseQueryUseCase.getAllCoursesForAdmin()
+                .stream()
+                .map(course -> AdminCourseListResponse.of(
+                        course,
+                        categoryPort.getCategoryNameById(course.getCategoryId()),
+                        instructorPort.getInstructorName(course.getInstructorId())
+                ))
+                .toList();
+        return ResponseEntity.ok(courses);
+    }
+
+    @GetMapping("/closed")
+    public ResponseEntity<List<AdminCourseListResponse>> getClosedCourses() {
+        List<AdminCourseListResponse> courses = courseQueryUseCase.getClosedCoursesForAdmin()
                 .stream()
                 .map(course -> AdminCourseListResponse.of(
                         course,

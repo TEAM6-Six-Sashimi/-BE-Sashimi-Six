@@ -38,4 +38,11 @@ public class CategoryPortAdapter implements CategoryPort {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND))
                 .getSubCategory();
     }
+
+    @Override
+    public Long getNcsInfoIdByCategoryId(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND))
+                .getNcsInfoId();
+    }
 }

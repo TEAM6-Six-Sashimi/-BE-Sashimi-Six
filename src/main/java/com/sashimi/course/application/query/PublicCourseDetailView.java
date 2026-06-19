@@ -1,6 +1,7 @@
 package com.sashimi.course.application.query;
 
 import com.sashimi.course.domain.model.CourseDifficulty;
+import com.sashimi.course.application.port.NcsInfoView;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,6 +19,7 @@ public record PublicCourseDetailView(
         int studentCount,
         String instructorName,
         String categoryName,
+        NcsInfoView ncs,
         List<SessionView> sessions
 ) {
     public record SessionView(

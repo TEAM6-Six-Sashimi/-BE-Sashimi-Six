@@ -32,9 +32,50 @@ public class CategoryJpaEntity {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "ncs_info_id")
+    private Long ncsInfoId;
+
     protected CategoryJpaEntity() {}
 
+    public void updateNcsInfoId(Long ncsInfoId) {
+        this.ncsInfoId = ncsInfoId;
+    }
+
+
     public Category toDomain() {
-        return Category.restore(id, mainCategoryId, name, subCategory, sortOrder, active, createdAt);
+        return Category.restore(id, mainCategoryId, ncsInfoId, name, subCategory,
+                sortOrder, active, createdAt);
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Long getMainCategoryId() {
+        return mainCategoryId;
+    }
+
+    public Long getNcsInfoId() {
+        return ncsInfoId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getSubCategory() {
+        return subCategory;
+    }
+
+    public int getSortOrder() {
+        return sortOrder;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }

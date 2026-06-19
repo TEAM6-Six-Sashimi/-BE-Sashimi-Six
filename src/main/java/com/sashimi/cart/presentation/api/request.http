@@ -57,7 +57,3 @@ Authorization: Bearer {{accessToken}}
   "cartItemIds": [1, 2, 3]
 }
 
-### 장바구니 결제 전 조회
-POST {{baseUrl}}/cart/checkout
-Accept: application/json
-Authorization: Bearer {{accessToken}}
