@@ -12,7 +12,6 @@ public class Course {
     private final Long id;
     private final Long instructorId;
     private final Long categoryId;
-    private final Long ncsInfoId;
     private final String title;
     private final String description;
     private final Long price;
@@ -29,7 +28,7 @@ public class Course {
     private final LocalDateTime approvedAt;
     private final List<CourseSession> sessions;
 
-    private Course(Long id, Long instructorId, Long categoryId, Long ncsInfoId, String title, String description,
+    private Course(Long id, Long instructorId, Long categoryId, String title, String description,
                    Long price, CourseDifficulty difficulty, String thumbnail, int totalDuration,
                    CourseStatus status, String rejectReason, BigDecimal ratingAvg,
                    int reviewCount, int studentCount, LocalDateTime createdAt,
@@ -44,7 +43,6 @@ public class Course {
         this.id = id;
         this.instructorId = instructorId;
         this.categoryId = categoryId;
-        this.ncsInfoId = ncsInfoId;
         this.title = title;
         this.description = description;
         this.price = price;
@@ -61,36 +59,36 @@ public class Course {
         this.approvedAt = approvedAt;
         this.sessions = sessions != null ? sessions : List.of();
     }
-    public static Course create(Long instructorId, Long categoryId, Long ncsInfoId,
+    public static Course create(Long instructorId, Long categoryId,
                                 String title, String description, Long price,
                                 CourseDifficulty difficulty, String thumbnail,
                                 CourseStatus initialStatus, List<CourseSession> sessions) {
         validateWritableStatus(initialStatus);
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
-        return new Course(null, instructorId, categoryId, ncsInfoId, title, description, price,
+        return new Course(null, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, initialStatus, null,
                 BigDecimal.ZERO, 0, 0, LocalDateTime.now(), null, null, sessions);
     }
 
-    public static Course restore(Long id, Long instructorId, Long categoryId, Long ncsInfoId,
+    public static Course restore(Long id, Long instructorId, Long categoryId,
                                  String title, String description, Long price,
                                  CourseDifficulty difficulty, String thumbnail, int totalDuration,
                                  CourseStatus status, String rejectReason, BigDecimal ratingAvg,
                                  int reviewCount, int studentCount, LocalDateTime createdAt,
                                  LocalDateTime updatedAt, LocalDateTime approvedAt,
                                  List<CourseSession> sessions) {
-        return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
+        return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, status, rejectReason, ratingAvg,
                 reviewCount, studentCount, createdAt, updatedAt, approvedAt, sessions);
     }
 
-    public Course update(Long categoryId, Long ncsInfoId, String title, String description, Long price,
+    public Course update(Long categoryId, String title, String description, Long price,
                          CourseDifficulty difficulty, String thumbnail, CourseStatus targetStatus,
                          List<CourseSession> sessions) {
         if (!canModify()) throw new BusinessException(ErrorCode.COURSE_NOT_MODIFIABLE);
         validateWritableStatus(targetStatus);
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
-        return new Course(this.id, this.instructorId, categoryId, ncsInfoId, title, description,
+        return new Course(this.id, this.instructorId, categoryId, title, description,
                 price, difficulty, thumbnail, totalDuration, targetStatus, null,
                 this.ratingAvg, this.reviewCount, this.studentCount, this.createdAt,
                 LocalDateTime.now(), this.approvedAt, sessions);
@@ -138,7 +136,6 @@ public class Course {
     public Long getId() { return id; }
     public Long getInstructorId() { return instructorId; }
     public Long getCategoryId() { return categoryId; }
-    public Long getNcsInfoId() { return ncsInfoId; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public Long getPrice() { return price; }

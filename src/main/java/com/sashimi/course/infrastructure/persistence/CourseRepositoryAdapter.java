@@ -29,7 +29,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
 
     private Course saveNew(Course course) {
         CourseJpaEntity entity = new CourseJpaEntity(
-                course.getInstructorId(), course.getCategoryId(), course.getNcsInfoId(), course.getTitle(),                course.getDescription(), course.getPrice(), course.getDifficulty(),
+                course.getInstructorId(), course.getCategoryId(),course.getTitle(),
+                course.getDescription(), course.getPrice(), course.getDifficulty(),
                 course.getThumbnail(), course.getTotalDuration(), course.getStatus(),
                 course.getRejectReason(), course.getRatingAvg(), course.getReviewCount(),
                 course.getStudentCount(), course.getCreatedAt(), course.getUpdatedAt(),
@@ -45,7 +46,7 @@ public class CourseRepositoryAdapter implements CourseRepository {
         CourseJpaEntity entity = springDataCourseRepository.findById(course.getId())
                 .orElseThrow(() -> new IllegalStateException("Course not found: " + course.getId()));
 
-        entity.update(course.getCategoryId(), course.getNcsInfoId(), course.getTitle(), course.getDescription(),
+        entity.update(course.getCategoryId(), course.getTitle(), course.getDescription(),
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getTotalDuration(), course.getStatus(), course.getUpdatedAt());
 
@@ -123,7 +124,7 @@ public class CourseRepositoryAdapter implements CourseRepository {
                         s.getAttachmentType(), s.getAttachmentSize(), s.getCreatedAt(), s.getUpdatedAt()))
                 .toList();
 
-        return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(), entity.getNcsInfoId(),
+        return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(),
                 entity.getTitle(), entity.getDescription(), entity.getPrice(), entity.getDifficulty(),
                 entity.getThumbnail(), entity.getTotalDuration(), entity.getStatus(),
                 entity.getRejectReason(), entity.getRatingAvg(), entity.getReviewCount(),

@@ -29,6 +29,7 @@ public class CourseCommandService implements CourseCommandUseCase {
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
+
         Long categoryId = categoryPort.getCategoryIdBySubCategoryName(command.subCategoryName());
 
         List<CourseSession> sessions = command.sessions().stream()
@@ -37,7 +38,7 @@ public class CourseCommandService implements CourseCommandUseCase {
                         s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
                 .toList();
 
-        Course course = Course.create(command.instructorId(), categoryId, command.ncsInfoId(),
+        Course course = Course.create(command.instructorId(), categoryId,
                 command.title(), command.description(), command.price(), command.difficulty(),
                 command.thumbnail(), command.initialStatus(), sessions);
 
@@ -53,13 +54,18 @@ public class CourseCommandService implements CourseCommandUseCase {
             throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
         }
 
+        if (!course.canModify()) {
+            throw new BusinessException(ErrorCode.COURSE_NOT_MODIFIABLE);
+        }
+
+
         List<CourseSession> sessions = command.sessions().stream()
                 .map(s -> CourseSession.create(s.title(), s.videoUrl(), s.durationSeconds(),
                         s.sessionOrder(), s.preview(), s.attachmentName(),
                         s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
                 .toList();
 
-        Course updated = course.update(command.categoryId(), command.ncsInfoId(),
+        Course updated = course.update(command.categoryId(),
                 command.title(), command.description(), command.price(), command.difficulty(),
                 command.thumbnail(), command.targetStatus(), sessions);
 

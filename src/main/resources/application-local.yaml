@@ -51,3 +51,7 @@ file:
 toss:
   payments:
     secret-key: ${TOSS_PAYMENTS_SECRET_KEY:}
+
+external:
+  ncs:
+    service-key: ${NCS_SERVICE_KEY}
