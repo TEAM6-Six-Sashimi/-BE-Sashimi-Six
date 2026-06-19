@@ -37,3 +37,12 @@ toss:
   payments:
     base-url: https://api.tosspayments.com
     secret-key: ${TOSS_PAYMENTS_SECRET_KEY:}
+
+# 배포 시 환경 변수를 정상적으로 사용하는 방법
+
+# 1. 구성 편집에 들어있는 환경 변수들을 별도의 파일에 작성한다. ex) .env or application-prod 해당 파일에.
+# 2. 해당 파일은 유출되면 안되기 때문에 .gitignore 시킨다.
+# 3. 만약 , github actions 로 cicd 환경 == 자동배포 환경을 구성하려면
+# ignore 시킨 파일을 알아야만 한다.
+# 4. 이 때 사용할 수 있는 것이 1 번 파일을 git secrets 에 등록한다.
+# 5. 해당 secrets 를 cicd yml 에서 알 수 있게 만든다.

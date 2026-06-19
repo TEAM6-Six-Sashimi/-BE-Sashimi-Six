@@ -42,7 +42,7 @@ clova:
 
 app:
   mail:
-    from: ${MAIL_FROM:no-reply@sashimi.com}
+    from: ${MAIL_FROM:no-reply@mg.market-app.org}
 
 file:
   upload-dir: uploads/
