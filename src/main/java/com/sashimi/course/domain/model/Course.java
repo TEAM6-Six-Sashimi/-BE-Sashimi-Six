@@ -96,7 +96,7 @@ public class Course {
 
     public Course approve() {
         if (this.status != CourseStatus.PENDING) throw new BusinessException(ErrorCode.COURSE_NOT_PENDING);
-        return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
+        return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.APPROVED, null,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 LocalDateTime.now(), sessions);
@@ -104,7 +104,7 @@ public class Course {
 
     public Course reject(String reason) {
         if (this.status != CourseStatus.PENDING) throw new BusinessException(ErrorCode.COURSE_NOT_PENDING);
-        return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
+        return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.REJECTED, reason,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 null, sessions);
@@ -113,7 +113,7 @@ public class Course {
     /** 승인 강의의 공개 기간 만료 시 비공개(CLOSED) 처리. 승인일은 보존한다. */
     public Course close() {
         if (this.status != CourseStatus.APPROVED) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
+        return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.CLOSED, rejectReason,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 approvedAt, sessions);

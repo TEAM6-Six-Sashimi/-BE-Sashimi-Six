@@ -12,7 +12,7 @@ import java.nio.file.Paths;
 import java.util.UUID;
 
 @Slf4j
-@Component
+@Component("memberFileStorageAdapter")
 public class LocalFileStorageAdapter implements FileStoragePort {
 
     @Value("${file.upload-dir}")

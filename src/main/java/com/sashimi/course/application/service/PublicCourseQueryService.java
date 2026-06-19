@@ -32,16 +32,6 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
     private final InstructorPort instructorPort;
     private final NcsInfoQueryPort ncsInfoQueryPort;
 
-    public PublicCourseQueryService(CourseRepository courseRepository,
-                                    CategoryPort categoryPort,
-                                    InstructorPort instructorPort,
-                                    NcsInfoQueryPort ncsInfoQueryPort) {
-        this.courseRepository = courseRepository;
-        this.categoryPort = categoryPort;
-        this.instructorPort = instructorPort;
-        this.ncsInfoQueryPort = ncsInfoQueryPort;
-    }
-
     @Override
     public List<PublicCourseView> getAllApprovedCourses() {
         List<Course> courses = courseRepository.findByStatus(CourseStatus.APPROVED);
