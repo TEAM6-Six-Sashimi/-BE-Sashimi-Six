@@ -9,6 +9,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,8 +34,24 @@ public class InstructorApplicationJpaEntity {
     @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
 
+    @Column(name = "motivation_letter", columnDefinition = "TEXT")
+    private String motivationLetter;
+
+    @Column(name = "category_id")
+    private Long categoryId;
+
     @Column(name = "portfolio_url")
     private String portfolioUrl;
+
+    @Column(name = "profile_image_path")
+    private String profileImagePath;
+
+    @Column(name = "resume_file_path")
+    private String resumeFilePath;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "main_careers", columnDefinition = "JSON")
+    private List<String> mainCareers;
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<InstructorCertificationJpaEntity> certifications = new ArrayList<>();
@@ -59,15 +77,23 @@ public class InstructorApplicationJpaEntity {
     private LocalDateTime updatedAt;
 
     @Builder
-    public InstructorApplicationJpaEntity(Long id, Long userId, String bio,
-                                          String portfolioUrl, ApprovalStatus approvalStatus,
+    public InstructorApplicationJpaEntity(Long id, Long userId, String bio, String motivationLetter,
+                                          Long categoryId, String portfolioUrl,
+                                          String profileImagePath, String resumeFilePath,
+                                          List<String> mainCareers,
+                                          ApprovalStatus approvalStatus,
                                           RejectionCategory rejectionCategory, String rejectionReason,
                                           LocalDateTime approvedAt, LocalDateTime createdAt,
                                           LocalDateTime updatedAt) {
         this.id = id;
         this.userId = userId;
         this.bio = bio;
+        this.motivationLetter = motivationLetter;
+        this.categoryId = categoryId;
         this.portfolioUrl = portfolioUrl;
+        this.profileImagePath = profileImagePath;
+        this.resumeFilePath = resumeFilePath;
+        this.mainCareers = mainCareers;
         this.approvalStatus = approvalStatus;
         this.rejectionCategory = rejectionCategory;
         this.rejectionReason = rejectionReason;
@@ -81,7 +107,12 @@ public class InstructorApplicationJpaEntity {
                 .id(domain.getId())
                 .userId(domain.getUserId())
                 .bio(domain.getBio())
+                .motivationLetter(domain.getMotivationLetter())
+                .categoryId(domain.getCategoryId())
                 .portfolioUrl(domain.getPortfolioUrl())
+                .profileImagePath(domain.getProfileImagePath())
+                .resumeFilePath(domain.getResumeFilePath())
+                .mainCareers(domain.getMainCareers())
                 .approvalStatus(domain.getApprovalStatus())
                 .rejectionCategory(domain.getRejectionCategory())
                 .rejectionReason(domain.getRejectionReason())
@@ -111,7 +142,12 @@ public class InstructorApplicationJpaEntity {
                 .id(id)
                 .userId(userId)
                 .bio(bio)
+                .motivationLetter(motivationLetter)
+                .categoryId(categoryId)
                 .portfolioUrl(portfolioUrl)
+                .profileImagePath(profileImagePath)
+                .resumeFilePath(resumeFilePath)
+                .mainCareers(mainCareers)
                 .certifications(certDomains)
                 .approvalStatus(approvalStatus)
                 .rejectionCategory(rejectionCategory)

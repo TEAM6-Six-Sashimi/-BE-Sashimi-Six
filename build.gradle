@@ -60,6 +60,10 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2'
 
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+// AWS SDK
+    implementation platform('software.amazon.awssdk:bom:2.26.31')
+    implementation 'software.amazon.awssdk:s3'
 }
 
 tasks.named('test') {

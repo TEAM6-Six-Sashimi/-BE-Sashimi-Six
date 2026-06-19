@@ -3,6 +3,7 @@ package com.sashimi.member.application.service;
 import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.member.application.command.ApplyInstructorCommand;
 import com.sashimi.member.application.port.OcrPort;
 import com.sashimi.member.application.usecase.MemberCommandUseCase;
@@ -29,6 +30,7 @@ public class MemberCommandService implements MemberCommandUseCase {
     private final UserRepository userRepository;
     private final OcrPort ocrPort;
     private final CategoryRepository categoryRepository;
+    private final FileStoragePort fileStoragePort;
 
     @Override
     public void applyInstructor(ApplyInstructorCommand command) {
@@ -71,14 +73,26 @@ public class MemberCommandService implements MemberCommandUseCase {
             throw new BusinessException(ErrorCode.ALREADY_APPLIED);
         }
 
+        String profileImageKey = fileStoragePort.storePrivate(
+                command.profileImage().fileBytes(),
+                command.profileImage().fileName(),
+                "instructor-applications/profile"
+        );
+
+        String resumeFileKey = fileStoragePort.storePrivate(
+                command.resumeFile().fileBytes(),
+                command.resumeFile().fileName(),
+                "instructor-applications/resume"
+        );
+
         InstructorApplication application = InstructorApplication.create(
                 command.userId(),
                 command.bio(),
                 command.motivationLetter(),
                 command.categoryId(),
                 command.portfolioUrl(),
-                null,   // profileImagePath: DB 컬럼 추가 후 저장
-                null,   // resumeFilePath: DB 컬럼 추가 후 저장
+                profileImageKey,
+                resumeFileKey,
                 mainCareers,
                 certifications
         );
