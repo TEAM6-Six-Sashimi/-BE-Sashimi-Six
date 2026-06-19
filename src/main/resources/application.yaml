@@ -37,3 +37,9 @@ toss:
   payments:
     base-url: https://api.tosspayments.com
     secret-key: ${TOSS_PAYMENTS_SECRET_KEY:}
+
+external:
+  ncs:
+    base-url: https://apis.data.go.kr/B490007/ncsInfo
+    service-key: ${NCS_SERVICE_KEY}
+    num-of-rows: 100

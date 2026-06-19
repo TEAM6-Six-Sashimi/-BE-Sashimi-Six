@@ -68,16 +68,13 @@ public class CourseJpaEntity {
     @Column(name = "instructor_id", nullable = false)
     private Long instructorId;
 
-    @Column(name = "ncs_info_id")
-    private Long ncsInfoId;
-
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderBy("sessionOrder ASC")
     private List<CourseSessionJpaEntity> sessions = new ArrayList<>();
 
     protected CourseJpaEntity() {}
 
-    public CourseJpaEntity(Long instructorId, Long categoryId, Long ncsInfoId,
+    public CourseJpaEntity(Long instructorId, Long categoryId,
                            String title, String description,
                            Long price, CourseDifficulty difficulty, String thumbnail,
                            int totalDuration, CourseStatus status, String rejectReason,
@@ -85,7 +82,6 @@ public class CourseJpaEntity {
                            LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime approvedAt) {
         this.instructorId = instructorId;
         this.categoryId = categoryId;
-        this.ncsInfoId = ncsInfoId;
         this.title = title;
         this.description = description;
         this.price = price;
@@ -102,11 +98,10 @@ public class CourseJpaEntity {
         this.approvedAt = approvedAt;
     }
 
-    public void update(Long categoryId, Long ncsInfoId, String title, String description, Long price,
+    public void update(Long categoryId, String title, String description, Long price,
                        CourseDifficulty difficulty, String thumbnail, int totalDuration,
                        CourseStatus status, LocalDateTime updatedAt) {
         this.categoryId = categoryId;
-        this.ncsInfoId = ncsInfoId;
         this.title = title;
         this.description = description;
         this.price = price;
@@ -143,7 +138,6 @@ public class CourseJpaEntity {
     public Long getId() { return id; }
     public Long getInstructorId() { return instructorId; }
     public Long getCategoryId() { return categoryId; }
-    public Long getNcsInfoId() { return ncsInfoId; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public Long getPrice() { return price; }

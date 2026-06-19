@@ -62,7 +62,7 @@ public class InstructorCourseController {
         Long courseId = courseCommandUseCase.createCourse(new CreateCourseCommand(
                 instructorId, request.subCategoryName(), request.title(), request.description(),
                 request.price(), request.difficulty(), request.thumbnail(),
-                request.ncsInfoId(), request.initialStatus(), sessionCommands));
+                request.initialStatus(), sessionCommands));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of("성공했습니다."));
     }
@@ -79,7 +79,7 @@ public class InstructorCourseController {
         courseCommandUseCase.updateCourse(new UpdateCourseCommand(
                 courseId, instructorId, request.categoryId(), request.title(), request.description(),
                 request.price(), request.difficulty(), request.thumbnail(),
-                request.ncsInfoId(), request.targetStatus(), sessionCommands));
+                request.targetStatus(), sessionCommands));
 
         return ResponseEntity.noContent().build();
     }
