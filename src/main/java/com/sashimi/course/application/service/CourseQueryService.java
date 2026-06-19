@@ -31,6 +31,11 @@ public class CourseQueryService implements CourseQueryUseCase {
     }
 
     @Override
+    public List<Course> getClosedCoursesByInstructor(Long instructorId) {
+        return courseRepository.findByInstructorIdAndStatus(instructorId, CourseStatus.CLOSED);
+    }
+
+    @Override
     public Course getCourseDetail(Long courseId, Long instructorId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
@@ -43,8 +48,8 @@ public class CourseQueryService implements CourseQueryUseCase {
     }
 
     @Override
-    public List<Course> getApprovedCoursesForAdmin() {
-        return courseRepository.findByStatus(CourseStatus.APPROVED);
+    public List<Course> getAllCoursesForAdmin() {
+        return courseRepository.findByStatusIn(List.of(CourseStatus.APPROVED, CourseStatus.CLOSED));
     }
 
     @Override
@@ -55,5 +60,10 @@ public class CourseQueryService implements CourseQueryUseCase {
     @Override
     public List<Course> getRejectedCoursesForAdmin() {
         return courseRepository.findByStatus(CourseStatus.REJECTED);
+    }
+
+    @Override
+    public List<Course> getClosedCoursesForAdmin() {
+        return courseRepository.findByStatus(CourseStatus.CLOSED);
     }
 }

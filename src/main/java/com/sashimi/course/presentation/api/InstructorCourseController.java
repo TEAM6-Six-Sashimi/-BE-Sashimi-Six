@@ -46,6 +46,14 @@ public class InstructorCourseController {
         return ResponseEntity.ok(courses);
     }
 
+    @GetMapping("/closed")
+    public ResponseEntity<List<ApprovedCourseResponse>> getClosedCourses(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
+        List<ApprovedCourseResponse> courses = courseQueryUseCase.getClosedCoursesByInstructor(principal.getId())
+                .stream().map(ApprovedCourseResponse::from).toList();
+        return ResponseEntity.ok(courses);
+    }
+
     @GetMapping("/{courseId}")
     public ResponseEntity<InstructorCourseDetailResponse> getCourseDetail(
             @AuthenticationPrincipal CustomUserPrincipal principal,

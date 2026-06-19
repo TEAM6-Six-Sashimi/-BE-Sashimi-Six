@@ -112,6 +112,15 @@ public class Course {
                 null, sessions);
     }
 
+    /** 승인 강의의 공개 기간 만료 시 비공개(CLOSED) 처리. 승인일은 보존한다. */
+    public Course close() {
+        if (this.status != CourseStatus.APPROVED) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
+                difficulty, thumbnail, totalDuration, CourseStatus.CLOSED, rejectReason,
+                ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
+                approvedAt, sessions);
+    }
+
     private static void validateWritableStatus(CourseStatus status) {
         if (status != CourseStatus.DRAFT && status != CourseStatus.PENDING) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
