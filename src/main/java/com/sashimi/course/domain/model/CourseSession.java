@@ -1,5 +1,8 @@
 package com.sashimi.course.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -24,8 +27,8 @@ public class CourseSession {
                           int durationSeconds, int sessionOrder, boolean preview,
                           String attachmentName, String attachmentUrl, String attachmentType,
                           Long attachmentSize, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        if (title == null || title.isBlank()) throw new IllegalArgumentException("Session title is required.");
-        if (sessionUid == null) throw new IllegalArgumentException("Session UID is required.");
+        if (title == null || title.isBlank()) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (sessionUid == null) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         this.id = id;
         this.sessionUid = sessionUid;
         this.courseId = courseId;

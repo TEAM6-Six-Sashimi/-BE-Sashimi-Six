@@ -1,5 +1,8 @@
 package com.sashimi.course.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,12 +34,12 @@ public class Course {
                    CourseStatus status, String rejectReason, BigDecimal ratingAvg,
                    int reviewCount, int studentCount, LocalDateTime createdAt,
                    LocalDateTime updatedAt, LocalDateTime approvedAt, List<CourseSession> sessions) {
-        if (instructorId == null) throw new IllegalArgumentException("Instructor id is required.");
-        if (categoryId == null) throw new IllegalArgumentException("Category id is required.");
-        if (title == null || title.isBlank()) throw new IllegalArgumentException("Title is required.");
-        if (price == null || price < 0) throw new IllegalArgumentException("Price must be zero or positive.");
-        if (difficulty == null) throw new IllegalArgumentException("Difficulty is required.");
-        if (status == null) throw new IllegalArgumentException("Status is required.");
+        if (instructorId == null) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (categoryId == null) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (title == null || title.isBlank()) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (price == null || price < 0) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (difficulty == null) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (status == null) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
 
         this.id = id;
         this.instructorId = instructorId;
@@ -84,7 +87,7 @@ public class Course {
     public Course update(Long categoryId, Long ncsInfoId, String title, String description, Long price,
                          CourseDifficulty difficulty, String thumbnail, CourseStatus targetStatus,
                          List<CourseSession> sessions) {
-        if (!canModify()) throw new IllegalStateException("수정할 수 없는 상태의 강의입니다.");
+        if (!canModify()) throw new BusinessException(ErrorCode.COURSE_NOT_MODIFIABLE);
         validateWritableStatus(targetStatus);
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
         return new Course(this.id, this.instructorId, categoryId, ncsInfoId, title, description,
@@ -94,7 +97,7 @@ public class Course {
     }
 
     public Course approve() {
-        if (this.status != CourseStatus.PENDING) throw new IllegalStateException("승인 대기 상태가 아닌 강의입니다.");
+        if (this.status != CourseStatus.PENDING) throw new BusinessException(ErrorCode.COURSE_NOT_PENDING);
         return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.APPROVED, null,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
@@ -102,16 +105,25 @@ public class Course {
     }
 
     public Course reject(String reason) {
-        if (this.status != CourseStatus.PENDING) throw new IllegalStateException("승인 대기 상태가 아닌 강의입니다.");
+        if (this.status != CourseStatus.PENDING) throw new BusinessException(ErrorCode.COURSE_NOT_PENDING);
         return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.REJECTED, reason,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 null, sessions);
     }
 
+    /** 승인 강의의 공개 기간 만료 시 비공개(CLOSED) 처리. 승인일은 보존한다. */
+    public Course close() {
+        if (this.status != CourseStatus.APPROVED) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        return new Course(id, instructorId, categoryId, ncsInfoId, title, description, price,
+                difficulty, thumbnail, totalDuration, CourseStatus.CLOSED, rejectReason,
+                ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
+                approvedAt, sessions);
+    }
+
     private static void validateWritableStatus(CourseStatus status) {
         if (status != CourseStatus.DRAFT && status != CourseStatus.PENDING) {
-            throw new IllegalArgumentException("Course status must be DRAFT or PENDING.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
     }
 

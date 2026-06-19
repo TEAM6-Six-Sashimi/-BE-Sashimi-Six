@@ -54,6 +54,7 @@ public enum ErrorCode {
 
     ENROLLMENT_ALREADY_EXISTS(409, "ENROLLMENT_001", "이미 수강 중인 강의입니다."),
     ENROLLMENT_CREATE_FAILED(500, "ENROLLMENT_002", "수강 등록에 실패했습니다."),
+    ENROLLMENT_EXPIRED(403, "ENROLLMENT_003", "수강 가능 기간이 만료되었습니다."),
 
     PAYMENT_ORDER_NOT_FOUND(404, "PAYMENT_001", "주문을 찾을 수 없습니다."),
     PAYMENT_EMPTY_COURSE(400, "PAYMENT_002", "결제할 강의가 없습니다."),
