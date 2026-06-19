@@ -24,6 +24,9 @@ import com.sashimi.credit.presentation.api.request.ConfirmCreditChargeRequest;
 import com.sashimi.credit.presentation.api.request.ReadyCreditChargeRequest;
 import com.sashimi.credit.presentation.api.response.CreditChargeConfirmResponse;
 import com.sashimi.credit.presentation.api.response.CreditChargeReadyResponse;
+import com.sashimi.global.exception.ErrorResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Tag(name = "Credit", description = "크레딧 API")
 @SecurityRequirement(name = "bearerAuth")
@@ -50,6 +53,34 @@ public class CreditController {
         return ResponseEntity.ok(CreditResponse.from(result));
     }
 
+
+    @Operation(
+            summary = "Toss 크레딧 충전 준비",
+            description = "충전 금액을 검증하고 Toss 결제에 사용할 주문번호, 주문명 및 결제 금액을 생성합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "충전 준비 성공",
+                    content = @Content(schema = @Schema(
+                            implementation = CreditChargeReadyResponse.class
+                    ))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "충전 금액이 최소 금액보다 작거나 1,000 단위가 아님",
+                    content = @Content(schema = @Schema(
+                            implementation = ErrorResponse.class
+                    ))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(schema = @Schema(
+                            implementation = ErrorResponse.class
+                    ))
+            )
+    })
     @PostMapping("/toss/ready")
     public ResponseEntity<CreditChargeReadyResponse> readyCreditCharge(
             @AuthenticationPrincipal CustomUserPrincipal principal,
@@ -62,6 +93,62 @@ public class CreditController {
         return ResponseEntity.ok(CreditChargeReadyResponse.from(result));
     }
 
+
+    @Operation(
+            summary = "Toss 크레딧 충전 승인",
+            description = "Toss 결제 성공 정보를 검증하고 Toss 승인 API 호출 성공 후 사용자의 크레딧을 충전합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "충전 승인 및 크레딧 충전 성공",
+                    content = @Content(schema = @Schema(
+                            implementation = CreditChargeConfirmResponse.class
+                    ))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "결제 금액 불일치 또는 잘못된 요청",
+                    content = @Content(schema = @Schema(
+                            implementation = ErrorResponse.class
+                    ))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(schema = @Schema(
+                            implementation = ErrorResponse.class
+                    ))
+            ),
+            @ApiResponse(
+                    responseCode = "403",
+                    description = "다른 사용자의 충전 주문에 접근",
+                    content = @Content(schema = @Schema(
+                            implementation = ErrorResponse.class
+                    ))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "충전 준비 주문을 찾을 수 없음",
+                    content = @Content(schema = @Schema(
+                            implementation = ErrorResponse.class
+                    ))
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 처리된 충전 결제",
+                    content = @Content(schema = @Schema(
+                            implementation = ErrorResponse.class
+                    ))
+            ),
+            @ApiResponse(
+                    responseCode = "502",
+                    description = "Toss 외부 결제 승인 실패",
+                    content = @Content(schema = @Schema(
+                            implementation = ErrorResponse.class
+                    ))
+            )
+    })
     @PostMapping("/toss/confirm")
     public ResponseEntity<CreditChargeConfirmResponse> confirmCreditCharge(
             @AuthenticationPrincipal CustomUserPrincipal principal,
