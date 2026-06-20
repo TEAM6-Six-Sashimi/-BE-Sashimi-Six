@@ -60,6 +60,9 @@ dependencies {
     testRuntimeOnly 'com.h2database:h2'
 
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+// Apache POI (docx 파싱)
+    implementation 'org.apache.poi:poi-ooxml:5.3.0'
 }
 
 tasks.named('test') {
