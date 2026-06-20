@@ -3,8 +3,8 @@ package com.sashimi.member.application.service;
 import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.member.application.command.ApplyInstructorCommand;
-import com.sashimi.member.application.port.FileStoragePort;
 import com.sashimi.member.application.port.OcrPort;
 import com.sashimi.member.application.usecase.MemberCommandUseCase;
 import com.sashimi.member.domain.model.ApprovalStatus;
@@ -29,8 +29,8 @@ public class MemberCommandService implements MemberCommandUseCase {
     private final InstructorApplicationRepository instructorApplicationRepository;
     private final UserRepository userRepository;
     private final OcrPort ocrPort;
-    private final FileStoragePort fileStoragePort;
     private final CategoryRepository categoryRepository;
+    private final FileStoragePort fileStoragePort;
 
     @Override
     public void applyInstructor(ApplyInstructorCommand command) {
@@ -73,10 +73,17 @@ public class MemberCommandService implements MemberCommandUseCase {
             throw new BusinessException(ErrorCode.ALREADY_APPLIED);
         }
 
-        String profileImagePath = fileStoragePort.upload(
-                command.profileImage().fileBytes(), command.profileImage().fileName());
-        String resumeFilePath = fileStoragePort.upload(
-                command.resumeFile().fileBytes(), command.resumeFile().fileName());
+        String profileImageKey = fileStoragePort.storePrivate(
+                command.profileImage().fileBytes(),
+                command.profileImage().fileName(),
+                "instructor-applications/profile"
+        );
+
+        String resumeFileKey = fileStoragePort.storePrivate(
+                command.resumeFile().fileBytes(),
+                command.resumeFile().fileName(),
+                "instructor-applications/resume"
+        );
 
         InstructorApplication application = InstructorApplication.create(
                 command.userId(),
@@ -84,8 +91,8 @@ public class MemberCommandService implements MemberCommandUseCase {
                 command.motivationLetter(),
                 command.categoryId(),
                 command.portfolioUrl(),
-                profileImagePath,
-                resumeFilePath,
+                profileImageKey,
+                resumeFileKey,
                 mainCareers,
                 certifications
         );
