@@ -1,0 +1,34 @@
+package com.sashimi.review.presentation;
+
+import com.sashimi.member.presentation.api.response.ApiResponse;
+import com.sashimi.review.application.command.WriteReviewCommand;
+import com.sashimi.review.application.usecase.ReviewCommandUseCase;
+import com.sashimi.review.presentation.api.request.WriteReviewRequest;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/users/{userId}/courses/{courseId}/reviews")
+@RequiredArgsConstructor
+@Tag(name = "수강평 API", description = "수강평 작성 API")
+public class ReviewController {
+
+    private final ReviewCommandUseCase reviewCommandUseCase;
+
+    @Operation(summary = "수강평 작성", description = "수강 중인 강의에 평점과 리뷰를 작성합니다.")
+    @PostMapping
+    public ResponseEntity<ApiResponse<Void>> writeReview(
+            @PathVariable Long userId,
+            @PathVariable Long courseId,
+            @Valid @RequestBody WriteReviewRequest request
+    ) {
+        reviewCommandUseCase.writeReview(
+                new WriteReviewCommand(userId, courseId, request.rating(), request.content())
+        );
+        return ResponseEntity.ok(ApiResponse.of("리뷰가 등록되었습니다."));
+    }
+}
