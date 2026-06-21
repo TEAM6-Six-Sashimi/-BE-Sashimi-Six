@@ -6,7 +6,6 @@ import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.member.application.command.ApplyInstructorCommand;
 import com.sashimi.member.application.port.DocxPort;
-import com.sashimi.member.application.port.FileStoragePort;
 import com.sashimi.member.application.port.OcrPort;
 import com.sashimi.member.application.usecase.MemberCommandUseCase;
 import com.sashimi.member.domain.model.ApprovalStatus;
