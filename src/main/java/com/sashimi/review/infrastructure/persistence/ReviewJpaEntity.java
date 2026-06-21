@@ -46,13 +46,24 @@ public class ReviewJpaEntity {
         this.createdAt = createdAt;
     }
 
+    public ReviewJpaEntity(Long id, Long userId, Long courseId, int rating, String content,
+                           ReviewStatus status, LocalDateTime createdAt) {
+        this.id = id;
+        this.userId = userId;
+        this.courseId = courseId;
+        this.rating = rating;
+        this.content = content;
+        this.status = status;
+        this.createdAt = createdAt;
+    }
+
     public Review toDomain() {
         return Review.restore(id, userId, courseId, rating, content, status, createdAt);
     }
 
     public static ReviewJpaEntity fromDomain(Review review) {
         return new ReviewJpaEntity(
-                review.getUserId(), review.getCourseId(), review.getRating(),
+                review.getId(), review.getUserId(), review.getCourseId(), review.getRating(),
                 review.getContent(), review.getStatus(), review.getCreatedAt()
         );
     }

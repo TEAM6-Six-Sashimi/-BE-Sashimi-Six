@@ -19,6 +19,17 @@ public class ReviewController {
 
     private final ReviewCommandUseCase reviewCommandUseCase;
 
+    @Operation(summary = "수강평 삭제", description = "본인이 작성한 수강평을 삭제합니다.")
+    @DeleteMapping("/{reviewId}")
+    public ResponseEntity<ApiResponse<Void>> deleteReview(
+            @PathVariable Long userId,
+            @PathVariable Long courseId,
+            @PathVariable Long reviewId
+    ) {
+        reviewCommandUseCase.deleteReview(userId, reviewId);
+        return ResponseEntity.ok(ApiResponse.of("수강평이 삭제되었습니다."));
+    }
+
     @Operation(summary = "수강평 작성", description = "수강 중인 강의에 평점과 리뷰를 작성합니다.")
     @PostMapping
     public ResponseEntity<ApiResponse<Void>> writeReview(
