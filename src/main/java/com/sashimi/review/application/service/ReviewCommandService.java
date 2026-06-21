@@ -25,6 +25,19 @@ public class ReviewCommandService implements ReviewCommandUseCase {
     private final CourseRatingPort courseRatingPort;
 
     @Override
+    public void deleteReview(Long userId, Long reviewId, boolean isAdmin) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+        if (!review.getUserId().equals(userId) && !isAdmin) {
+            throw new BusinessException(ErrorCode.REVIEW_FORBIDDEN);
+        }
+
+        reviewRepository.save(review.delete());
+        courseRatingPort.updateRating(review.getCourseId());
+    }
+
+    @Override
     public void writeReview(WriteReviewCommand command) {
         EnrollmentSummary enrollment = enrollmentPort
                 .getEnrollmentByCourse(command.userId(), command.courseId())
