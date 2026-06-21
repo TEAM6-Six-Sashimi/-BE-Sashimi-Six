@@ -6,5 +6,5 @@ public interface ReviewCommandUseCase {
 
     void writeReview(WriteReviewCommand command);
 
-    void deleteReview(Long userId, Long reviewId);
+    void deleteReview(Long userId, Long reviewId, boolean isAdmin);
 }
