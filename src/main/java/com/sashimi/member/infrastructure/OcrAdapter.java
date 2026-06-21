@@ -12,9 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,71 +55,6 @@ public class OcrAdapter implements OcrPort {
             log.error("Clova OCR 호출 중 예외 발생", e);
             return new OcrResult(null, null, null, false);
         }
-    }
-
-    @Override
-    public List<String> extractMainCareers(byte[] fileBytes, String fileName) {
-        try {
-            String requestBody = buildRequestBody(fileBytes, fileName);
-
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(invokeUrl))
-                    .header("Content-Type", "application/json")
-                    .header("X-OCR-SECRET", secretKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .build();
-
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                log.error("이력서 OCR 호출 실패: status={}", response.statusCode());
-                return List.of();
-            }
-
-            return parseMainCareers(response.body());
-
-        } catch (Exception e) {
-            log.error("이력서 OCR 호출 중 예외 발생", e);
-            return List.of();
-        }
-    }
-
-    private List<String> parseMainCareers(String responseBody) throws Exception {
-        JsonNode root = objectMapper.readTree(responseBody);
-        JsonNode fields = root.path("images").get(0).path("fields");
-
-        StringBuilder fullText = new StringBuilder();
-        for (JsonNode field : fields) {
-            fullText.append(field.path("inferText").asText()).append(" ");
-        }
-
-        String text = fullText.toString();
-        log.info("이력서 OCR 추출 텍스트: {}", text);
-
-        // "주요 이력" 섹션 이후의 텍스트만 대상으로 함
-        int sectionStart = text.indexOf("주요 이력");
-        if (sectionStart == -1) {
-            sectionStart = text.indexOf("주요이력");
-        }
-        if (sectionStart == -1) {
-            return List.of();
-        }
-        String careerSection = text.substring(sectionStart);
-
-        // 1~5번 항목 추출: "1 내용", "2 내용" 패턴
-        List<String> careers = new ArrayList<>();
-        Pattern pattern = Pattern.compile("([1-5])\\s+([^1-5위]{5,})");
-        Matcher matcher = pattern.matcher(careerSection);
-        while (matcher.find() && careers.size() < 5) {
-            String content = matcher.group(2).trim();
-            // 양식 설명 문구 제외
-            if (!content.contains("자격증, 수상, 주요 경험") && !content.contains("내용")) {
-                careers.add(content);
-            }
-        }
-
-        return careers;
     }
 
     private String buildRequestBody(byte[] fileBytes, String fileName) {
