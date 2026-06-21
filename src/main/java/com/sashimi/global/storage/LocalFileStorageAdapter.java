@@ -3,16 +3,17 @@ package com.sashimi.global.storage;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Set;
 import java.util.UUID;
 
+@Profile("local")
 @Component
 public class LocalFileStorageAdapter implements FileStoragePort {
 
@@ -46,6 +47,16 @@ public class LocalFileStorageAdapter implements FileStoragePort {
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }
+    }
+
+    @Override
+    public String storePrivate(byte[] bytes, String originalFilename, String folder) {
+        throw new UnsupportedOperationException("로컬 환경에서는 private 파일 저장을 지원하지 않습니다.");
+    }
+
+    @Override
+    public String generatePresignedDownloadUrl(String s3Key, int expiryMinutes) {
+        throw new UnsupportedOperationException("로컬 환경에서는 presigned URL을 지원하지 않습니다.");
     }
 
     private String getExtension(String originalFilename) {

@@ -123,11 +123,11 @@ public class InstructorApplicationJpaEntity {
 
         if (domain.getCertifications() != null) {
             domain.getCertifications().forEach(cert ->
-                entity.certifications.add(InstructorCertificationJpaEntity.builder()
-                        .certificationName(cert.getCertificationName())
-                        .issuedBy(cert.getIssuedBy())
-                        .application(entity)
-                        .build())
+                    entity.certifications.add(InstructorCertificationJpaEntity.builder()
+                            .certificationName(cert.getCertificationName())
+                            .issuedBy(cert.getIssuedBy())
+                            .application(entity)
+                            .build())
             );
         }
         return entity;
@@ -158,3 +158,4 @@ public class InstructorApplicationJpaEntity {
                 .build();
     }
 }
+
