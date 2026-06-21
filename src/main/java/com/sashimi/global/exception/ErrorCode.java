@@ -93,6 +93,10 @@ public enum ErrorCode {
     RESUME_PARSE_FAILED(400, "MEMBER_007", "이력서 파싱 처리에 실패했습니다. 주요 이력 항목을 확인해주세요."),
     RESUME_INVALID_FORMAT(400, "MEMBER_008", "이력서 파일은 .docx 형식만 업로드 가능합니다."),
 
+    REVIEW_ALREADY_EXISTS(409, "REVIEW_001", "이미 해당 강의에 리뷰를 작성하셨습니다."),
+    REVIEW_NOT_ENROLLED(403, "REVIEW_002", "수강 중인 강의에만 리뷰를 작성할 수 있습니다."),
+    REVIEW_PROGRESS_REQUIRED(400, "REVIEW_003", "수강 후 리뷰를 작성할 수 있습니다."),
+
     AI_API_KEY_MISSING(500, "AI_001", "AI API Key가 설정되지 않았습니다."),
     AI_API_KEY_NOT_RESOLVED(500, "AI_002", "AI API Key 환경변수가 정상적으로 치환되지 않았습니다."),
     AI_API_CALL_FAILED(502, "AI_003", "AI API 호출에 실패했습니다."),
