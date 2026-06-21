@@ -63,6 +63,9 @@ dependencies {
 
 // Apache POI (docx 파싱)
     implementation 'org.apache.poi:poi-ooxml:5.3.0'
+// AWS SDK
+    implementation platform('software.amazon.awssdk:bom:2.26.31')
+    implementation 'software.amazon.awssdk:s3'
 }
 
 tasks.named('test') {
