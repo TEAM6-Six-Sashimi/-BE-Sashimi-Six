@@ -73,6 +73,17 @@ public class LocalFileStorageAdapter implements FileStoragePort {
         return baseUrl + "/uploads/" + s3Key;
     }
 
+    @Override
+    public byte[] downloadPrivate(String s3Key) {
+        try {
+            Path filePath = Paths.get(uploadDir, s3Key).toAbsolutePath().normalize();
+            return Files.readAllBytes(filePath);
+        } catch (Exception e) {
+            log.error("[Local] 파일 다운로드 실패 - key: {}, cause: {}", s3Key, e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        }
+    }
+
     private String getExtension(String originalFilename) {
         if (originalFilename == null || !originalFilename.contains(".")) return "";
         return originalFilename.substring(originalFilename.lastIndexOf("."));

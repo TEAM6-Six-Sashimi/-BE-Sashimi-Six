@@ -2,7 +2,6 @@ package com.sashimi.member.application.service;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
-import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.member.application.usecase.MemberQueryUseCase;
 import com.sashimi.member.domain.model.ApprovalStatus;
 import com.sashimi.member.domain.model.InstructorApplication;
@@ -26,11 +25,10 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class MemberQueryService implements MemberQueryUseCase {
 
-    private static final int PRESIGNED_URL_EXPIRY_MINUTES = 60;
+    private static final String FILE_DOWNLOAD_BASE = "/files/download?key=";
 
     private final InstructorApplicationRepository instructorApplicationRepository;
     private final UserRepository userRepository;
-    private final FileStoragePort fileStoragePort;
 
     @Override
     public List<InstructorApplicationListResponse> getPendingInstructorApplications() {
@@ -91,7 +89,7 @@ public class MemberQueryService implements MemberQueryUseCase {
 
     private String toPresignedUrl(String s3Key) {
         if (s3Key == null) return null;
-        return fileStoragePort.generatePresignedDownloadUrl(s3Key, PRESIGNED_URL_EXPIRY_MINUTES);
+        return FILE_DOWNLOAD_BASE + s3Key;
     }
 
     @Override

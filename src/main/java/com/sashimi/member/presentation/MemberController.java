@@ -56,10 +56,10 @@ public class MemberController {
     @PostMapping(value = "/{userId}/instructor-apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<Void>> applyInstructor(
             @PathVariable Long userId,
-            @RequestPart("bio") String bio,
-            @RequestPart("motivationLetter") String motivationLetter,
-            @RequestPart("categoryId") String categoryId,
-            @RequestPart("portfolioUrl") String portfolioUrl,
+            @RequestParam("bio") String bio,
+            @RequestParam("motivationLetter") String motivationLetter,
+            @RequestParam("categoryId") String categoryId,
+            @RequestParam("portfolioUrl") String portfolioUrl,
             @RequestPart("profileImage") MultipartFile profileImage,
             @RequestPart("certificateFiles") List<MultipartFile> certificateFiles,
             @RequestPart("resumeFile") MultipartFile resumeFile
