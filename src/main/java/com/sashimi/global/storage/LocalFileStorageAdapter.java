@@ -74,6 +74,21 @@ public class LocalFileStorageAdapter implements FileStoragePort {
     }
 
     @Override
+    public String storeVideo(MultipartFile file) {
+        throw new UnsupportedOperationException("로컬 환경에서는 영상 업로드를 지원하지 않습니다.");
+    }
+
+    @Override
+    public String storeAttachment(MultipartFile file) {
+        throw new UnsupportedOperationException("로컬 환경에서는 자료 업로드를 지원하지 않습니다.");
+    }
+
+    @Override
+    public void archiveFile(String s3Key) {
+        // 로컬 환경은 콜드 스토리지가 없어 동작하지 않음 (no-op)
+    }
+
+    @Override
     public byte[] downloadPrivate(String s3Key) {
         try {
             Path filePath = Paths.get(uploadDir, s3Key).toAbsolutePath().normalize();

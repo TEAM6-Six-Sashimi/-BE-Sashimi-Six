@@ -21,4 +21,16 @@ public class FileUploadController {
         String url = fileStoragePort.store(image);
         return ResponseEntity.ok(FileUploadResponse.of(url));
     }
+
+    @PostMapping(value = "/video", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<FileKeyResponse> uploadVideo(@RequestParam("video") MultipartFile video) {
+        String key = fileStoragePort.storeVideo(video);
+        return ResponseEntity.ok(FileKeyResponse.of(key));
+    }
+
+    @PostMapping(value = "/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<FileKeyResponse> uploadAttachment(@RequestParam("file") MultipartFile file) {
+        String key = fileStoragePort.storeAttachment(file);
+        return ResponseEntity.ok(FileKeyResponse.of(key));
+    }
 }

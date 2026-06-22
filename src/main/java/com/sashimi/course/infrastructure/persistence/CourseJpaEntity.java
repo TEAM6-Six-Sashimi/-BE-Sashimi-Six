@@ -62,6 +62,9 @@ public class CourseJpaEntity {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
+    @Column(name = "archived", nullable = false)
+    private boolean archived = false;
+
     @Column(name = "category_id", nullable = false)
     private Long categoryId;
 
@@ -126,6 +129,10 @@ public class CourseJpaEntity {
         this.updatedAt = updatedAt;
     }
 
+    public void markArchived(boolean archived) {
+        this.archived = archived;
+    }
+
     public void clearSessions() {
         this.sessions.clear();
     }
@@ -152,5 +159,6 @@ public class CourseJpaEntity {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getApprovedAt() { return approvedAt; }
+    public boolean isArchived() { return archived; }
     public List<CourseSessionJpaEntity> getSessions() { return sessions; }
 }

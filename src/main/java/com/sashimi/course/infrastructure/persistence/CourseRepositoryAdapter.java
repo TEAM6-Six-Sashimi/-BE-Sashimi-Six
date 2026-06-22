@@ -56,6 +56,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
             entity.reject(course.getRejectReason(), course.getUpdatedAt());
         }
 
+        entity.markArchived(course.isArchived());
+
         entity.clearSessions();
         for (CourseSession session : course.getSessions()) {
             entity.addSession(toSessionEntity(session));
@@ -112,6 +114,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findByStatusAndArchivedFalse(CourseStatus status) {
+        return springDataCourseRepository.findByStatusAndArchivedFalse(status)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public void deleteById(Long id) {
         springDataCourseRepository.deleteById(id);
     }
@@ -129,7 +137,7 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 entity.getThumbnail(), entity.getTotalDuration(), entity.getStatus(),
                 entity.getRejectReason(), entity.getRatingAvg(), entity.getReviewCount(),
                 entity.getStudentCount(), entity.getCreatedAt(), entity.getUpdatedAt(),
-                entity.getApprovedAt(), sessions);
+                entity.getApprovedAt(), entity.isArchived(), sessions);
     }
 
     private CourseSessionJpaEntity toSessionEntity(CourseSession session) {
