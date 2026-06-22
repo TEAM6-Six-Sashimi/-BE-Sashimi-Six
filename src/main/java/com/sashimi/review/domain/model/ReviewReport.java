@@ -36,6 +36,10 @@ public class ReviewReport {
         return new ReviewReport(id, reviewId, reporterId, category, reason, status, createdAt);
     }
 
+    public ReviewReport process() {
+        return new ReviewReport(id, reviewId, reporterId, category, reason, ReviewReportStatus.PROCESSED, createdAt);
+    }
+
     public Long getId() { return id; }
     public Long getReviewId() { return reviewId; }
     public Long getReporterId() { return reporterId; }
