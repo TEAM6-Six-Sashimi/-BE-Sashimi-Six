@@ -118,12 +118,15 @@ public class PaymentController {
     }
 
     @Operation(
-            summary = "강의 결제",
+            summary = "공통 결제",
             description = """
-                    단일 강의 또는 장바구니에서 선택한 강의를 크레딧으로 결제합니다.
-                    COURSE 결제는 courseId가 필수이고,
-                    CART 결제는 courseId를 전달하지 않아야 합니다.
-                    """
+                단일 강의, 장바구니 선택 강의 또는 AI 구독권을
+                사용자의 크레딧으로 결제합니다.
+
+                COURSE 결제는 courseId가 필수입니다.
+                CART 결제는 courseId와 planCode를 전달하지 않습니다.
+                AI_SUBSCRIPTION 결제는 planCode가 필수입니다.
+                """
     )
     @ApiResponses({
             @ApiResponse(
@@ -163,6 +166,7 @@ public class PaymentController {
                                 principal.getId(),
                                 request.purchaseType(),
                                 request.courseId(),
+                                request.planCode(),
                                 request.agreed()
                         )
                 );

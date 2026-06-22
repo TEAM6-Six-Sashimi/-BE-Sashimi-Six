@@ -34,6 +34,10 @@ public class OrderItem {
         return new OrderItem(null, OrderItemType.COURSE, courseId, courseTitle, price, 0L, price, orderId, courseId);
     }
 
+    public static OrderItem createSubscription(String planName, Long price, Long orderId, Long subscriptionId) {
+        return new OrderItem(null, OrderItemType.AI_SUBSCRIPTION, subscriptionId, planName, price, 0L, price, orderId, null);
+    }
+
     public static OrderItem restore(Long id, String courseTitle, Long price, Long discountAmount,
                                     Long finalPrice, Long orderId, Long courseId) {
         return new OrderItem(
@@ -73,4 +77,7 @@ public class OrderItem {
     public Long getCourseId() { return courseId; }
     public OrderItemType getItemType() { return itemType; }
     public Long getItemId() { return itemId; }
+
+
+
 }
