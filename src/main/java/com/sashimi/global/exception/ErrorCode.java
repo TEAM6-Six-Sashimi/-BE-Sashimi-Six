@@ -68,6 +68,9 @@ public enum ErrorCode {
     PAYMENT_AGREEMENT_REQUIRED(400, "PAYMENT_009", "결제 진행을 위해 결제 동의가 필요합니다."),
     PAYMENT_COURSE_ID_REQUIRED(400, "PAYMENT_010", "단일 강의 결제에는 강의 ID가 필요합니다."),
     PAYMENT_CART_COURSE_ID_NOT_ALLOWED(400, "PAYMENT_011", "장바구니 결제에는 강의 ID를 전달할 수 없습니다."),
+    PAYMENT_SUBSCRIPTION_PLAN_REQUIRED(400, "PAYMENT_012", "구독권 결제에는 구독 플랜이 필요합니다."),
+    PAYMENT_PLAN_NOT_ALLOWED(400, "PAYMENT_013", "강의 또는 장바구니 결제에는 구독 플랜을 전달할 수 없습니다."),
+    PAYMENT_SUBSCRIPTION_COURSE_ID_NOT_ALLOWED(400, "PAYMENT_014", "구독권 결제에는 강의 ID를 전달할 수 없습니다."),
 
     CREDIT_INVALID_AMOUNT(400, "CREDIT_001", "크레딧 금액이 올바르지 않습니다."),
     CREDIT_INSUFFICIENT_BALANCE(400, "CREDIT_002", "크레딧 잔액이 부족합니다."),
