@@ -24,14 +24,18 @@ public class InstructorCertificationJpaEntity {
     @Column(name = "issued_by")
     private String issuedBy;
 
+    @Column(name = "file_path", length = 500)
+    private String filePath;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "instructor_profile_id", nullable = false)
     private InstructorApplicationJpaEntity application;
 
     @Builder
-    public InstructorCertificationJpaEntity(String certificationName, String issuedBy, InstructorApplicationJpaEntity application) {
+    public InstructorCertificationJpaEntity(String certificationName, String issuedBy, String filePath, InstructorApplicationJpaEntity application) {
         this.certificationName = certificationName;
         this.issuedBy = issuedBy;
+        this.filePath = filePath;
         this.application = application;
     }
 
@@ -40,6 +44,7 @@ public class InstructorCertificationJpaEntity {
                 .id(id)
                 .certificationName(certificationName)
                 .issuedBy(issuedBy)
+                .filePath(filePath)
                 .build();
     }
 }

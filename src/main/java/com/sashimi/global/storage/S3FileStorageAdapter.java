@@ -3,6 +3,8 @@ package com.sashimi.global.storage;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +19,8 @@ import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
+@Primary
 @Profile("s3")
 @Component
 @RequiredArgsConstructor
@@ -51,6 +55,7 @@ public class S3FileStorageAdapter implements FileStoragePort {
                     RequestBody.fromBytes(file.getBytes())
             );
         } catch (Exception e) {
+            log.error("[S3] 이미지 업로드 실패 - key: {}, cause: {}", key, e.getMessage(), e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }
 
@@ -70,6 +75,8 @@ public class S3FileStorageAdapter implements FileStoragePort {
                     RequestBody.fromBytes(bytes)
             );
         } catch (Exception e) {
+            log.error("[S3] private 파일 업로드 실패 - bucket: {}, key: {}, cause: {}",
+                    properties.getS3().getBucketDocs(), key, e.getMessage(), e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }
 
