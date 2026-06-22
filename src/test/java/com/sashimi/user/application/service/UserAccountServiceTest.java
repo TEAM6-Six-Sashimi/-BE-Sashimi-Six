@@ -150,7 +150,8 @@ class UserAccountServiceTest {
                 true,
                 "ABC12345",
                 List.of(1L),
-                null
+                null,
+                false, false, false
         );
     }
 }

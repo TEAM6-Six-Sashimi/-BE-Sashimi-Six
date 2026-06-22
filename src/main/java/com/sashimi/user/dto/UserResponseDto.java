@@ -23,6 +23,9 @@ public class UserResponseDto {
     private boolean emailVerified;
     private String referralCode;
     private List<Long> interestCategoryIds;
+    private boolean marketingConsent;
+    private boolean emailConsent;
+    private boolean aiConsent;
 
     public static UserResponseDto from(User user) {
         return UserResponseDto.builder()
@@ -36,6 +39,9 @@ public class UserResponseDto {
                 .emailVerified(user.isEmailVerified())
                 .referralCode(user.getReferralCode())
                 .interestCategoryIds(user.getInterestCategoryIds())
+                .marketingConsent(user.isMarketingConsent())
+                .emailConsent(user.isEmailConsent())
+                .aiConsent(user.isAiConsent())
                 .build();
     }
 }

@@ -20,12 +20,19 @@ public class UpdateMyInfoRequest {
     @Email(message = "이메일 형식이 올바르지 않습니다.")
     private String email;
 
+    private boolean marketingConsent;
+    private boolean emailConsent;
+    private boolean aiConsent;
+
     public UpdateMyInfoCommand toCommand(Long userId) {
         return new UpdateMyInfoCommand(
                 userId,
                 currentPassword,
                 name,
-                email
+                email,
+                marketingConsent,
+                emailConsent,
+                aiConsent
         );
     }
 }
