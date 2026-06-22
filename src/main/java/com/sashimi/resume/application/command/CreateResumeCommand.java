@@ -1,11 +1,15 @@
 package com.sashimi.resume.application.command;
 
-import com.sashimi.resume.domain.model.ResumeReviewSection;
+import com.sashimi.resume.domain.model.ResumeCareer;
+import com.sashimi.resume.domain.model.ResumeEducation;
+
+import java.util.List;
 
 public record CreateResumeCommand(
         Long userId,
-        String title,
-        String content,
+        List<ResumeEducation> educations,
+        boolean entryLevel,
+        List<ResumeCareer> careers,
         boolean defaultResume
 ) {
 }
