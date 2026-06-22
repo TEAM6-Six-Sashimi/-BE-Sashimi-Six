@@ -11,4 +11,10 @@ public interface CategoryRepository {
     boolean existsAllActiveByIds(List<Long> categoryIds);
     Optional<Category> findBySubCategory(String subCategory);
     Optional<Category> findById(Long id);
+
+    Category save(Category category);
+    List<Category> findAll();
+    boolean existsBySubCategory(String subCategory);
+    Optional<Long> findMainCategoryIdByName(String name);
+    Long findMaxMainCategoryId();
 }

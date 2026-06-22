@@ -37,6 +37,22 @@ public class CategoryJpaEntity {
 
     protected CategoryJpaEntity() {}
 
+    public CategoryJpaEntity(Long mainCategoryId, String name, String subCategory,
+                            int sortOrder, boolean active, LocalDateTime createdAt, Long ncsInfoId) {
+        this.mainCategoryId = mainCategoryId;
+        this.name = name;
+        this.subCategory = subCategory;
+        this.sortOrder = sortOrder;
+        this.active = active;
+        this.createdAt = createdAt;
+        this.ncsInfoId = ncsInfoId;
+    }
+
+    public void update(String subCategory, boolean active) {
+        this.subCategory = subCategory;
+        this.active = active;
+    }
+
     public void updateNcsInfoId(Long ncsInfoId) {
         this.ncsInfoId = ncsInfoId;
     }
