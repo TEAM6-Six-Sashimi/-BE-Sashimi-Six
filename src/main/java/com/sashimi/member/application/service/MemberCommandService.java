@@ -5,6 +5,7 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.member.application.command.ApplyInstructorCommand;
+import com.sashimi.member.application.port.DocxPort;
 import com.sashimi.member.application.port.OcrPort;
 import com.sashimi.member.application.usecase.MemberCommandUseCase;
 import com.sashimi.member.domain.model.ApprovalStatus;
@@ -29,8 +30,9 @@ public class MemberCommandService implements MemberCommandUseCase {
     private final InstructorApplicationRepository instructorApplicationRepository;
     private final UserRepository userRepository;
     private final OcrPort ocrPort;
-    private final CategoryRepository categoryRepository;
+    private final DocxPort docxPort;
     private final FileStoragePort fileStoragePort;
+    private final CategoryRepository categoryRepository;
 
     @Override
     public void applyInstructor(ApplyInstructorCommand command) {
@@ -59,11 +61,17 @@ public class MemberCommandService implements MemberCommandUseCase {
             throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
         }
 
-        // 이력서 OCR - 주요 이력 추출
-        List<String> mainCareers = ocrPort.extractMainCareers(
-                command.resumeFile().fileBytes(), command.resumeFile().fileName());
+        // 이력서 파일 형식 검증
+        String resumeFileName = command.resumeFile().fileName();
+        if (resumeFileName == null || !resumeFileName.toLowerCase().endsWith(".docx")) {
+            throw new BusinessException(ErrorCode.RESUME_INVALID_FORMAT);
+        }
+
+        // 이력서 docx - 주요 이력 추출
+        List<String> mainCareers = docxPort.extractMainCareers(
+                command.resumeFile().fileBytes());
         if (mainCareers.isEmpty()) {
-            throw new BusinessException(ErrorCode.RESUME_OCR_FAILED);
+            throw new BusinessException(ErrorCode.RESUME_PARSE_FAILED);
         }
 
         // 중복 신청 방지
