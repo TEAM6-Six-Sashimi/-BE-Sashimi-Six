@@ -9,6 +9,32 @@ public record SectionFeedbackResult(
         String message
 ) {
 
+    public SectionFeedbackResult {
+        if (section == null || type == null) {
+            throw new IllegalArgumentException(
+                    "피드백 영역과 유형은 필수입니다."
+            );
+        }
+
+        if (label == null || label.isBlank()) {
+            throw new IllegalArgumentException(
+                    "피드백 영역 이름은 필수입니다."
+            );
+        }
+
+        if (!label.equals(section.label())) {
+            throw new IllegalArgumentException(
+                    "피드백 영역 이름이 일치하지 않습니다."
+            );
+        }
+
+        if (message == null || message.isBlank()) {
+            throw new IllegalArgumentException(
+                    "피드백 내용은 필수입니다."
+            );
+        }
+    }
+
     public static SectionFeedbackResult strength(
             SectionScoreResult sectionScore
     ) {
@@ -39,12 +65,6 @@ public record SectionFeedbackResult(
         if (sectionScore.score() >= 80) {
             throw new IllegalArgumentException(
                     "80점 이상 영역은 보완점으로 생성할 수 없습니다."
-            );
-        }
-
-        if (message == null || message.isBlank()) {
-            throw new IllegalArgumentException(
-                    "보완 내용은 필수입니다."
             );
         }
 

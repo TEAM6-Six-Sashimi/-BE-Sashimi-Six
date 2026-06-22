@@ -4,6 +4,7 @@ import com.sashimi.member.presentation.api.response.InstructorApplicationDetailR
 import com.sashimi.member.presentation.api.response.InstructorApplicationListResponse;
 import com.sashimi.member.presentation.api.response.MyInstructorApplicationDetailResponse;
 import com.sashimi.member.presentation.api.response.MyInstructorApplicationListResponse;
+import com.sashimi.member.presentation.api.response.RejectedApplicationListResponse;
 
 import java.util.List;
 
@@ -16,4 +17,6 @@ public interface MemberQueryUseCase {
     List<MyInstructorApplicationListResponse> getMyInstructorApplications(Long userId);
 
     MyInstructorApplicationDetailResponse getMyInstructorApplicationDetail(Long userId, Long applicationId);
+
+    List<RejectedApplicationListResponse> getRejectedInstructorApplications();
 }

@@ -12,6 +12,7 @@ import com.sashimi.member.presentation.api.response.InstructorApplicationDetailR
 import com.sashimi.member.presentation.api.response.InstructorApplicationListResponse;
 import com.sashimi.member.presentation.api.response.MyInstructorApplicationDetailResponse;
 import com.sashimi.member.presentation.api.response.MyInstructorApplicationListResponse;
+import com.sashimi.member.presentation.api.response.RejectedApplicationListResponse;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -91,5 +92,17 @@ public class MemberQueryService implements MemberQueryUseCase {
     private String toPresignedUrl(String s3Key) {
         if (s3Key == null) return null;
         return fileStoragePort.generatePresignedDownloadUrl(s3Key, PRESIGNED_URL_EXPIRY_MINUTES);
+    }
+
+    @Override
+    public List<RejectedApplicationListResponse> getRejectedInstructorApplications() {
+        return instructorApplicationRepository.findAllByStatus(ApprovalStatus.REJECTED)
+                .stream()
+                .map(application -> {
+                    User user = userRepository.findById(application.getUserId())
+                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    return RejectedApplicationListResponse.of(application, user);
+                })
+                .toList();
     }
 }

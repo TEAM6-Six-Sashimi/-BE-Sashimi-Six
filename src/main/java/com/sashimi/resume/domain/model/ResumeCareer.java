@@ -24,32 +24,34 @@ public class ResumeCareer {
             String customEmploymentType,
             String jobTitle
     ) {
-        if (companyName == null || companyName.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
         if (startYearMonth == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
         }
+
+        if (currentlyEmployed && endYearMonth != null) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
+        }
+
         if (!currentlyEmployed && endYearMonth == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
         }
-        if (endYearMonth != null && endYearMonth.isBefore(startYearMonth)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        if (employmentType == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        if (employmentType == EmploymentType.OTHER
-                && (customEmploymentType == null || customEmploymentType.isBlank())) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        if (jobTitle == null || jobTitle.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+
+        if (endYearMonth != null
+                && endYearMonth.isBefore(startYearMonth)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
         }
 
         this.companyName = companyName;
         this.startYearMonth = startYearMonth;
-        this.endYearMonth = currentlyEmployed ? null : endYearMonth;
+        this.endYearMonth = endYearMonth;
         this.currentlyEmployed = currentlyEmployed;
         this.employmentType = employmentType;
         this.customEmploymentType = employmentType == EmploymentType.OTHER
