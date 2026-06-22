@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface CategoryQueryUseCase {
     List<Category> getActiveCategories();
+    List<Category> getAllCategories();
 }

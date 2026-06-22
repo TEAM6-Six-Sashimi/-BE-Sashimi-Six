@@ -22,4 +22,9 @@ public class CategoryQueryService implements CategoryQueryUseCase {
     public List<Category> getActiveCategories() {
         return categoryRepository.findAllActive();
     }
+
+    @Override
+    public List<Category> getAllCategories() {
+        return categoryRepository.findAll();
+    }
 }
