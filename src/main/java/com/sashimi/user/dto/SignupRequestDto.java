@@ -63,4 +63,8 @@ public class SignupRequestDto {
             message = "전화번호 형식은 010-0000-0000이어야 합니다."
     )
     private String phone;
+
+    private boolean marketingConsent;
+    private boolean emailConsent;
+    private boolean aiConsent;
 }

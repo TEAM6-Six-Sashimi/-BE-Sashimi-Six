@@ -59,9 +59,17 @@ public class UserJpaEntity {
     @Column(name = "phone", length = 20)
     private String phone;
 
-
     @Column(name = "deleted_at")
     private LocalDateTime deactivatedAt;
+
+    @Column(name = "marketing_consent", nullable = false)
+    private boolean marketingConsent;
+
+    @Column(name = "email_consent", nullable = false)
+    private boolean emailConsent;
+
+    @Column(name = "ai_consent", nullable = false)
+    private boolean aiConsent;
 
     public static UserJpaEntity from(User user) {
         UserJpaEntity entity = new UserJpaEntity();
@@ -78,11 +86,15 @@ public class UserJpaEntity {
         entity.referralCode = user.getReferralCode();
         entity.interestCategoryIds = user.getInterestCategoryIds();
         entity.deactivatedAt = user.getDeactivatedAt();
+        entity.marketingConsent = user.isMarketingConsent();
+        entity.emailConsent = user.isEmailConsent();
+        entity.aiConsent = user.isAiConsent();
         return entity;
     }
 
     public User toDomain() {
         return new User(id, name, loginId, password, email, phone, birthDate, role, status,
-                emailVerified, referralCode, interestCategoryIds, deactivatedAt);
+                emailVerified, referralCode, interestCategoryIds, deactivatedAt,
+                marketingConsent, emailConsent, aiConsent);
     }
 }

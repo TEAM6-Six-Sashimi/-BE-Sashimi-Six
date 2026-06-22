@@ -34,7 +34,8 @@ public abstract class UserRepositoryContractTest {
                 "테스트유저", loginId, "password123",
                 email, "010-0000-0000",
                 LocalDate.of(2000, 1, 1),
-                "REF001", List.of()
+                "REF001", List.of(),
+                false, false, false
         );
     }
 
@@ -109,7 +110,7 @@ public abstract class UserRepositoryContractTest {
     @DisplayName("유저 정보를 수정 후 저장하면 반영된다")
     void save_updatesExistingUser() {
         User saved = userRepository.save(sampleUser("user7", "user7@test.com"));
-        saved.updateProfile("수정된이름", "new@test.com");
+        saved.updateProfile("수정된이름", "new@test.com", false, false, false);
         userRepository.save(saved);
 
         User found = userRepository.findById(saved.getId()).orElseThrow();

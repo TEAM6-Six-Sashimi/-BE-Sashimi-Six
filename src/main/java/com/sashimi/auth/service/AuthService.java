@@ -79,7 +79,10 @@ public class AuthService {
                 request.getPhone(),
                 request.getBirthDate(),
                 generateUniqueReferralCode(),
-                interestCategoryIds
+                interestCategoryIds,
+                request.isMarketingConsent(),
+                request.isEmailConsent(),
+                request.isAiConsent()
         );
 
         User savedUser = userRepository.save(user);

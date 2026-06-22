@@ -43,7 +43,8 @@ public class UserAccountService implements UserCommandUseCase {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
-        user.updateProfile(command.getName(), command.getEmail());
+        user.updateProfile(command.getName(), command.getEmail(),
+                command.isMarketingConsent(), command.isEmailConsent(), command.isAiConsent());
         User savedUser = userRepository.save(user);
 
         return UserResponseDto.from(savedUser);
