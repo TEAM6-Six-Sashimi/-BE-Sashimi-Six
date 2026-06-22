@@ -50,12 +50,30 @@ public class MemberCommandService implements MemberCommandUseCase {
             throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
         }
 
-        // 자격증 OCR 검증 - 성공한 파일들 모두 수집
-        List<InstructorCertification> certifications = command.certificateFiles().stream()
-                .map(f -> ocrPort.extractCertificateInfo(f.fileBytes(), f.fileName()))
-                .filter(OcrPort.OcrResult::success)
-                .map(r -> InstructorCertification.of(r.certificationName(), r.issuedBy()))
-                .collect(Collectors.toList());
+        // 중복 신청 방지 - S3 업로드 전에 체크해야 orphan 파일 방지
+        boolean alreadyApplied = instructorApplicationRepository
+                .existsByUserIdAndApprovalStatus(command.userId(), ApprovalStatus.PENDING);
+        if (alreadyApplied) {
+            throw new BusinessException(ErrorCode.ALREADY_APPLIED);
+        }
+
+        // 자격증 OCR 검증 후 S3 업로드
+        List<InstructorCertification> certifications = new java.util.ArrayList<>();
+        for (ApplyInstructorCommand.FileEntry certFile : command.certificateFiles()) {
+            OcrPort.OcrResult ocrResult = ocrPort.extractCertificateInfo(certFile.fileBytes(), certFile.fileName());
+            if (ocrResult.success()) {
+                String certFileKey = fileStoragePort.storePrivate(
+                        certFile.fileBytes(),
+                        certFile.fileName(),
+                        "instructor-applications/certificates"
+                );
+                certifications.add(InstructorCertification.of(
+                        ocrResult.certificationName(),
+                        ocrResult.issuedBy(),
+                        certFileKey
+                ));
+            }
+        }
 
         if (certifications.isEmpty()) {
             throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
@@ -72,13 +90,6 @@ public class MemberCommandService implements MemberCommandUseCase {
                 command.resumeFile().fileBytes());
         if (mainCareers.isEmpty()) {
             throw new BusinessException(ErrorCode.RESUME_PARSE_FAILED);
-        }
-
-        // 중복 신청 방지
-        boolean alreadyApplied = instructorApplicationRepository
-                .existsByUserIdAndApprovalStatus(command.userId(), ApprovalStatus.PENDING);
-        if (alreadyApplied) {
-            throw new BusinessException(ErrorCode.ALREADY_APPLIED);
         }
 
         String profileImageKey = fileStoragePort.storePrivate(
