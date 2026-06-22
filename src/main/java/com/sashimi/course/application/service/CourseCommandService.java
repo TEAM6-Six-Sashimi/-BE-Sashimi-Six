@@ -2,6 +2,7 @@ package com.sashimi.course.application.service;
 
 import com.sashimi.course.application.command.*;
 import com.sashimi.course.application.port.CategoryPort;
+import com.sashimi.course.application.port.CourseEnrollmentPort;
 import com.sashimi.course.application.usecase.CourseCommandUseCase;
 import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.model.CourseSession;
@@ -9,6 +10,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.storage.FileStoragePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,8 +26,13 @@ public class CourseCommandService implements CourseCommandUseCase {
     /** 승인일(공개 시작) 기준 공개 기간 (년) */
     private static final int PUBLICATION_PERIOD_YEARS = 2;
 
+    /** 수강생 시청 가능 기간 (년) — 이 기간 내 등록자가 없으면 '시청자 0명' */
+    private static final int STUDENT_ACCESS_PERIOD_YEARS = 2;
+
     private final CourseRepository courseRepository;
     private final CategoryPort categoryPort;
+    private final CourseEnrollmentPort courseEnrollmentPort;
+    private final FileStoragePort fileStoragePort;
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
@@ -111,5 +118,29 @@ public class CourseCommandService implements CourseCommandUseCase {
                 CourseStatus.APPROVED, cutoff);
         expiredCourses.forEach(course -> courseRepository.save(course.close()));
         return expiredCourses.size();
+    }
+
+    @Override
+    public int archiveInactiveCourses() {
+        LocalDateTime cutoff = LocalDateTime.now().minusYears(STUDENT_ACCESS_PERIOD_YEARS);
+        List<Course> candidates = courseRepository.findByStatusAndArchivedFalse(CourseStatus.CLOSED);
+
+        int archivedCount = 0;
+        for (Course course : candidates) {
+            // 시청 가능한 학생이 한 명이라도 있으면 건너뜀
+            if (courseEnrollmentPort.hasActiveEnrollment(course.getId(), cutoff)) {
+                continue;
+            }
+            // 영상 key에 아카이브 태그 부착 (실제 업로드된 key만; 더미 URL은 스킵)
+            for (CourseSession session : course.getSessions()) {
+                String key = session.getVideoUrl();
+                if (key != null && !key.isBlank() && !key.startsWith("http")) {
+                    fileStoragePort.archiveFile(key);
+                }
+            }
+            courseRepository.save(course.archive());
+            archivedCount++;
+        }
+        return archivedCount;
     }
 }

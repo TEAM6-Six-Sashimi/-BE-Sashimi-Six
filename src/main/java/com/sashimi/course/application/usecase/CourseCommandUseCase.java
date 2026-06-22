@@ -13,4 +13,5 @@ public interface CourseCommandUseCase {
     void approveCourse(ApproveCourseCommand command);
     void rejectCourse(RejectCourseCommand command);
     int closeExpiredCourses();
+    int archiveInactiveCourses();
 }
