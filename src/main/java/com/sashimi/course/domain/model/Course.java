@@ -26,13 +26,15 @@ public class Course {
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
     private final LocalDateTime approvedAt;
+    private final boolean archived;
     private final List<CourseSession> sessions;
 
     private Course(Long id, Long instructorId, Long categoryId, String title, String description,
                    Long price, CourseDifficulty difficulty, String thumbnail, int totalDuration,
                    CourseStatus status, String rejectReason, BigDecimal ratingAvg,
                    int reviewCount, int studentCount, LocalDateTime createdAt,
-                   LocalDateTime updatedAt, LocalDateTime approvedAt, List<CourseSession> sessions) {
+                   LocalDateTime updatedAt, LocalDateTime approvedAt, boolean archived,
+                   List<CourseSession> sessions) {
         if (instructorId == null) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         if (categoryId == null) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         if (title == null || title.isBlank()) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
@@ -57,6 +59,7 @@ public class Course {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.approvedAt = approvedAt;
+        this.archived = archived;
         this.sessions = sessions != null ? sessions : List.of();
     }
     public static Course create(Long instructorId, Long categoryId,
@@ -67,7 +70,7 @@ public class Course {
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
         return new Course(null, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, initialStatus, null,
-                BigDecimal.ZERO, 0, 0, LocalDateTime.now(), null, null, sessions);
+                BigDecimal.ZERO, 0, 0, LocalDateTime.now(), null, null, false, sessions);
     }
 
     public static Course restore(Long id, Long instructorId, Long categoryId,
@@ -75,11 +78,11 @@ public class Course {
                                  CourseDifficulty difficulty, String thumbnail, int totalDuration,
                                  CourseStatus status, String rejectReason, BigDecimal ratingAvg,
                                  int reviewCount, int studentCount, LocalDateTime createdAt,
-                                 LocalDateTime updatedAt, LocalDateTime approvedAt,
+                                 LocalDateTime updatedAt, LocalDateTime approvedAt, boolean archived,
                                  List<CourseSession> sessions) {
         return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, status, rejectReason, ratingAvg,
-                reviewCount, studentCount, createdAt, updatedAt, approvedAt, sessions);
+                reviewCount, studentCount, createdAt, updatedAt, approvedAt, archived, sessions);
     }
 
     public Course update(Long categoryId, String title, String description, Long price,
@@ -91,7 +94,7 @@ public class Course {
         return new Course(this.id, this.instructorId, categoryId, title, description,
                 price, difficulty, thumbnail, totalDuration, targetStatus, null,
                 this.ratingAvg, this.reviewCount, this.studentCount, this.createdAt,
-                LocalDateTime.now(), this.approvedAt, sessions);
+                LocalDateTime.now(), this.approvedAt, this.archived, sessions);
     }
 
     public Course approve() {
@@ -99,7 +102,7 @@ public class Course {
         return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.APPROVED, null,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
-                LocalDateTime.now(), sessions);
+                LocalDateTime.now(), this.archived, sessions);
     }
 
     public Course reject(String reason) {
@@ -107,7 +110,7 @@ public class Course {
         return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.REJECTED, reason,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
-                null, sessions);
+                null, this.archived, sessions);
     }
 
     /** 승인 강의의 공개 기간 만료 시 비공개(CLOSED) 처리. 승인일은 보존한다. */
@@ -116,7 +119,16 @@ public class Course {
         return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.CLOSED, rejectReason,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
-                approvedAt, sessions);
+                approvedAt, this.archived, sessions);
+    }
+
+    /** 비공개 강의에 시청 가능한 학생이 없을 때, 영상 콜드 이동 후 아카이브 표시 */
+    public Course archive() {
+        if (this.status != CourseStatus.CLOSED) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        return new Course(id, instructorId, categoryId, title, description, price,
+                difficulty, thumbnail, totalDuration, status, rejectReason,
+                ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
+                approvedAt, true, sessions);
     }
 
     private static void validateWritableStatus(CourseStatus status) {
@@ -150,5 +162,6 @@ public class Course {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public LocalDateTime getApprovedAt() { return approvedAt; }
+    public boolean isArchived() { return archived; }
     public List<CourseSession> getSessions() { return sessions; }
 }

@@ -9,6 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectTaggingRequest;
+import software.amazon.awssdk.services.s3.model.Tag;
+import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -77,6 +80,39 @@ public class S3FileStorageAdapter implements FileStoragePort {
     }
 
     @Override
+    public String storeVideo(MultipartFile file) {
+        return storeToPrivateBucket(file, properties.getS3().getBucketVideos(), "videos/lectures");
+    }
+
+    @Override
+    public String storeAttachment(MultipartFile file) {
+        return storeToPrivateBucket(file, properties.getS3().getBucketAttachments(), "materials/lectures");
+    }
+
+    private String storeToPrivateBucket(MultipartFile file, String bucket, String folder) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(ErrorCode.FILE_EMPTY);
+        }
+
+        String key = folder + "/" + UUID.randomUUID() + getExtension(file.getOriginalFilename());
+
+        try {
+            s3Client.putObject(
+                    PutObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .contentType(file.getContentType())
+                            .build(),
+                    RequestBody.fromBytes(file.getBytes())
+            );
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+
+        return key;
+    }
+
+    @Override
     public String generatePresignedDownloadUrl(String s3Key, int expiryMinutes) {
         GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
                 .signatureDuration(Duration.ofMinutes(expiryMinutes))
@@ -87,6 +123,21 @@ public class S3FileStorageAdapter implements FileStoragePort {
                 .build();
 
         return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    @Override
+    public void archiveFile(String s3Key) {
+        try {
+            s3Client.putObjectTagging(PutObjectTaggingRequest.builder()
+                    .bucket(properties.getS3().getBucketVideos())
+                    .key(s3Key)
+                    .tagging(Tagging.builder()
+                            .tagSet(Tag.builder().key("archive").value("true").build())
+                            .build())
+                    .build());
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
     }
 
     private String getExtension(String originalFilename) {
