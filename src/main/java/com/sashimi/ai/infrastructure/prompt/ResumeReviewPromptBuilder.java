@@ -3,14 +3,23 @@ package com.sashimi.ai.infrastructure.prompt;
 import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.resume.domain.model.Resume;
 import org.springframework.stereotype.Component;
+import com.sashimi.resume.domain.model.ResumeCareer;
+import com.sashimi.resume.domain.model.ResumeEducation;
 
+// 해당 클래스는 계산기 클래스 추가한 후 삭제될 예정입니다.
 @Component
 public class ResumeReviewPromptBuilder {
 
     public String build(Resume resume, AiPrompt prompt) {
         String userPrompt = prompt.prompt()
-                .replace("{resumeContent}", safe(resume.content()))
-                .replace("{resumeTitle}", safe(resume.title()));
+                .replace(
+                        "{resumeContent}",
+                        buildResumeContent(resume)
+                )
+                .replace(
+                        "{resumeTitle}",
+                        "이력서"
+                );
 
         return """
                 You are an AI assistant for an LMS resume review feature.
@@ -92,6 +101,90 @@ public class ResumeReviewPromptBuilder {
                 prompt.version(),
                 userPrompt
         );
+    }
+
+    private String buildResumeContent(Resume resume) {
+        String educationContent = resume.educations().stream()
+                .map(this::formatEducation)
+                .reduce(
+                        (first, second) -> first + "\n" + second
+                )
+                .orElse("NONE");
+
+        String careerContent = resume.careers().stream()
+                .map(this::formatCareer)
+                .reduce(
+                        (first, second) -> first + "\n" + second
+                )
+                .orElse("NONE");
+
+        return """
+            Education:
+            %s
+
+            Entry level:
+            %s
+
+            Career:
+            %s
+            """.formatted(
+                educationContent,
+                resume.entryLevel(),
+                careerContent
+        );
+    }
+
+    private String formatEducation(
+            ResumeEducation education
+    ) {
+        return """
+            - schoolName: %s
+              period: %s ~ %s
+              degree: %s
+              major: %s
+              graduationStatus: %s
+              minorOrResearch: %s
+            """.formatted(
+                safe(education.schoolName()),
+                education.startYearMonth(),
+                education.endYearMonth(),
+                education.degree(),
+                safe(education.major()),
+                education.graduationStatus(),
+                safe(education.minorOrResearch())
+        ).strip();
+    }
+
+    private String formatCareer(
+            ResumeCareer career
+    ) {
+        String endYearMonth = career.currentlyEmployed()
+                ? "CURRENT"
+                : career.endYearMonth().toString();
+
+        String employmentType =
+                career.employmentType().name();
+
+        if (career.customEmploymentType() != null) {
+            employmentType += " ("
+                    + career.customEmploymentType()
+                    + ")";
+        }
+
+        return """
+            - companyName: %s
+              period: %s ~ %s
+              currentlyEmployed: %s
+              employmentType: %s
+              jobTitle: %s
+            """.formatted(
+                safe(career.companyName()),
+                career.startYearMonth(),
+                endYearMonth,
+                career.currentlyEmployed(),
+                employmentType,
+                safe(career.jobTitle())
+        ).strip();
     }
 
     private String safe(String value) {

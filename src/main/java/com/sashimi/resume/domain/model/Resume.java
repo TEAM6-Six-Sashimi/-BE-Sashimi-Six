@@ -5,6 +5,7 @@ import com.sashimi.global.exception.ErrorCode;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 public class Resume {
 
@@ -102,31 +103,25 @@ public class Resume {
                 this.updatedAt
         );
     }
-
     private static void validate(
             Long userId,
             List<ResumeEducation> educations,
             boolean entryLevel,
             List<ResumeCareer> careers
     ) {
-        if (userId == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (educations == null
+                || educations.isEmpty()
+                || educations.stream().anyMatch(Objects::isNull)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
         }
 
-        if (educations == null || educations.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        if (careers == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        if (entryLevel && !careers.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-
-        if (!entryLevel && careers.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        if (careers == null
+                || careers.stream().anyMatch(Objects::isNull)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
         }
     }
 
