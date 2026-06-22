@@ -105,8 +105,9 @@ public class ResumeController {
         Resume resume = resumeCommandUseCase.create(
                 new CreateResumeCommand(
                         principal.getId(),
-                        request.title(),
-                        request.content(),
+                        request.toEducations(),
+                        request.entryLevel(),
+                        request.toCareers(),
                         Boolean.TRUE.equals(request.defaultResume())
                 )
         );
@@ -159,8 +160,9 @@ public class ResumeController {
                 new UpdateResumeCommand(
                         principal.getId(),
                         resumeId,
-                        request.title(),
-                        request.content(),
+                        request.toEducations(),
+                        request.entryLevel(),
+                        request.toCareers(),
                         request.defaultResume()
                 )
         );
