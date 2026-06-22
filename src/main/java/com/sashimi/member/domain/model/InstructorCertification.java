@@ -10,11 +10,13 @@ public class InstructorCertification {
     private Long id;
     private String certificationName;
     private String issuedBy;
+    private String filePath;
 
-    public static InstructorCertification of(String certificationName, String issuedBy) {
+    public static InstructorCertification of(String certificationName, String issuedBy, String filePath) {
         return InstructorCertification.builder()
                 .certificationName(certificationName)
                 .issuedBy(issuedBy)
+                .filePath(filePath)
                 .build();
     }
 }

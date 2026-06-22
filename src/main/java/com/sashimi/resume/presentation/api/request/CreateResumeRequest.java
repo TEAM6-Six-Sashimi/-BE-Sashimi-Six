@@ -1,32 +1,49 @@
 package com.sashimi.resume.presentation.api.request;
 
-import com.sashimi.resume.application.command.CreateResumeCommand;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.resume.domain.model.ResumeCareer;
+import com.sashimi.resume.domain.model.ResumeEducation;
+
+import java.util.List;
+import java.util.Objects;
 
 public record CreateResumeRequest(
-
-        @Schema(description = "이력서 제목", example = "백엔드 신입 개발자 이력서")
-        @NotBlank
-        String title,
-
-        @Schema(
-                description = "이력서 내용 JSON",
-                example = "{\"basic\":{\"name\":\"박학생\",\"email\":\"student1@test.com\",\"phone\":\"010-1234-5678\"},\"education\":[],\"career\":[],\"skills\":[\"Java\",\"Spring Boot\"],\"certificates\":[]}"
-        )
-        @NotBlank
-        String content,
-
-        @Schema(description = "기본 이력서 여부", example = "true")
-        boolean defaultResume
+        List<ResumeEducationRequest> educations,
+        boolean entryLevel,
+        List<ResumeCareerRequest> careers,
+        Boolean defaultResume
 ) {
 
-    public CreateResumeCommand toCommand(Long userId) {
-        return new CreateResumeCommand(
-                userId,
-                title,
-                content,
-                defaultResume
-        );
+    public List<ResumeEducation> toEducations() {
+        if (educations == null) {
+            return List.of();
+        }
+
+        if (educations.stream().anyMatch(Objects::isNull)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
+        }
+
+        return educations.stream()
+                .map(ResumeEducationRequest::toDomain)
+                .toList();
+    }
+
+    public List<ResumeCareer> toCareers() {
+        if (careers == null) {
+            return List.of();
+        }
+
+        if (careers.stream().anyMatch(Objects::isNull)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
+        }
+
+        return careers.stream()
+                .map(ResumeCareerRequest::toDomain)
+                .toList();
     }
 }

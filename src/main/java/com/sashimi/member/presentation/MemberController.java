@@ -9,6 +9,7 @@ import com.sashimi.member.presentation.api.response.InstructorApplicationDetailR
 import com.sashimi.member.presentation.api.response.InstructorApplicationListResponse;
 import com.sashimi.member.presentation.api.response.MyInstructorApplicationDetailResponse;
 import com.sashimi.member.presentation.api.response.MyInstructorApplicationListResponse;
+import com.sashimi.member.presentation.api.response.RejectedApplicationListResponse;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -157,5 +158,18 @@ public class MemberController {
             @PathVariable Long applicationId) {
         InstructorApplicationDetailResponse response = memberQueryUseCase.getInstructorApplicationDetail(applicationId);
         return ResponseEntity.ok(ApiResponse.of("강사 신청 상세 조회 성공", response));
+    }
+
+    @Operation(summary = "강사 신청 반려 이력 조회 [ADMIN 전용]", description = "관리자만 반려된 강사 신청 이력을 조회할 수 있습니다. ROLE_ADMIN 권한 필요.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (ROLE_ADMIN 아닌 경우)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @GetMapping("/instructor-applications/rejected")
+    public ResponseEntity<ApiResponse<List<RejectedApplicationListResponse>>> getRejectedInstructorApplications() {
+        List<RejectedApplicationListResponse> responses = memberQueryUseCase.getRejectedInstructorApplications();
+        return ResponseEntity.ok(ApiResponse.of("강사 신청 반려 이력 조회 성공", responses));
     }
 }

@@ -1,6 +1,7 @@
 package com.sashimi.payment.presentation.api.request;
 
 import com.sashimi.payment.application.command.PaymentPurchaseType;
+import com.sashimi.subscription.domain.model.SubscriptionPlan;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
@@ -9,15 +10,19 @@ import jakarta.validation.constraints.Positive;
 public record PaymentCheckoutRequest(
 
         @Schema(
-                description = "구매 유형",
-                example = "COURSE",
-                allowableValues = {"COURSE", "CART"}
+                description = "결제 상품 유형",
+                example = "AI_SUBSCRIPTION",
+                allowableValues = {
+                        "COURSE",
+                        "CART",
+                        "AI_SUBSCRIPTION"
+                }
         )
-        @NotNull(message = "구매 유형은 필수입니다.")
+        @NotNull(message = "결제 상품 유형은 필수입니다.")
         PaymentPurchaseType purchaseType,
 
         @Schema(
-                description = "단일 구매할 강의 ID. COURSE일 때 필수이며 CART일 때는 전달하지 않습니다.",
+                description = "단일 강의 결제 시 강의 ID",
                 example = "10",
                 nullable = true
         )
@@ -25,11 +30,24 @@ public record PaymentCheckoutRequest(
         Long courseId,
 
         @Schema(
-                description = "결제 약관 동의 여부. 반드시 true여야 합니다.",
+                description = "AI 구독권 결제 시 플랜 코드",
+                example = "MONTHLY",
+                allowableValues = {
+                        "MONTHLY",
+                        "ANNUAL"
+                },
+                nullable = true
+        )
+        SubscriptionPlan planCode,
+
+        @Schema(
+                description = "결제 약관 동의 여부",
                 example = "true"
         )
         @NotNull(message = "결제 동의 여부는 필수입니다.")
-        @AssertTrue(message = "결제 진행을 위해 결제 동의가 필요합니다.")
+        @AssertTrue(
+                message = "결제 진행을 위해 결제 동의가 필요합니다."
+        )
         Boolean agreed
 ) {
 }

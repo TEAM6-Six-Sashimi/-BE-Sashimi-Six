@@ -3,6 +3,7 @@ package com.sashimi.global.storage;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
 @Profile("local")
 @Component
 public class LocalFileStorageAdapter implements FileStoragePort {
@@ -45,18 +47,30 @@ public class LocalFileStorageAdapter implements FileStoragePort {
 
             return baseUrl + "/uploads/" + fileName;
         } catch (Exception e) {
+            log.error("[Local] 이미지 업로드 실패 - cause: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }
     }
 
     @Override
     public String storePrivate(byte[] bytes, String originalFilename, String folder) {
-        throw new UnsupportedOperationException("로컬 환경에서는 private 파일 저장을 지원하지 않습니다.");
+        try {
+            Path uploadPath = Paths.get(uploadDir, folder).toAbsolutePath().normalize();
+            Files.createDirectories(uploadPath);
+
+            String fileName = UUID.randomUUID() + getExtension(originalFilename);
+            Files.write(uploadPath.resolve(fileName), bytes);
+
+            return folder + "/" + fileName;
+        } catch (Exception e) {
+            log.error("[Local] private 파일 업로드 실패 - folder: {}, file: {}, cause: {}", folder, originalFilename, e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
     }
 
     @Override
     public String generatePresignedDownloadUrl(String s3Key, int expiryMinutes) {
-        throw new UnsupportedOperationException("로컬 환경에서는 presigned URL을 지원하지 않습니다.");
+        return baseUrl + "/uploads/" + s3Key;
     }
 
     @Override
