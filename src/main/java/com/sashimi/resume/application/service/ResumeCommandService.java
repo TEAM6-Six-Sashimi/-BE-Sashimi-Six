@@ -99,15 +99,21 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
     public Resume create(CreateResumeCommand command) {
         Resume resume = Resume.create(
                 command.userId(),
-                command.title(),
-                command.content(),
+                command.educations(),
+                command.entryLevel(),
+                command.careers(),
                 command.defaultResume()
         );
 
         Resume savedResume = resumeRepository.save(resume);
 
-        log.info("📃 이력서 생성: userId={}, resumeId={}, defaultResume={}",
-                command.userId(), savedResume.resumeId(), savedResume.defaultResume());
+        log.info(
+                "이력서 생성: userId={}, resumeId={}, entryLevel={}, defaultResume={}",
+                command.userId(),
+                savedResume.resumeId(),
+                savedResume.entryLevel(),
+                savedResume.defaultResume()
+        );
 
         return savedResume;
     }
@@ -115,19 +121,28 @@ public class ResumeCommandService implements ResumeCommandUseCase, ReviewResumeU
     @Override
     @Transactional
     public Resume update(UpdateResumeCommand command) {
-        Resume resume = resumeRepository.findByIdAndUserId(command.resumeId(), command.userId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESUME_NOT_FOUND));
+        Resume resume = resumeRepository
+                .findByIdAndUserId(command.resumeId(), command.userId())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESUME_NOT_FOUND
+                ));
 
         Resume updatedResume = resume.update(
-                command.title(),
-                command.content(),
+                command.educations(),
+                command.entryLevel(),
+                command.careers(),
                 command.defaultResume()
         );
 
         Resume savedResume = resumeRepository.save(updatedResume);
 
-        log.info("📃 이력서 수정: userId={}, resumeId={}, defaultResume={}",
-                command.userId(), savedResume.resumeId(), savedResume.defaultResume());
+        log.info(
+                "이력서 수정: userId={}, resumeId={}, entryLevel={}, defaultResume={}",
+                command.userId(),
+                savedResume.resumeId(),
+                savedResume.entryLevel(),
+                savedResume.defaultResume()
+        );
 
         return savedResume;
     }

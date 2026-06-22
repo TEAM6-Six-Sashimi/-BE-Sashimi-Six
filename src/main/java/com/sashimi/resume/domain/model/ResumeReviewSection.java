@@ -1,15 +1,18 @@
 package com.sashimi.resume.domain.model;
 
 public enum ResumeReviewSection {
-    // 기본 정보
-    BASIC,
 
-    // 학력 사항
-    EDUCATION,
+    EDUCATION("학력 사항"),
+    CAREER("경력 사항"),
+    CERTIFICATE("자격증 사항");
 
-    // 경력 사항
-    CAREER,
+    private final String label;
 
-    // 보유 기술 및 자격증
-    SKILL
+    ResumeReviewSection(String label) {
+        this.label = label;
+    }
+
+    public String label() {
+        return label;
+    }
 }
