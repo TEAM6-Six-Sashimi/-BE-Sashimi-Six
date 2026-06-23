@@ -22,7 +22,7 @@ public class ReviewController {
     private final ReviewCommandUseCase reviewCommandUseCase;
 
     @Operation(summary = "수강평 삭제", description = "본인이 작성한 수강평을 삭제합니다. 관리자는 타인의 수강평도 삭제 가능합니다.")
-    @DeleteMapping("/{reviewId}")
+    @PatchMapping("/{reviewId}/delete")
     public ResponseEntity<ApiResponse<Void>> deleteReview(
             @PathVariable Long userId,
             @PathVariable Long courseId,
