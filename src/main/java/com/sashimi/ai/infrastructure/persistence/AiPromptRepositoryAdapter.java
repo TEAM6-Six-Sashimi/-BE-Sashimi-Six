@@ -28,12 +28,25 @@ public class AiPromptRepositoryAdapter implements AiPromptRepository {
                 .map(entity -> entity.toDomain(promptType));
     }
 
-    private String toPurpose(AiPromptType promptType) {
+    private String toPurpose(
+            AiPromptType promptType
+    ) {
         return switch (promptType) {
-            case RESUME_GENERATE -> "RESUME_GENERATION";
-            case RESUME_REVIEW -> "RESUME_EVALUATION";
-            case JOB_POSTING_ANALYSIS -> "JOB_ANALYSIS";
-            default -> throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            case RESUME_GENERATE ->
+                    "RESUME_GENERATION";
+
+            case RESUME_IMPROVE ->
+                    "RESUME_IMPROVEMENT";
+
+            case RESUME_CAREER_CONTINUITY ->
+                    "RESUME_CAREER_CONTINUITY";
+
+            case JOB_POSTING_ANALYSIS ->
+                    "JOB_ANALYSIS";
+
+            default -> throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
         };
     }
 }

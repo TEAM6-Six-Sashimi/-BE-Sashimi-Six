@@ -1,8 +1,11 @@
 package com.sashimi.resume.application.result;
 
-import java.util.List;
-import java.util.Objects;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 
+import java.util.List;
+
+// 이력서 항목별 점수와 전체 점수를 묶는 평가 점수 결과
 public record ResumeScoreResult(
         SectionScoreResult education,
         SectionScoreResult career,
@@ -15,22 +18,21 @@ public record ResumeScoreResult(
 ) {
 
     public ResumeScoreResult {
-        Objects.requireNonNull(
-                education,
-                "학력 평가 결과는 필수입니다."
-        );
-        Objects.requireNonNull(
-                career,
-                "경력 평가 결과는 필수입니다."
-        );
-        Objects.requireNonNull(
-                certificate,
-                "자격증 평가 결과는 필수입니다."
-        );
+        if (education == null || career == null || certificate == null) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_SCORE
+            );
+        }
 
         if (overallScore < 0 || overallScore > 100) {
-            throw new IllegalArgumentException(
-                    "전체 점수는 0점 이상 100점 이하여야 합니다."
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_SCORE
+            );
+        }
+
+        if (overallGrade == null || overallGrade.isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_SCORE
             );
         }
     }

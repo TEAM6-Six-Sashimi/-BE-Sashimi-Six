@@ -2,15 +2,13 @@ package com.sashimi.resume.presentation.api;
 
 import com.sashimi.resume.application.command.CreateResumeCommand;
 import com.sashimi.resume.application.command.DeleteResumeCommand;
-import com.sashimi.resume.application.command.ReviewResumeCommand;
 import com.sashimi.resume.application.command.UpdateResumeCommand;
+import com.sashimi.resume.application.result.ReviewResumeResult;
 import com.sashimi.resume.application.usecase.ResumeCommandUseCase;
 import com.sashimi.resume.application.usecase.ResumeQueryUseCase;
 import com.sashimi.resume.application.usecase.ReviewResumeUseCase;
 import com.sashimi.resume.domain.model.Resume;
-import com.sashimi.resume.domain.model.ResumeEvaluation;
 import com.sashimi.resume.presentation.api.request.CreateResumeRequest;
-import com.sashimi.resume.presentation.api.request.ReviewResumeRequest;
 import com.sashimi.resume.presentation.api.request.UpdateResumeRequest;
 import com.sashimi.resume.presentation.api.response.ResumeResponse;
 import com.sashimi.resume.presentation.api.response.ReviewResumeResponse;
@@ -70,17 +68,14 @@ public class ResumeController {
     @PostMapping("/{resumeId}/ai-review")
     public ReviewResumeResponse review(
             @AuthenticationPrincipal CustomUserPrincipal principal,
-            @PathVariable Long resumeId,
-            @RequestBody(required = false) ReviewResumeRequest request
+            @PathVariable Long resumeId
     ) {
-        Long userId = principal.getId();
-        Long jobPostingId = request == null ? null : request.jobPostingId();
-
-        ResumeEvaluation evaluation = reviewResumeUseCase.review(
-                new ReviewResumeCommand(userId, resumeId, jobPostingId)
+        ReviewResumeResult result = reviewResumeUseCase.review(
+                resumeId,
+                principal.getId()
         );
 
-        return ReviewResumeResponse.from(evaluation);
+        return ReviewResumeResponse.from(result);
     }
 
     @Operation(

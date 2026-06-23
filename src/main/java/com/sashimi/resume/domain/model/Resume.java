@@ -61,6 +61,34 @@ public class Resume {
         );
     }
 
+    public static Resume restore(
+            Long resumeId,
+            Long userId,
+            List<ResumeEducation> educations,
+            boolean entryLevel,
+            List<ResumeCareer> careers,
+            boolean defaultResume,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        if (resumeId == null) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
+        }
+
+        return new Resume(
+                resumeId,
+                userId,
+                educations,
+                entryLevel,
+                careers,
+                defaultResume,
+                createdAt,
+                updatedAt
+        );
+    }
+
     public Resume update(
             List<ResumeEducation> educations,
             Boolean entryLevel,

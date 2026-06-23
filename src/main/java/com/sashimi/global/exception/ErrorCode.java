@@ -110,6 +110,10 @@ public enum ErrorCode {
     AI_PROMPT_NOT_FOUND(404, "AI_006", "활성화된 AI 프롬프트를 찾을 수 없습니다."),
 
     RESUME_NOT_FOUND(404, "RESUME_404", "이력서를 찾을 수 없습니다."),
+    RESUME_INVALID_EDUCATION(400, "RESUME_001", "학력 정보가 올바르지 않습니다."),
+    RESUME_INVALID_CAREER(400, "RESUME_002", "경력 정보가 올바르지 않습니다."),
+    RESUME_INVALID_REVIEW_SCORE(400, "RESUME_003", "이력서 평가 점수가 올바르지 않습니다."),
+    RESUME_INVALID_REVIEW_FEEDBACK(400, "RESUME_004", "이력서 평가 피드백이 올바르지 않습니다."),
 
     JOB_POSTING_RECOMMENDATION_NOT_FOUND(404, "RECOMMENDATION_404", "채용공고 추천 결과를 찾을 수 없습니다."),
 
