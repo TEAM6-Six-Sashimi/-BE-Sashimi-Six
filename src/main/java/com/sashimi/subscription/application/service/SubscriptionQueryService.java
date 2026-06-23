@@ -122,6 +122,12 @@ public class SubscriptionQueryService
             int page,
             int size
     ) {
+        if (page < 0 || size < 1 || size > 100) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
+        }
+
         SubscriptionPaymentRepository.PageResult result =
                 subscriptionPaymentRepository.findAllByUserId(
                         userId,

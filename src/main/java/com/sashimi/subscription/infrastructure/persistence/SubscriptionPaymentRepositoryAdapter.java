@@ -37,7 +37,7 @@ public class SubscriptionPaymentRepositoryAdapter
             int size
     ) {
         Page<SubscriptionPaymentJpaEntity> result =
-                repository.findAllByUserIdOrderByPaidAtDesc(
+                repository.findAllByUserIdOrderByPaidAtDescIdDesc(
                         userId,
                         PageRequest.of(page, size)
                 );

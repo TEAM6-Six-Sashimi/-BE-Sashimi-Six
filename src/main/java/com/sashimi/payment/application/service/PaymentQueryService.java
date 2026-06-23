@@ -45,22 +45,13 @@ public class PaymentQueryService implements PaymentQueryUseCase {
         List<PaymentHistoryItem> items =
                 paymentRepository.findAllByUserId(userId)
                         .stream()
-                        .filter(this::isCoursePayment)
                         .map(this::toHistoryItem)
+                        .filter(item -> !item.courses().isEmpty())
                         .toList();
 
         return new PaymentHistory(items);
     }
 
-    private boolean isCoursePayment(Payment payment) {
-        return orderItemRepository
-                .findAllByOrderId(payment.getOrderId())
-                .stream()
-                .anyMatch(orderItem ->
-                        orderItem.getItemType()
-                                == OrderItemType.COURSE
-                );
-    }
 
     private PaymentHistoryItem toHistoryItem(Payment payment) {
         Order order = orderRepository.findById(payment.getOrderId())
