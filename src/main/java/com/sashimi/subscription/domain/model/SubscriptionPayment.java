@@ -95,6 +95,31 @@ public class SubscriptionPayment {
         );
     }
 
+    public static SubscriptionPayment renewal(
+            Long subscriptionId,
+            Long orderId,
+            Long paymentId,
+            Long userId,
+            String orderNo,
+            SubscriptionPlan plan,
+            Long amount,
+            LocalDateTime paidAt
+    ) {
+        return new SubscriptionPayment(
+                null,
+                subscriptionId,
+                orderId,
+                paymentId,
+                userId,
+                orderNo,
+                plan,
+                amount,
+                SubscriptionBillingType.RENEWAL,
+                paidAt,
+                LocalDateTime.now()
+        );
+    }
+
     public Long getId() { return id; }
     public Long getSubscriptionId() { return subscriptionId; }
     public Long getOrderId() { return orderId; }

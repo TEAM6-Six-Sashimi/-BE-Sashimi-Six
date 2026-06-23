@@ -8,7 +8,7 @@ public interface SpringDataSubscriptionPaymentRepository
         extends JpaRepository<SubscriptionPaymentJpaEntity, Long> {
 
     Page<SubscriptionPaymentJpaEntity>
-    findAllByUserIdOrderByPaidAtDesc(
+    findAllByUserIdOrderByPaidAtDescIdDesc(
             Long userId,
             Pageable pageable
     );

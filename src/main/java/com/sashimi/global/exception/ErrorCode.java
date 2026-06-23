@@ -87,6 +87,9 @@ public enum ErrorCode {
     SUBSCRIPTION_ALREADY_ACTIVE(409, "SUBSCRIPTION_002", "이미 활성화된 구독권이 있습니다."),
     SUBSCRIPTION_INVALID_PLAN(400, "SUBSCRIPTION_003", "올바르지 않은 구독권 상품입니다."),
     SUBSCRIPTION_RENEWAL_FAILED(400, "SUBSCRIPTION_004", "구독권 자동 갱신에 실패했습니다."),
+    SUBSCRIPTION_ALREADY_CANCELLED(409, "SUBSCRIPTION_005", "이미 구독 해지가 신청되었습니다."),
+    SUBSCRIPTION_NOT_ACTIVE(400, "SUBSCRIPTION_006", "활성화된 구독이 아닙니다."),
+    SUBSCRIPTION_REQUIRED(403, "SUBSCRIPTION_007", "AI 기능을 사용하려면 활성 구독이 필요합니다."),
 
     INVALID_INPUT(400, "MEMBER_001", "입력값이 올바르지 않습니다."),
     ALREADY_APPLIED(400, "MEMBER_002","이미 강사 신청이 진행 중입니다."),

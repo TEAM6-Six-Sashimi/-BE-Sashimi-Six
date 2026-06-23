@@ -1,5 +1,8 @@
 package com.sashimi.subscription.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.time.LocalDateTime;
 
 public class Subscription {
@@ -79,6 +82,83 @@ public class Subscription {
                 autoRenew,
                 userId
         );
+    }
+
+    public Subscription cancelRenewal() {
+        if (status != SubscriptionStatus.ACTIVE) {
+            throw new BusinessException(
+                    ErrorCode.SUBSCRIPTION_NOT_ACTIVE
+            );
+        }
+
+        if (!autoRenew) {
+            throw new BusinessException(
+                    ErrorCode.SUBSCRIPTION_ALREADY_CANCELLED
+            );
+        }
+
+        return new Subscription(
+                id,
+                plan,
+                status,
+                price,
+                startedAt,
+                expiredAt,
+                null,
+                false,
+                userId
+        );
+    }
+
+    public Subscription renew(LocalDateTime renewedAt) {
+        if (status != SubscriptionStatus.ACTIVE || !autoRenew) {
+            throw new BusinessException(
+                    ErrorCode.SUBSCRIPTION_RENEWAL_FAILED
+            );
+        }
+
+        LocalDateTime newExpiredAt =
+                plan.calculateExpiration(renewedAt);
+
+        return new Subscription(
+                id,
+                plan,
+                SubscriptionStatus.ACTIVE,
+                price,
+                startedAt,
+                newExpiredAt,
+                newExpiredAt,
+                true,
+                userId
+        );
+    }
+
+    public Subscription expire() {
+        return new Subscription(
+                id,
+                plan,
+                SubscriptionStatus.EXPIRED,
+                price,
+                startedAt,
+                expiredAt,
+                null,
+                false,
+                userId
+        );
+    }
+
+    public boolean isRenewalDue(LocalDateTime now) {
+        return status == SubscriptionStatus.ACTIVE
+                && autoRenew
+                && nextBillingAt != null
+                && !nextBillingAt.isAfter(now);
+    }
+
+    public boolean isExpirationDue(LocalDateTime now) {
+        return status == SubscriptionStatus.ACTIVE
+                && !autoRenew
+                && expiredAt != null
+                && !expiredAt.isAfter(now);
     }
 
     public boolean isActive(LocalDateTime now) {

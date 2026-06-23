@@ -2,11 +2,14 @@ package com.sashimi.subscription.presentation.api;
 
 import com.sashimi.global.exception.ErrorResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
+import com.sashimi.subscription.application.usecase.SubscriptionCommandUseCase;
 import com.sashimi.subscription.application.usecase.SubscriptionQueryUseCase;
 import com.sashimi.subscription.presentation.api.response.MySubscriptionResponse;
 import com.sashimi.subscription.presentation.api.response.SubscriptionPaymentHistoryResponse;
 import com.sashimi.subscription.presentation.api.response.SubscriptionPlansResponse;
 import com.sashimi.subscription.presentation.api.response.SubscriptionPreviewResponse;
+import com.sashimi.subscription.presentation.api.response.CancelSubscriptionResponse;
+import org.springframework.web.bind.annotation.PostMapping;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -36,12 +39,14 @@ import org.springframework.web.bind.annotation.RestController;
 public class SubscriptionController {
 
     private final SubscriptionQueryUseCase subscriptionQueryUseCase;
+    private final SubscriptionCommandUseCase subscriptionCommandUseCase;
 
     public SubscriptionController(
-            SubscriptionQueryUseCase subscriptionQueryUseCase
+            SubscriptionQueryUseCase subscriptionQueryUseCase,
+            SubscriptionCommandUseCase subscriptionCommandUseCase
     ) {
-        this.subscriptionQueryUseCase =
-                subscriptionQueryUseCase;
+        this.subscriptionQueryUseCase = subscriptionQueryUseCase;
+        this.subscriptionCommandUseCase = subscriptionCommandUseCase;
     }
 
     @Operation(
@@ -62,11 +67,7 @@ public class SubscriptionController {
     })
     @GetMapping("/plans")
     public ResponseEntity<SubscriptionPlansResponse> getPlans() {
-        return ResponseEntity.ok(
-                SubscriptionPlansResponse.from(
-                        subscriptionQueryUseCase.getPlans()
-                )
-        );
+        return ResponseEntity.ok(SubscriptionPlansResponse.from(subscriptionQueryUseCase.getPlans()));
     }
 
     @Operation(
@@ -107,22 +108,12 @@ public class SubscriptionController {
             )
     })
     @GetMapping("/plans/{planCode}/preview")
-    public ResponseEntity<SubscriptionPreviewResponse>
-    getPreview(
-            @AuthenticationPrincipal
-            CustomUserPrincipal principal,
-
-            @PathVariable
-            String planCode
-    ) {
+    public ResponseEntity<SubscriptionPreviewResponse> getPreview(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable String planCode) {
         return ResponseEntity.ok(
                 SubscriptionPreviewResponse.from(
-                        subscriptionQueryUseCase.getPreview(
-                                principal.getId(),
-                                planCode
-                        )
-                )
-        );
+                        subscriptionQueryUseCase.getPreview(principal.getId(), planCode)));
     }
 
     @Operation(
@@ -130,11 +121,8 @@ public class SubscriptionController {
             description = "현재 활성화된 AI 구독 상태를 조회합니다."
     )
     @GetMapping("/me")
-    public ResponseEntity<MySubscriptionResponse>
-    getMySubscription(
-            @AuthenticationPrincipal
-            CustomUserPrincipal principal
-    ) {
+    public ResponseEntity<MySubscriptionResponse> getMySubscription(
+            @AuthenticationPrincipal CustomUserPrincipal principal) {
         return ResponseEntity.ok(
                 MySubscriptionResponse.from(
                         subscriptionQueryUseCase
@@ -147,13 +135,11 @@ public class SubscriptionController {
 
     @Operation(
             summary = "내 AI 구독 결제 내역 조회",
-            description = "최초 결제 및 갱신 결제 내역을 조회합니다."
-    )
+            description = "최초 결제 및 갱신 결제 내역을 조회합니다.")
+
     @GetMapping("/payments")
-    public ResponseEntity<SubscriptionPaymentHistoryResponse>
-    getPaymentHistory(
-            @AuthenticationPrincipal
-            CustomUserPrincipal principal,
+    public ResponseEntity<SubscriptionPaymentHistoryResponse> getPaymentHistory(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
 
             @RequestParam(defaultValue = "0")
             @Min(value = 0, message = "페이지 번호는 0 이상이어야 합니다.")
@@ -173,6 +159,53 @@ public class SubscriptionController {
                                         size
                                 )
                 )
+        );
+    }
+
+    @Operation(
+            summary = "AI 구독 해지",
+            description = """
+                다음 자동 갱신을 중단합니다.
+                해지 후에도 현재 구독 만료일까지 AI 기능을 이용할 수 있습니다.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "구독 해지 성공",
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation =
+                                            CancelSubscriptionResponse.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "활성 구독 없음",
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation = ErrorResponse.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "이미 해지 신청됨",
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation = ErrorResponse.class
+                            )
+                    )
+            )
+    })
+    @PostMapping("/me/cancel")
+    public ResponseEntity<CancelSubscriptionResponse> cancelSubscription(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        return ResponseEntity.ok(
+                CancelSubscriptionResponse.from(
+                        subscriptionCommandUseCase.cancel(principal.getId()))
         );
     }
 }

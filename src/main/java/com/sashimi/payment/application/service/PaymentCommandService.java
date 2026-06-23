@@ -264,61 +264,36 @@ public class PaymentCommandService
         return credit.balance();
     }
 
-    private PaymentResult checkoutSubscription(
-            Long userId,
-            SubscriptionPlan plan
-    ) {
+    private PaymentResult checkoutSubscription(Long userId, SubscriptionPlan plan) {
         LocalDateTime now = LocalDateTime.now();
 
-        if (subscriptionRepository.findActiveByUserId(
-                userId,
-                now
-        ).isPresent()) {
-            throw new BusinessException(
-                    ErrorCode.SUBSCRIPTION_ALREADY_ACTIVE
-            );
-        }
+        subscriptionRepository.findActiveByUserIdForUpdate(userId)
+                .ifPresent(subscription -> {
+                    if (subscription.isActive(now)) {
+                        throw new BusinessException(
+                                ErrorCode.SUBSCRIPTION_ALREADY_ACTIVE
+                        );
+                    }
 
-        Order order = orderRepository.save(
-                Order.paid(
-                        createOrderNo(),
-                        plan.getPrice(),
-                        userId
-                )
-        );
+                    subscriptionRepository.save(
+                            subscription.expire()
+                    );
+                });
 
-        Subscription subscription =
-                subscriptionRepository.save(
-                        Subscription.start(
-                                userId,
-                                plan,
-                                now
-                        )
-                );
+        Order order = orderRepository.save(Order.paid(createOrderNo(), plan.getPrice(), userId));
+
+        Subscription subscription = subscriptionRepository.save(Subscription.start(userId, plan, now));
 
         orderItemRepository.save(
-                OrderItem.createSubscription(
-                        plan.getPlanName(),
-                        plan.getPrice(),
-                        order.getId(),
-                        subscription.getId()
-                )
+                OrderItem.createSubscription(plan.getPlanName(), plan.getPrice(), order.getId(), subscription.getId())
         );
 
         Payment payment = paymentRepository.save(
-                Payment.paid(
-                        plan.getPrice(),
-                        order.getId(),
-                        userId
-                )
+                Payment.paid(plan.getPrice(), order.getId(),userId)
         );
 
         CreditBalanceResult credit =
-                creditCommandUseCase.useCredit(
-                        new UseCreditCommand(
-                                userId,
-                                payment.getAmount()
-                        )
+                creditCommandUseCase.useCredit(new UseCreditCommand(userId, payment.getAmount())
                 );
 
         subscriptionPaymentRepository.save(
@@ -366,12 +341,7 @@ public class PaymentCommandService
     }
 
     private String createOrderNo() {
-        return "ORD-"
-                + LocalDateTime.now().format(
-                DateTimeFormatter.ofPattern(
-                        "yyyyMMddHHmmssSSS"
-                )
-        )
+        return "ORD-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"))
                 + "-"
                 + UUID.randomUUID()
                 .toString()
@@ -379,15 +349,8 @@ public class PaymentCommandService
                 .toUpperCase();
     }
 
-    private enum PaymentSource {
-        CART,
-        DIRECT
-    }
+    private enum PaymentSource {CART, DIRECT}
 
-    private record PaymentCourse(
-            Long courseId,
-            String title,
-            Long price
-    ) {
+    private record PaymentCourse(Long courseId, String title, Long price) {
     }
 }

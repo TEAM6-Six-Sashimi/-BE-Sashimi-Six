@@ -7,38 +7,30 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class SubscriptionRepositoryAdapter
-        implements SubscriptionRepository {
+public class SubscriptionRepositoryAdapter implements SubscriptionRepository {
 
     private final SpringDataSubscriptionRepository repository;
 
-    public SubscriptionRepositoryAdapter(
-            SpringDataSubscriptionRepository repository
-    ) {
+    public SubscriptionRepositoryAdapter(SpringDataSubscriptionRepository repository) {
         this.repository = repository;
     }
 
     @Override
     public Subscription save(Subscription subscription) {
-        return repository.save(
-                SubscriptionJpaEntity.from(subscription)
-        ).toDomain();
+        return repository.save(SubscriptionJpaEntity.from(subscription)).toDomain();
     }
 
     @Override
     public Optional<Subscription> findById(Long subscriptionId) {
-        return repository.findById(subscriptionId)
-                .map(SubscriptionJpaEntity::toDomain);
+        return repository.findById(subscriptionId).map(SubscriptionJpaEntity::toDomain);
     }
 
     @Override
-    public Optional<Subscription> findActiveByUserId(
-            Long userId,
-            LocalDateTime now
-    ) {
+    public Optional<Subscription> findActiveByUserId(Long userId, LocalDateTime now){
         return repository
                 .findByUserIdAndStatusAndExpiredAtAfterOrderByStartedAtDesc(
                         userId,
@@ -49,5 +41,26 @@ public class SubscriptionRepositoryAdapter
                 .stream()
                 .findFirst()
                 .map(SubscriptionJpaEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Subscription> findActiveByUserIdForUpdate(Long userId) {
+        return repository.findActiveByUserIdForUpdate(userId)
+                .map(SubscriptionJpaEntity::toDomain);
+    }
+
+    @Override
+    public Optional<Subscription> findByIdForUpdate(Long subscriptionId) {
+        return repository.findByIdForUpdate(subscriptionId).map(SubscriptionJpaEntity::toDomain);
+    }
+
+    @Override
+    public List<Long> findRenewalDueIds(LocalDateTime now) {
+        return repository.findRenewalDueIds(now);
+    }
+
+    @Override
+    public List<Long> findExpirationDueIds(LocalDateTime now) {
+        return repository.findExpirationDueIds(now);
     }
 }
