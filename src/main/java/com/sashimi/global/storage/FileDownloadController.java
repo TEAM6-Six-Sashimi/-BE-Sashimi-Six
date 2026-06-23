@@ -1,5 +1,7 @@
 package com.sashimi.global.storage;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,6 +20,9 @@ public class FileDownloadController {
 
     @GetMapping("/download")
     public ResponseEntity<byte[]> download(@RequestParam String key) {
+        if (key.contains("..")) {
+            throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        }
         byte[] bytes = fileStoragePort.downloadPrivate(key);
 
         String filename = key.contains("/") ? key.substring(key.lastIndexOf('/') + 1) : key;
