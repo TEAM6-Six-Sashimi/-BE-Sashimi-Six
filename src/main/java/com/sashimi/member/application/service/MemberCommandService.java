@@ -5,6 +5,7 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.member.application.command.ApplyInstructorCommand;
+import com.sashimi.member.application.event.InstructorApprovedEvent;
 import com.sashimi.member.application.port.DocxPort;
 import com.sashimi.member.application.port.OcrPort;
 import com.sashimi.member.application.usecase.MemberCommandUseCase;
@@ -16,6 +17,7 @@ import com.sashimi.member.domain.repository.InstructorApplicationRepository;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class MemberCommandService implements MemberCommandUseCase {
     private final DocxPort docxPort;
     private final FileStoragePort fileStoragePort;
     private final CategoryRepository categoryRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void applyInstructor(ApplyInstructorCommand command) {
@@ -131,6 +134,12 @@ public class MemberCommandService implements MemberCommandUseCase {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         user.promoteToInstructor();
         userRepository.save(user);
+
+        eventPublisher.publishEvent(new InstructorApprovedEvent(
+                user.getId(),
+                user.getName(),
+                user.getEmail()
+        ));
     }
 
     @Override

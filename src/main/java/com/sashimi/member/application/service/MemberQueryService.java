@@ -5,6 +5,7 @@ import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.member.application.usecase.MemberQueryUseCase;
 import com.sashimi.member.domain.model.ApprovalStatus;
 import com.sashimi.member.domain.model.InstructorApplication;
+import com.sashimi.member.domain.model.InstructorCertification;
 import com.sashimi.member.domain.repository.InstructorApplicationRepository;
 import com.sashimi.member.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.member.presentation.api.response.InstructorApplicationListResponse;
@@ -23,6 +24,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberQueryService implements MemberQueryUseCase {
+
+    private static final String FILE_DOWNLOAD_BASE = "/files/download?key=";
 
     private final InstructorApplicationRepository instructorApplicationRepository;
     private final UserRepository userRepository;
@@ -43,7 +46,16 @@ public class MemberQueryService implements MemberQueryUseCase {
     public InstructorApplicationDetailResponse getInstructorApplicationDetail(Long applicationId) {
         InstructorApplication application = instructorApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
-        return InstructorApplicationDetailResponse.from(application);
+
+        String profileImageUrl = toPresignedUrl(application.getProfileImagePath());
+        String resumeFileUrl = toPresignedUrl(application.getResumeFilePath());
+        List<String> certFileUrls = application.getCertifications() == null ? List.of() :
+                application.getCertifications().stream()
+                        .map(InstructorCertification::getFilePath)
+                        .map(this::toPresignedUrl)
+                        .toList();
+
+        return InstructorApplicationDetailResponse.from(application, profileImageUrl, resumeFileUrl, certFileUrls);
     }
 
     @Override
@@ -63,7 +75,21 @@ public class MemberQueryService implements MemberQueryUseCase {
         }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return MyInstructorApplicationDetailResponse.of(application, user);
+
+        String profileImageUrl = toPresignedUrl(application.getProfileImagePath());
+        String resumeFileUrl = toPresignedUrl(application.getResumeFilePath());
+        List<String> certFileUrls = application.getCertifications() == null ? List.of() :
+                application.getCertifications().stream()
+                        .map(InstructorCertification::getFilePath)
+                        .map(this::toPresignedUrl)
+                        .toList();
+
+        return MyInstructorApplicationDetailResponse.of(application, user, profileImageUrl, resumeFileUrl, certFileUrls);
+    }
+
+    private String toPresignedUrl(String s3Key) {
+        if (s3Key == null) return null;
+        return FILE_DOWNLOAD_BASE + s3Key;
     }
 
     @Override

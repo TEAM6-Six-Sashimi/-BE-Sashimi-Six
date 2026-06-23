@@ -19,7 +19,7 @@ public record InstructorApplicationResponse(
 ) {
     public static InstructorApplicationResponse from(InstructorApplication domain) {
         List<InstructorApplicationDetailResponse.CertificationInfo> certInfos = domain.getCertifications().stream()
-                .map(c -> new InstructorApplicationDetailResponse.CertificationInfo(c.getCertificationName(), c.getIssuedBy()))
+                .map(c -> new InstructorApplicationDetailResponse.CertificationInfo(c.getCertificationName(), c.getIssuedBy(), null))
                 .collect(Collectors.toList());
 
         return new InstructorApplicationResponse(
