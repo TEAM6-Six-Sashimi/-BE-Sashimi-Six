@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -17,7 +18,9 @@ public class UserResponseDto {
     private String name;
     private String loginId;
     private String email;
+    private String phone;
     private LocalDate birthDate;
+    private LocalDateTime createdAt;
     private Role role;
     private UserStatus status;
     private boolean emailVerified;
@@ -33,7 +36,9 @@ public class UserResponseDto {
                 .name(user.getName())
                 .loginId(user.getLoginId())
                 .email(user.getEmail())
+                .phone(user.getPhone())
                 .birthDate(user.getBirthDate())
+                .createdAt(user.getCreatedAt())
                 .role(user.getRole())
                 .status(user.getStatus())
                 .emailVerified(user.isEmailVerified())

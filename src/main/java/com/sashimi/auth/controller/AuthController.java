@@ -6,6 +6,7 @@ import com.sashimi.auth.dto.ReissueRequestDto;
 import com.sashimi.auth.dto.TokenResponseDto;
 import com.sashimi.auth.service.AuthService;
 import com.sashimi.user.dto.LoginIdCheckResponseDto;
+import com.sashimi.user.dto.ReferralCodeCheckResponseDto;
 import com.sashimi.user.dto.SignupRequestDto;
 import com.sashimi.user.dto.UserResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,6 +42,17 @@ public class AuthController {
     @GetMapping("/login-id/check")
     public ResponseEntity<LoginIdCheckResponseDto> checkLoginId(@RequestParam String loginId) {
         return ResponseEntity.ok(authService.checkLoginId(loginId));
+    }
+
+    @Operation(summary = "추천인 코드 확인", description = "추천인 코드가 유효한지 확인하고 추천인 이름을 반환합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "추천인 코드 조회 성공"),
+            @ApiResponse(responseCode = "400", description = "필수 요청 파라미터 누락 또는 잘못된 요청"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @GetMapping("/referral-code/check")
+    public ResponseEntity<ReferralCodeCheckResponseDto> checkReferralCode(@RequestParam String referralCode) {
+        return ResponseEntity.ok(authService.checkReferralCode(referralCode));
     }
 
 

@@ -23,7 +23,7 @@ public class InMemoryUserRepository implements UserRepository {
                     user.getEmail(), user.getPhone(), user.getBirthDate(),
                     user.getRole(), user.getStatus(), user.isEmailVerified(),
                     user.getReferralCode(), user.getInterestCategoryIds(),
-                    user.getDeactivatedAt(),
+                    user.getCreatedAt(), user.getDeactivatedAt(),
                     user.isMarketingConsent(), user.isEmailConsent(), user.isAiConsent()
             );
             store.put(saved.getId(), saved);

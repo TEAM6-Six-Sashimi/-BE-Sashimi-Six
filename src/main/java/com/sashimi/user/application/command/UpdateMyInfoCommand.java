@@ -9,8 +9,7 @@ public class UpdateMyInfoCommand {
 
     private final Long userId;
     private final String currentPassword;
-    private final String name;
-    private final String email;
+    private final String phone;
     private final boolean marketingConsent;
     private final boolean emailConsent;
     private final boolean aiConsent;

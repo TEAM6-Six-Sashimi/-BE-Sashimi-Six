@@ -23,6 +23,7 @@ import com.sashimi.user.application.event.UserRegisteredEvent;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import com.sashimi.user.dto.LoginIdCheckResponseDto;
+import com.sashimi.user.dto.ReferralCodeCheckResponseDto;
 import com.sashimi.user.dto.SignupRequestDto;
 import com.sashimi.user.dto.UserResponseDto;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
@@ -232,6 +233,15 @@ public class AuthService {
     @Transactional(readOnly = true)
     public LoginIdCheckResponseDto checkLoginId(String loginId) {
         return LoginIdCheckResponseDto.of(loginId, !userRepository.existsByLoginId(loginId));
+    }
+
+    @Transactional(readOnly = true)
+    public ReferralCodeCheckResponseDto checkReferralCode(String referralCode) {
+        String normalized = referralCode == null ? null : referralCode.toUpperCase().trim();
+        return userRepository.findByReferralCode(normalized)
+                .filter(User::isActive)
+                .map(user -> ReferralCodeCheckResponseDto.of(normalized, true, user.getName()))
+                .orElse(ReferralCodeCheckResponseDto.of(normalized, false, null));
     }
 
     private String generateUniqueReferralCode() {
