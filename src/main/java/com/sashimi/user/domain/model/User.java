@@ -17,6 +17,7 @@ public class User {
     private boolean emailVerified;
     private String referralCode;
     private List<Long> interestCategoryIds;
+    private LocalDateTime createdAt;
     private LocalDateTime deactivatedAt;
     private String phone;
     private boolean marketingConsent;
@@ -25,7 +26,7 @@ public class User {
 
     public User(Long id, String name, String loginId, String password, String email, String phone, LocalDate birthDate,
                 Role role, UserStatus status, boolean emailVerified,
-                String referralCode, List<Long> interestCategoryIds, LocalDateTime deactivatedAt,
+                String referralCode, List<Long> interestCategoryIds, LocalDateTime createdAt, LocalDateTime deactivatedAt,
                 boolean marketingConsent, boolean emailConsent, boolean aiConsent) {
         this.id = id;
         this.name = name;
@@ -38,6 +39,7 @@ public class User {
         this.emailVerified = emailVerified;
         this.referralCode = referralCode;
         this.interestCategoryIds = interestCategoryIds == null ? List.of() : List.copyOf(interestCategoryIds);
+        this.createdAt = createdAt;
         this.deactivatedAt = deactivatedAt;
         this.phone = phone;
         this.marketingConsent = marketingConsent;
@@ -54,13 +56,12 @@ public class User {
                                      String referralCode, List<Long> interestCategoryIds,
                                      boolean marketingConsent, boolean emailConsent, boolean aiConsent) {
         return new User(null, name, loginId, password, email, phone, birthDate,
-                Role.STUDENT, UserStatus.ACTIVE, true, referralCode, interestCategoryIds, null,
+                Role.STUDENT, UserStatus.ACTIVE, true, referralCode, interestCategoryIds, null, null,
                 marketingConsent, emailConsent, aiConsent);
     }
 
-    public void updateProfile(String name, String email, boolean marketingConsent, boolean emailConsent, boolean aiConsent) {
-        this.name = name;
-        this.email = email;
+    public void updateProfile(String phone, boolean marketingConsent, boolean emailConsent, boolean aiConsent) {
+        this.phone = phone;
         this.marketingConsent = marketingConsent;
         this.emailConsent = emailConsent;
         this.aiConsent = aiConsent;
@@ -90,6 +91,7 @@ public class User {
     public boolean isEmailVerified() { return emailVerified; }
     public String getReferralCode() { return referralCode; }
     public List<Long> getInterestCategoryIds() { return interestCategoryIds; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getDeactivatedAt() { return deactivatedAt; }
     public boolean isMarketingConsent() { return marketingConsent; }
     public boolean isEmailConsent() { return emailConsent; }

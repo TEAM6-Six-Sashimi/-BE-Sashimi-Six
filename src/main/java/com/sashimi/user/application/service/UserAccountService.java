@@ -38,12 +38,7 @@ public class UserAccountService implements UserCommandUseCase {
         User user = getActiveUser(command.getUserId());
         verifyCurrentPassword(user, command.getCurrentPassword());
 
-        if (!user.getEmail().equals(command.getEmail())
-                && userRepository.existsByEmail(command.getEmail())) {
-            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
-        }
-
-        user.updateProfile(command.getName(), command.getEmail(),
+        user.updateProfile(command.getPhone(),
                 command.isMarketingConsent(), command.isEmailConsent(), command.isAiConsent());
         User savedUser = userRepository.save(user);
 

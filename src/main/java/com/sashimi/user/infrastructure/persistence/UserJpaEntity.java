@@ -8,6 +8,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -59,6 +61,10 @@ public class UserJpaEntity {
     @Column(name = "phone", length = 20)
     private String phone;
 
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     @Column(name = "deleted_at")
     private LocalDateTime deactivatedAt;
 
@@ -94,7 +100,7 @@ public class UserJpaEntity {
 
     public User toDomain() {
         return new User(id, name, loginId, password, email, phone, birthDate, role, status,
-                emailVerified, referralCode, interestCategoryIds, deactivatedAt,
+                emailVerified, referralCode, interestCategoryIds, createdAt, deactivatedAt,
                 marketingConsent, emailConsent, aiConsent);
     }
 }

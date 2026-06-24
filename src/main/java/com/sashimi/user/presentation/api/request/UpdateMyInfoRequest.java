@@ -13,12 +13,7 @@ public class UpdateMyInfoRequest {
     @NotBlank(message = "현재 비밀번호는 필수입니다.")
     private String currentPassword;
 
-    @NotBlank(message = "이름은 필수입니다.")
-    private String name;
-
-    @NotBlank(message = "이메일은 필수입니다.")
-    @Email(message = "이메일 형식이 올바르지 않습니다.")
-    private String email;
+    private String phone;
 
     private boolean marketingConsent;
     private boolean emailConsent;
@@ -28,8 +23,7 @@ public class UpdateMyInfoRequest {
         return new UpdateMyInfoCommand(
                 userId,
                 currentPassword,
-                name,
-                email,
+                phone,
                 marketingConsent,
                 emailConsent,
                 aiConsent
