@@ -1,0 +1,31 @@
+package com.sashimi.certificate.presentation.api.response;
+
+import com.sashimi.certificate.domain.model.CertificationStatus;
+import com.sashimi.certificate.domain.model.UserCertification;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+public record CertificateResponse(
+        Long id,
+        Long userId,
+        String certificationName,
+        String issuedBy,
+        LocalDate issuedDate,
+        String fileName,
+        CertificationStatus status,
+        LocalDateTime createdAt
+) {
+    public static CertificateResponse from(UserCertification domain) {
+        return new CertificateResponse(
+                domain.getId(),
+                domain.getUserId(),
+                domain.getCertificationName(),
+                domain.getIssuedBy(),
+                domain.getIssuedDate(),
+                domain.getFileName(),
+                domain.getStatus(),
+                domain.getCreatedAt()
+        );
+    }
+}

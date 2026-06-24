@@ -65,10 +65,11 @@ public class UserAccountService implements UserCommandUseCase {
 
         refreshService.deleteByUser(savedUser);
 
+        CustomUserPrincipal principal = CustomUserPrincipal.from(savedUser);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                savedUser.getLoginId(),
+                principal,
                 "",
-                CustomUserPrincipal.from(savedUser).getAuthorities()
+                principal.getAuthorities()
         );
         TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
         LocalDateTime refreshExpiryDate = LocalDateTime.now()
