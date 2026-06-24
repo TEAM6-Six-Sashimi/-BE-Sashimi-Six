@@ -18,7 +18,7 @@ public class UserPasswordChangedSecurityNotificationHandler {
     public void handle(UserPasswordChangedEvent event) {
         emailSender.send(
                 event.email(),
-                "[Sashimi Six] 비밀번호가 변경되었습니다.",
+                "[FitGyeok] 비밀번호가 변경되었습니다.",
                 createContent()
         );
 

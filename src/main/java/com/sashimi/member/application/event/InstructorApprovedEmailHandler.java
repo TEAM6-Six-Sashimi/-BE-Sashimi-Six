@@ -19,7 +19,7 @@ public class InstructorApprovedEmailHandler {
         try {
             emailSender.send(
                     event.email(),
-                    "[Sashimi Six] 강사 승인이 완료되었습니다!",
+                    "[FitGyeok] 강사 승인이 완료되었습니다!",
                     createContent(event.name())
             );
             log.info("강사 승인 이메일 발송 완료. userId={}, email={}", event.userId(), event.email());
