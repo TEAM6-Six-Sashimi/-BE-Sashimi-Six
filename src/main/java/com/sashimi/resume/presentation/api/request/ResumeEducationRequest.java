@@ -21,9 +21,9 @@ public record ResumeEducationRequest(
                 schoolName,
                 startYearMonth,
                 endYearMonth,
-                degree,
-                major,
                 graduationStatus,
+                major,
+                degree,
                 minorOrResearch
         );
     }

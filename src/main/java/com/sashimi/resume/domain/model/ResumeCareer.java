@@ -24,32 +24,42 @@ public class ResumeCareer {
             String customEmploymentType,
             String jobTitle
     ) {
+        if (companyName == null || companyName.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
         if (startYearMonth == null) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_INPUT_VALUE
-            );
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         if (currentlyEmployed && endYearMonth != null) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_INPUT_VALUE
-            );
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         if (!currentlyEmployed && endYearMonth == null) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_INPUT_VALUE
-            );
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         if (endYearMonth != null
                 && endYearMonth.isBefore(startYearMonth)) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_INPUT_VALUE
-            );
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        this.companyName = companyName;
+        if (employmentType == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        if (employmentType == EmploymentType.OTHER
+                && (customEmploymentType == null
+                || customEmploymentType.isBlank())) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        if (jobTitle == null || jobTitle.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        this.companyName = companyName.trim();
         this.startYearMonth = startYearMonth;
         this.endYearMonth = endYearMonth;
         this.currentlyEmployed = currentlyEmployed;
@@ -57,7 +67,7 @@ public class ResumeCareer {
         this.customEmploymentType = employmentType == EmploymentType.OTHER
                 ? customEmploymentType.trim()
                 : null;
-        this.jobTitle = jobTitle;
+        this.jobTitle = jobTitle.trim();
     }
 
     public String companyName() {

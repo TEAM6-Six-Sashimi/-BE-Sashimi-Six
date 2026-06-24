@@ -1,54 +1,95 @@
 package com.sashimi.resume.presentation.api.response;
 
-import com.sashimi.resume.domain.model.ResumeEvaluation;
+import com.sashimi.resume.application.result.ReviewResumeResult;
+import com.sashimi.resume.application.result.SectionFeedbackResult;
+import com.sashimi.resume.application.result.SectionScoreResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.List;
 
-/**
- * AI 이력서 평가 API 응답 DTO.
- *
- * domain model인 ResumeEvaluation을
- * 클라이언트에게 내려줄 응답 형태로 변환한다.
- */
 @Schema(description = "AI 이력서 평가 응답")
 public record ReviewResumeResponse(
 
-        @Schema(description = "평가 결과 ID", example = "10")
-        Long evaluationId,
+        @Schema(description = "전체 점수", example = "78")
+        int overallScore,
 
-        @Schema(description = "종합 점수", example = "78")
-        BigDecimal overallScore,
+        @Schema(description = "전체 등급", example = "보통")
+        String overallGrade,
 
-        @Schema(description = "강점", example = "기술 스택과 학력 정보가 명확하게 작성되어 있습니다.")
-        String strengths,
+        @Schema(description = "항목별 평가 점수")
+        List<SectionScoreResponse> sectionScores,
 
-        @Schema(description = "약점", example = "경력 사항과 자격증 정보가 부족합니다.")
-        String weaknesses,
-
-        @Schema(description = "개선 제안", example = "경력 사항의 담당 업무를 구체적으로 작성하고, 보유 자격증을 추가하면 좋습니다.")
-        String suggestions,
-
-        @Schema(
-                description = "AI 상세 평가 결과 JSON. sectionScores와 improvementItems를 포함합니다.",
-                example = "{\"overallScore\":78,\"sectionScores\":[{\"type\":\"BASIC\",\"label\":\"기본 정보\",\"score\":100,\"grade\":\"우수\"}],\"improvementItems\":[\"자격증 정보를 추가해보세요.\"]}"
-        )
-        String aiResult,
-
-        @Schema(description = "평가 일시", example = "2026-05-27T16:30:00")
-        LocalDateTime evaluationAt
+        @Schema(description = "항목별 강점 또는 보완점")
+        List<SectionFeedbackResponse> feedbacks
 ) {
 
-    public static ReviewResumeResponse from(ResumeEvaluation evaluation) {
+    public static ReviewResumeResponse from(
+            ReviewResumeResult result
+    ) {
         return new ReviewResumeResponse(
-                evaluation.evaluationId(),
-                evaluation.overallScore(),
-                evaluation.strengths(),
-                evaluation.weaknesses(),
-                evaluation.suggestions(),
-                evaluation.aiResult(),
-                evaluation.evaluationAt()
+                result.scoreResult().overallScore(),
+                result.scoreResult().overallGrade(),
+                result.scoreResult()
+                        .sectionScores()
+                        .stream()
+                        .map(SectionScoreResponse::from)
+                        .toList(),
+                result.feedbacks()
+                        .stream()
+                        .map(SectionFeedbackResponse::from)
+                        .toList()
         );
+    }
+
+    public record SectionScoreResponse(
+            @Schema(description = "평가 항목", example = "EDUCATION")
+            String type,
+
+            @Schema(description = "평가 항목명", example = "학력 사항")
+            String label,
+
+            @Schema(description = "점수", example = "85")
+            int score,
+
+            @Schema(description = "등급", example = "양호")
+            String grade
+    ) {
+
+        public static SectionScoreResponse from(
+                SectionScoreResult result
+        ) {
+            return new SectionScoreResponse(
+                    result.type().name(),
+                    result.label(),
+                    result.score(),
+                    result.grade()
+            );
+        }
+    }
+
+    public record SectionFeedbackResponse(
+            @Schema(description = "평가 항목", example = "CAREER")
+            String section,
+
+            @Schema(description = "평가 항목명", example = "경력 사항")
+            String label,
+
+            @Schema(description = "피드백 유형", example = "IMPROVEMENT")
+            String type,
+
+            @Schema(description = "피드백 내용", example = "경력 사항을 추가하면 이력서 완성도를 높일 수 있습니다.")
+            String message
+    ) {
+
+        public static SectionFeedbackResponse from(
+                SectionFeedbackResult result
+        ) {
+            return new SectionFeedbackResponse(
+                    result.section().name(),
+                    result.label(),
+                    result.type().name(),
+                    result.message()
+            );
+        }
     }
 }

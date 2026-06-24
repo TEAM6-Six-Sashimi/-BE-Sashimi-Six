@@ -1,7 +1,10 @@
 package com.sashimi.resume.application.result;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.resume.domain.model.ResumeReviewSection;
 
+// 각 평가 항목의 강점 또는 보완점 메시지
 public record SectionFeedbackResult(
         ResumeReviewSection section,
         String label,
@@ -11,26 +14,26 @@ public record SectionFeedbackResult(
 
     public SectionFeedbackResult {
         if (section == null || type == null) {
-            throw new IllegalArgumentException(
-                    "피드백 영역과 유형은 필수입니다."
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
             );
         }
 
         if (label == null || label.isBlank()) {
-            throw new IllegalArgumentException(
-                    "피드백 영역 이름은 필수입니다."
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
             );
         }
 
         if (!label.equals(section.label())) {
-            throw new IllegalArgumentException(
-                    "피드백 영역 이름이 일치하지 않습니다."
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
             );
         }
 
         if (message == null || message.isBlank()) {
-            throw new IllegalArgumentException(
-                    "피드백 내용은 필수입니다."
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
             );
         }
     }
@@ -39,8 +42,8 @@ public record SectionFeedbackResult(
             SectionScoreResult sectionScore
     ) {
         if (sectionScore.score() < 80) {
-            throw new IllegalArgumentException(
-                    "80점 미만 영역은 강점으로 생성할 수 없습니다."
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
             );
         }
 
@@ -63,8 +66,8 @@ public record SectionFeedbackResult(
             String message
     ) {
         if (sectionScore.score() >= 80) {
-            throw new IllegalArgumentException(
-                    "80점 이상 영역은 보완점으로 생성할 수 없습니다."
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
             );
         }
 
