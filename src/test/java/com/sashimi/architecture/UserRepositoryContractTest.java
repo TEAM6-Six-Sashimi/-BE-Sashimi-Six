@@ -110,12 +110,11 @@ public abstract class UserRepositoryContractTest {
     @DisplayName("유저 정보를 수정 후 저장하면 반영된다")
     void save_updatesExistingUser() {
         User saved = userRepository.save(sampleUser("user7", "user7@test.com"));
-        saved.updateProfile("수정된이름", "new@test.com", false, false, false);
+        saved.updateProfile("010-1234-5678", false, false, false);
         userRepository.save(saved);
 
         User found = userRepository.findById(saved.getId()).orElseThrow();
-        assertThat(found.getName()).isEqualTo("수정된이름");
-        assertThat(found.getEmail()).isEqualTo("new@test.com");
+        assertThat(found.getPhone()).isEqualTo("010-1234-5678");
     }
 
     @Test

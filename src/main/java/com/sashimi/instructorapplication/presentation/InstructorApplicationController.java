@@ -1,5 +1,7 @@
 package com.sashimi.instructorapplication.presentation;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.instructorapplication.application.command.ApplyInstructorCommand;
 import com.sashimi.instructorapplication.application.usecase.InstructorApplicationCommandUseCase;
 import com.sashimi.instructorapplication.application.usecase.InstructorApplicationQueryUseCase;
@@ -9,6 +11,7 @@ import com.sashimi.instructorapplication.presentation.api.response.InstructorApp
 import com.sashimi.instructorapplication.presentation.api.response.MyInstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.MyInstructorApplicationListResponse;
 import com.sashimi.instructorapplication.presentation.api.response.RejectedApplicationListResponse;
+import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -20,6 +23,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -50,10 +54,12 @@ public class InstructorApplicationController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "강사 지원 완료"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값 오류 / 중복 신청 / OCR 검증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 계정만 접근 가능"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping(value = "/{userId}/instructor-apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> applyInstructor(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long userId,
             @RequestParam("bio") String bio,
             @RequestParam("motivationLetter") String motivationLetter,
@@ -63,6 +69,10 @@ public class InstructorApplicationController {
             @RequestPart("certificateFiles") List<MultipartFile> certificateFiles,
             @RequestPart("resumeFile") MultipartFile resumeFile
     ) throws Exception {
+        if (!principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         List<ApplyInstructorCommand.FileEntry> certEntries = new java.util.ArrayList<>();
         for (MultipartFile file : certificateFiles) {
             certEntries.add(new ApplyInstructorCommand.FileEntry(file.getBytes(), file.getOriginalFilename()));
@@ -117,15 +127,25 @@ public class InstructorApplicationController {
     @Operation(summary = "나의 강사 지원 내역 목록 조회", description = "본인의 강사 지원 내역 목록을 조회합니다.")
     @GetMapping("/{userId}/instructor-applications")
     public ResponseEntity<List<MyInstructorApplicationListResponse>> getMyInstructorApplications(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long userId) {
+        if (!principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         return ResponseEntity.ok(instructorApplicationQueryUseCase.getMyInstructorApplications(userId));
     }
 
     @Operation(summary = "나의 강사 지원 상세 조회", description = "본인의 강사 지원 상세 정보 및 반려 사유를 조회합니다.")
     @GetMapping("/{userId}/instructor-applications/{applicationId}")
     public ResponseEntity<MyInstructorApplicationDetailResponse> getMyInstructorApplicationDetail(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long userId,
             @PathVariable Long applicationId) {
+        if (!principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         return ResponseEntity.ok(instructorApplicationQueryUseCase.getMyInstructorApplicationDetail(userId, applicationId));
     }
 

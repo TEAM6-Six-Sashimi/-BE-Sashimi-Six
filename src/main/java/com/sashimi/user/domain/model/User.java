@@ -19,6 +19,7 @@ public class User {
     private List<Long> interestCategoryIds;
     private LocalDateTime createdAt;
     private LocalDateTime deactivatedAt;
+    private LocalDateTime lastLoginAt;
     private String phone;
     private boolean marketingConsent;
     private boolean emailConsent;
@@ -27,7 +28,7 @@ public class User {
     public User(Long id, String name, String loginId, String password, String email, String phone, LocalDate birthDate,
                 Role role, UserStatus status, boolean emailVerified,
                 String referralCode, List<Long> interestCategoryIds, LocalDateTime createdAt, LocalDateTime deactivatedAt,
-                boolean marketingConsent, boolean emailConsent, boolean aiConsent) {
+                LocalDateTime lastLoginAt, boolean marketingConsent, boolean emailConsent, boolean aiConsent) {
         this.id = id;
         this.name = name;
         this.loginId = loginId;
@@ -41,6 +42,7 @@ public class User {
         this.interestCategoryIds = interestCategoryIds == null ? List.of() : List.copyOf(interestCategoryIds);
         this.createdAt = createdAt;
         this.deactivatedAt = deactivatedAt;
+        this.lastLoginAt = lastLoginAt;
         this.phone = phone;
         this.marketingConsent = marketingConsent;
         this.emailConsent = emailConsent;
@@ -56,7 +58,7 @@ public class User {
                                      String referralCode, List<Long> interestCategoryIds,
                                      boolean marketingConsent, boolean emailConsent, boolean aiConsent) {
         return new User(null, name, loginId, password, email, phone, birthDate,
-                Role.STUDENT, UserStatus.ACTIVE, true, referralCode, interestCategoryIds, null, null,
+                Role.STUDENT, UserStatus.ACTIVE, true, referralCode, interestCategoryIds, null, null, null,
                 marketingConsent, emailConsent, aiConsent);
     }
 
@@ -93,6 +95,11 @@ public class User {
     public List<Long> getInterestCategoryIds() { return interestCategoryIds; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getDeactivatedAt() { return deactivatedAt; }
+    public LocalDateTime getLastLoginAt() { return lastLoginAt; }
+
+    public void updateLastLoginAt(LocalDateTime now) {
+        this.lastLoginAt = now;
+    }
     public boolean isMarketingConsent() { return marketingConsent; }
     public boolean isEmailConsent() { return emailConsent; }
     public boolean isAiConsent() { return aiConsent; }

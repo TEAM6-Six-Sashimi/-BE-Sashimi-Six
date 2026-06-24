@@ -20,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
@@ -107,6 +109,6 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
 
     private String toDownloadUrl(String s3Key) {
         if (s3Key == null) return null;
-        return FILE_DOWNLOAD_BASE + s3Key;
+        return FILE_DOWNLOAD_BASE + URLEncoder.encode(s3Key, StandardCharsets.UTF_8);
     }
 }

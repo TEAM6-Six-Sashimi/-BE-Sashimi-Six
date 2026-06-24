@@ -26,4 +26,6 @@ public interface SpringDataUserRepository extends JpaRepository<UserJpaEntity, L
             UserStatus status,
             LocalDateTime dateTime
     );
+
+    List<UserJpaEntity> findAllByStatusNotOrderByCreatedAtDesc(UserStatus status);
 }

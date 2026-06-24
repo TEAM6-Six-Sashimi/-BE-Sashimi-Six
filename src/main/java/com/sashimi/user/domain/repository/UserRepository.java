@@ -26,4 +26,6 @@ public interface UserRepository {
     boolean existsByReferralCode(String referralCode);
 
     List<User> findAllByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime);
+
+    List<User> findAllForAdmin();
 }

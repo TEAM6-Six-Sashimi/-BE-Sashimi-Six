@@ -23,7 +23,7 @@ public class InMemoryUserRepository implements UserRepository {
                     user.getEmail(), user.getPhone(), user.getBirthDate(),
                     user.getRole(), user.getStatus(), user.isEmailVerified(),
                     user.getReferralCode(), user.getInterestCategoryIds(),
-                    user.getCreatedAt(), user.getDeactivatedAt(),
+                    user.getCreatedAt(), user.getDeactivatedAt(), user.getLastLoginAt(),
                     user.isMarketingConsent(), user.isEmailConsent(), user.isAiConsent()
             );
             store.put(saved.getId(), saved);
@@ -79,6 +79,15 @@ public class InMemoryUserRepository implements UserRepository {
         return store.values().stream()
                 .filter(u -> u.getStatus() == status)
                 .filter(u -> u.getDeactivatedAt() != null && u.getDeactivatedAt().isBefore(dateTime))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> findAllForAdmin() {
+        return store.values().stream()
+                .filter(u -> u.getStatus() != UserStatus.DELETED)
+                .sorted(Comparator.comparing(User::getCreatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
     }
 }

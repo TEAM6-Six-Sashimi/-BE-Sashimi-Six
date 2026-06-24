@@ -70,6 +70,11 @@ public class UserRepositoryAdapter implements UserRepository {
                 .toList();
     }
 
-
-
+    @Override
+    public List<User> findAllForAdmin() {
+        return springDataUserRepository.findAllByStatusNotOrderByCreatedAtDesc(UserStatus.DELETED)
+                .stream()
+                .map(UserJpaEntity::toDomain)
+                .toList();
+    }
 }
