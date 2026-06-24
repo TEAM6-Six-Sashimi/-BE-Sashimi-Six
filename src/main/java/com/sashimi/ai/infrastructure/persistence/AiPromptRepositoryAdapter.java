@@ -3,8 +3,6 @@ package com.sashimi.ai.infrastructure.persistence;
 import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.ai.domain.model.AiPromptType;
 import com.sashimi.ai.domain.repository.AiPromptRepository;
-import com.sashimi.global.exception.BusinessException;
-import com.sashimi.global.exception.ErrorCode;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
@@ -41,12 +39,11 @@ public class AiPromptRepositoryAdapter implements AiPromptRepository {
             case RESUME_CAREER_CONTINUITY ->
                     "RESUME_CAREER_CONTINUITY";
 
+            case CERTIFICATE_VERIFY ->
+                    "CERTIFICATE_VERIFY";
+
             case JOB_POSTING_ANALYSIS ->
                     "JOB_ANALYSIS";
-
-            default -> throw new BusinessException(
-                    ErrorCode.INVALID_INPUT_VALUE
-            );
         };
     }
 }

@@ -120,6 +120,12 @@ public class ResumeFeedbackGenerator {
 
         for (SectionFeedbackResult improvement
                 : improvements) {
+            if (improvement == null) {
+                throw new BusinessException(
+                        ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
+                );
+            }
+
             SectionFeedbackResult previous =
                     feedbackBySection.put(
                             improvement.section(),
@@ -152,7 +158,9 @@ public class ResumeFeedbackGenerator {
         Set<ResumeReviewSection> resultSections =
                 improvements.stream()
                         .map(feedback -> {
-                            if (feedback.type()
+                            if (feedback == null
+                                    || feedback.type() == null
+                                    || feedback.type()
                                     != ResumeFeedbackType
                                     .IMPROVEMENT) {
                                 throw new BusinessException(

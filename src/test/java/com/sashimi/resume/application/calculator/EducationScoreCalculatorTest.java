@@ -95,9 +95,9 @@ class EducationScoreCalculatorTest {
                 "테스트 학교",
                 YearMonth.of(2020, 3),
                 YearMonth.of(2024, 2),
-                degree,
-                "테스트 전공",
                 status,
+                "테스트 전공",
+                degree,
                 null
         );
     }
