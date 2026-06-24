@@ -20,6 +20,7 @@ import java.util.List;
 public class CreditQueryService implements CreditQueryUseCase {
 
     private final CreditRepository creditRepository;
+    private final CreditChargePaymentRepository creditChargePaymentRepository;
 
     @Override
     public CreditBalanceResult getBalance(Long userId) {
