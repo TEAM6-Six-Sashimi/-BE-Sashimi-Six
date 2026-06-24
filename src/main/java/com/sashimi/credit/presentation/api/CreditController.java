@@ -25,9 +25,14 @@ import com.sashimi.credit.presentation.api.request.ReadyCreditChargeRequest;
 import com.sashimi.credit.presentation.api.response.CreditChargeConfirmResponse;
 import com.sashimi.credit.presentation.api.response.CreditChargeReadyResponse;
 import com.sashimi.global.exception.ErrorResponse;
+import com.sashimi.credit.presentation.api.response.CreditChargeHistoryResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import org.springframework.validation.annotation.Validated;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@Validated
 @Tag(name = "Credit", description = "크레딧 API")
 @SecurityRequirement(name = "bearerAuth")
 @RestController
@@ -51,6 +56,79 @@ public class CreditController {
     public ResponseEntity<CreditResponse> getMyCredit(@AuthenticationPrincipal CustomUserPrincipal principal) {
         CreditBalanceResult result = creditQueryUseCase.getBalance(principal.getId());
         return ResponseEntity.ok(CreditResponse.from(result));
+    }
+
+    @Operation(
+            summary = "내 크레딧 충전 내역 조회",
+            description = """
+                로그인한 사용자의 완료된 크레딧 충전 내역을
+                최신 결제 승인 순서로 조회합니다.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "크레딧 충전 내역 조회 성공",
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation =
+                                            CreditChargeHistoryResponse.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 페이지 요청",
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation = ErrorResponse.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(
+                            schema = @Schema(
+                                    implementation = ErrorResponse.class
+                            )
+                    )
+            )
+    })
+    @GetMapping("/charges")
+    public ResponseEntity<CreditChargeHistoryResponse>
+    getMyChargeHistory(
+            @AuthenticationPrincipal
+            CustomUserPrincipal principal,
+
+            @RequestParam(defaultValue = "0")
+            @Min(
+                    value = 0,
+                    message = "페이지 번호는 0 이상이어야 합니다."
+            )
+            int page,
+
+            @RequestParam(defaultValue = "10")
+            @Min(
+                    value = 1,
+                    message = "페이지 크기는 1 이상이어야 합니다."
+            )
+            @Max(
+                    value = 100,
+                    message = "페이지 크기는 100 이하여야 합니다."
+            )
+            int size
+    ) {
+        CreditQueryUseCase.CreditChargeHistory history =
+                creditQueryUseCase.getChargeHistory(
+                        principal.getId(),
+                        page,
+                        size
+                );
+
+        return ResponseEntity.ok(
+                CreditChargeHistoryResponse.from(history)
+        );
     }
 
 
