@@ -1,6 +1,5 @@
 package com.sashimi.review.presentation;
 
-import com.sashimi.member.presentation.api.response.ApiResponse;
 import com.sashimi.review.application.command.ReportReviewCommand;
 import com.sashimi.review.application.usecase.ReviewReportCommandUseCase;
 import com.sashimi.review.presentation.api.request.ReportReviewRequest;
@@ -23,7 +22,7 @@ public class ReviewReportController {
 
     @Operation(summary = "수강평 신고", description = "부적절한 수강평을 신고합니다.")
     @PostMapping("/{reviewId}/reports")
-    public ResponseEntity<ApiResponse<Void>> reportReview(
+    public ResponseEntity<Void> reportReview(
             @PathVariable Long reviewId,
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @Valid @RequestBody ReportReviewRequest request
@@ -31,6 +30,6 @@ public class ReviewReportController {
         reviewReportCommandUseCase.reportReview(
                 new ReportReviewCommand(principal.getId(), reviewId, request.category(), request.reason())
         );
-        return ResponseEntity.ok(ApiResponse.of("신고가 접수되었습니다."));
+        return ResponseEntity.noContent().build();
     }
 }

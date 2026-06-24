@@ -8,10 +8,9 @@ import com.sashimi.course.presentation.api.request.UpdateCourseRequest;
 import com.sashimi.course.presentation.api.response.ApprovedCourseResponse;
 import com.sashimi.course.presentation.api.response.CourseResponse;
 import com.sashimi.course.presentation.api.response.InstructorCourseDetailResponse;
-import com.sashimi.member.presentation.api.response.ApiResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import java.net.URI;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,7 +61,7 @@ public class InstructorCourseController {
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Void>> createCourse(
+    public ResponseEntity<Void> createCourse(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody CreateCourseRequest request) {
         List<CreateSessionCommand> sessionCommands = request.sessions().stream()
@@ -75,7 +74,7 @@ public class InstructorCourseController {
                 request.price(), request.difficulty(), request.thumbnail(),
                 request.initialStatus(), sessionCommands));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.of("성공했습니다."));
+        return ResponseEntity.created(URI.create("/instructor/courses/" + courseId)).build();
     }
 
     @PutMapping("/{courseId}")

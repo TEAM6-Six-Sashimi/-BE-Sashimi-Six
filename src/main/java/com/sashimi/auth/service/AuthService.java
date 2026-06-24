@@ -33,6 +33,7 @@ import com.sashimi.verification.domain.model.VerificationPurpose;
 import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import com.sashimi.security.principal.CustomUserPrincipal;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -198,10 +199,11 @@ public class AuthService {
         User user = userRepository.findById(refreshToken.getUserId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        CustomUserPrincipal principal = CustomUserPrincipal.from(user);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user.getLoginId(),
+                principal,
                 "",
-                com.sashimi.security.principal.CustomUserPrincipal.from(user).getAuthorities()
+                principal.getAuthorities()
         );
 
         TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
