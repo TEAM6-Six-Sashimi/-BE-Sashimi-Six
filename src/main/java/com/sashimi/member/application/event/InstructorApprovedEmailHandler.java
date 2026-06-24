@@ -16,13 +16,16 @@ public class InstructorApprovedEmailHandler {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(InstructorApprovedEvent event) {
-        emailSender.send(
-                event.email(),
-                "[Sashimi Six] 강사 승인이 완료되었습니다!",
-                createContent(event.name())
-        );
-
-        log.info("강사 승인 이메일 발송 완료. userId={}, email={}", event.userId(), event.email());
+        try {
+            emailSender.send(
+                    event.email(),
+                    "[Sashimi Six] 강사 승인이 완료되었습니다!",
+                    createContent(event.name())
+            );
+            log.info("강사 승인 이메일 발송 완료. userId={}, email={}", event.userId(), event.email());
+        } catch (RuntimeException e) {
+            log.error("강사 승인 이메일 발송 실패. userId={}, email={}", event.userId(), event.email(), e);
+        }
     }
 
     private String createContent(String name) {

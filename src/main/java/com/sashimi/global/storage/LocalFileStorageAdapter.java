@@ -91,8 +91,16 @@ public class LocalFileStorageAdapter implements FileStoragePort {
     @Override
     public byte[] downloadPrivate(String s3Key) {
         try {
-            Path filePath = Paths.get(uploadDir, s3Key).toAbsolutePath().normalize();
+            Path basePath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Path filePath = basePath.resolve(s3Key).normalize();
+
+            if (!filePath.startsWith(basePath)) {
+                throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+            }
+
             return Files.readAllBytes(filePath);
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("[Local] 파일 다운로드 실패 - key: {}, cause: {}", s3Key, e.getMessage(), e);
             throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
