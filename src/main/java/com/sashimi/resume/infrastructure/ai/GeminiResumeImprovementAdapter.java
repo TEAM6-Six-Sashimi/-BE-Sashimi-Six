@@ -17,6 +17,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Component
@@ -150,10 +151,19 @@ public class GeminiResumeImprovementAdapter
                 );
             }
 
-            ResumeReviewSection section =
-                    ResumeReviewSection.valueOf(
-                            sectionNode.asText()
-                    );
+            ResumeReviewSection section;
+
+            try {
+                section = ResumeReviewSection.valueOf(
+                        sectionNode.asText()
+                                .trim()
+                                .toUpperCase(Locale.ROOT)
+                );
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalArgumentException(
+                        "요청하지 않은 평가 영역이 포함되었습니다."
+                );
+            }
 
             if (!requestedByType.containsKey(section)) {
                 throw new IllegalArgumentException(
