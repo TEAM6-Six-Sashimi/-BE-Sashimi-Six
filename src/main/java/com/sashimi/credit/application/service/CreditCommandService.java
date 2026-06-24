@@ -19,6 +19,8 @@ import com.sashimi.credit.infrastructure.toss.TossPaymentConfirmResponse;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 
+import java.util.Objects;
+import org.springframework.transaction.annotation.Propagation;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +43,7 @@ public class CreditCommandService implements CreditCommandUseCase {
     private final CreditChargePolicy creditChargePolicy;
     private final CreditChargePaymentRepository creditChargePaymentRepository;
     private final TossPaymentClient tossPaymentClient;
+    private final CreditChargeTransactionService creditChargeTransactionService;
 
     @Override
     public void createInitialCredit(CreateInitialCreditCommand command) {
@@ -117,15 +120,24 @@ public class CreditCommandService implements CreditCommandUseCase {
     }
 
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CreditChargeConfirmResult confirmCreditCharge(ConfirmCreditChargeCommand command) {
-        CreditChargePayment payment = creditChargePaymentRepository.findByOrderIdForUpdate(command.orderId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.CREDIT_CHARGE_PAYMENT_NOT_FOUND));
+        CreditChargePayment payment =
+                creditChargePaymentRepository.findByOrderId(command.orderId())
+                        .orElseThrow(() -> new BusinessException(
+                                ErrorCode.CREDIT_CHARGE_PAYMENT_NOT_FOUND
+                        ));
 
         payment.validateOwner(command.userId());
         payment.validateAmount(command.amount());
 
         if (payment.isDone()) {
-            Credit credit = getOrCreateCreditForUpdate(command.userId());
+            payment.validatePaymentKey(command.paymentKey());
+
+            Credit credit = creditRepository.findByUserId(command.userId())
+                    .orElseThrow(() -> new BusinessException(
+                            ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+                    ));
 
             return new CreditChargeConfirmResult(
                     credit.getBalance(),
@@ -135,60 +147,46 @@ public class CreditCommandService implements CreditCommandUseCase {
             );
         }
 
-        TossPaymentConfirmResponse tossResponse;
-
-        try {
-            tossResponse = tossPaymentClient.confirm(
-                    command.paymentKey(),
-                    command.orderId(),
-                    command.amount()
+        if (payment.isFailed()) {
+            throw new BusinessException(
+                    ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED
             );
-        } catch (BusinessException e) {
-            throw e;
         }
 
-        if (tossResponse == null || !"DONE".equals(tossResponse.status())) {
-            payment.markFailed("Toss payment approval failed");
-            creditChargePaymentRepository.save(payment);
+        TossPaymentConfirmResponse response =
+                tossPaymentClient.confirmOrRetrieve(
+                        command.paymentKey(),
+                        command.orderId(),
+                        command.amount()
+                );
+
+        validateTossResponse(command, response);
+
+        return creditChargeTransactionService.complete(command, response);
+    }
+
+    private void validateTossResponse(ConfirmCreditChargeCommand command, TossPaymentConfirmResponse response) {
+        if (response == null || !"DONE".equals(response.status())) {
+            creditChargeTransactionService.markFailed(command, "Toss payment status is not DONE");
+
             throw new BusinessException(ErrorCode.CREDIT_EXTERNAL_PAYMENT_FAILED);
         }
 
-        if (!command.amount().equals(tossResponse.totalAmount())) {
-            payment.markFailed("Toss payment amount mismatch");
-            creditChargePaymentRepository.save(payment);
-            throw new BusinessException(ErrorCode.CREDIT_CHARGE_PAYMENT_AMOUNT_MISMATCH);
+        if (!Objects.equals(command.orderId(), response.orderId())
+                || !Objects.equals(
+                command.paymentKey(),
+                response.paymentKey()
+        )) {
+            creditChargeTransactionService.markFailed(command, "Toss payment identifier mismatch");
+
+            throw new BusinessException(ErrorCode.CREDIT_EXTERNAL_PAYMENT_RESPONSE_MISMATCH);
         }
 
-        payment.markDone(
-                tossResponse.paymentKey(),
-                tossResponse.method(),
-                tossResponse.approvedAt() == null
-                        ? null
-                        : tossResponse.approvedAt().toLocalDateTime()
-        );
-        creditChargePaymentRepository.save(payment);
+        if (!Objects.equals(command.amount(), response.totalAmount())) {
+            creditChargeTransactionService.markFailed(command, "Toss payment amount mismatch");
 
-        Credit credit = getOrCreateCreditForUpdate(command.userId());
-        credit.add(payment.getAmount());
-
-        Credit savedCredit = creditRepository.save(credit);
-
-        log.info(
-                "크레딧 토스 충전 완료 - userId={}, orderId={}, paymentKey={}, paymentMethod={}, amount={}, balance={}",
-                command.userId(),
-                payment.getOrderId(),
-                payment.getPaymentKey(),
-                payment.getPaymentMethod(),
-                payment.getAmount(),
-                savedCredit.getBalance()
-        );
-
-        return new CreditChargeConfirmResult(
-                savedCredit.getBalance(),
-                payment.getOrderId(),
-                payment.getPaymentKey(),
-                payment.getAmount()
-        );
+            throw new BusinessException(ErrorCode.CREDIT_CHARGE_PAYMENT_AMOUNT_MISMATCH);
+        }
     }
 
     private String generateCreditChargeOrderId() {

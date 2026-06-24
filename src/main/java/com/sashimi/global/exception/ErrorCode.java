@@ -82,6 +82,8 @@ public enum ErrorCode {
     CREDIT_CHARGE_PAYMENT_AMOUNT_MISMATCH(400, "CREDIT_007", "크레딧 충전 결제 금액이 일치하지 않습니다."),
     CREDIT_CHARGE_PAYMENT_FORBIDDEN(403, "CREDIT_008", "해당 크레딧 충전 결제에 접근할 수 없습니다."),
     CREDIT_EXTERNAL_PAYMENT_FAILED(502, "CREDIT_009", "외부 결제 승인에 실패했습니다."),
+    CREDIT_EXTERNAL_PAYMENT_RESPONSE_MISMATCH(502, "CREDIT_010", "외부 결제 승인 정보가 요청 정보와 일치하지 않습니다."),
+    CREDIT_CHARGE_RESULT_INCONSISTENT(500, "CREDIT_011", "승인된 크레딧 충전 결과의 정합성을 확인할 수 없습니다."),
 
     SUBSCRIPTION_NOT_FOUND(404, "SUBSCRIPTION_001", "구독권을 찾을 수 없습니다."),
     SUBSCRIPTION_ALREADY_ACTIVE(409, "SUBSCRIPTION_002", "이미 활성화된 구독권이 있습니다."),
