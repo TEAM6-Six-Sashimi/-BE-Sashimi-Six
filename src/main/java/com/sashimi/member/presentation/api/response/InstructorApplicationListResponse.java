@@ -10,14 +10,16 @@ public record InstructorApplicationListResponse(
         String name,
         String loginId,
         String email,
+        String categoryName,
         LocalDateTime createdAt
 ) {
-    public static InstructorApplicationListResponse of(InstructorApplication application, User user) {
+    public static InstructorApplicationListResponse of(InstructorApplication application, User user, String categoryName) {
         return new InstructorApplicationListResponse(
                 application.getId(),
                 user.getName(),
                 user.getLoginId(),
                 user.getEmail(),
+                categoryName,
                 application.getCreatedAt()
         );
     }
