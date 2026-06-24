@@ -1,7 +1,10 @@
 package com.sashimi.user.application.service;
 
+import com.sashimi.auth.dto.TokenResponseDto;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.security.jwt.JwtTokenProvider;
+import com.sashimi.security.principal.CustomUserPrincipal;
 import com.sashimi.token.service.RefreshService;
 import com.sashimi.user.application.command.ChangePasswordCommand;
 import com.sashimi.user.application.command.UpdateMyInfoCommand;
@@ -14,6 +17,8 @@ import com.sashimi.user.domain.repository.UserRepository;
 import com.sashimi.user.dto.UserResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +35,7 @@ public class UserAccountService implements UserCommandUseCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshService refreshService;
+    private final JwtTokenProvider jwtTokenProvider;
     private final ApplicationEventPublisher eventPublisher;
 
 
@@ -57,6 +63,18 @@ public class UserAccountService implements UserCommandUseCase {
         user.changePassword(passwordEncoder.encode(command.getNewPassword()));
         User savedUser = userRepository.save(user);
 
+        refreshService.deleteByUser(savedUser);
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                savedUser.getLoginId(),
+                "",
+                CustomUserPrincipal.from(savedUser).getAuthorities()
+        );
+        TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
+        LocalDateTime refreshExpiryDate = LocalDateTime.now()
+                .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
+        refreshService.saveOrUpdate(savedUser, tokenResponse.getRefreshToken(), refreshExpiryDate);
+
         eventPublisher.publishEvent(
                 new UserPasswordChangedEvent(
                         savedUser.getId(),
@@ -65,7 +83,7 @@ public class UserAccountService implements UserCommandUseCase {
                 )
         );
 
-        return new ChangePasswordResult(true, true);
+        return new ChangePasswordResult(true, false, tokenResponse.getAccessToken(), tokenResponse.getRefreshToken());
     }
 
     private User getActiveUser(Long userId) {

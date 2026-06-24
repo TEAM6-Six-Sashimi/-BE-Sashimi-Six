@@ -18,7 +18,7 @@ public class UserRegisteredWelcomeEmailHandler {
     public void handle(UserRegisteredEvent event) {
         emailSender.send(
                 event.email(),
-                "[Sashimi Six] 가입을 환영합니다!",
+                "[FitGyeok] 가입을 환영합니다!",
                 createContent(event.name())
         );
 
@@ -26,7 +26,7 @@ public class UserRegisteredWelcomeEmailHandler {
     }
 
     private String createContent(String name) {
-        return name + "님, Sashimi Six에 오신 걸 환영합니다!\n"
+        return name + "님, FitGyeok에 오신 걸 환영합니다!\n"
                 + "다양한 강의를 통해 새로운 것을 배워보세요.";
     }
 }

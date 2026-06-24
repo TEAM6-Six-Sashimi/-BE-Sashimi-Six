@@ -74,7 +74,9 @@ public class UserController {
 
         return ResponseEntity.ok(new ChangePasswordResponse(
                 result.passwordChanged(),
-                result.requiresLogin()
+                result.requiresLogin(),
+                result.accessToken(),
+                result.refreshToken()
         ));
     }
 
