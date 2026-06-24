@@ -25,38 +25,54 @@ public class ResumeCareer {
             String jobTitle
     ) {
         if (companyName == null || companyName.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_CAREER
+            );
         }
 
         if (startYearMonth == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_CAREER
+            );
         }
 
         if (currentlyEmployed && endYearMonth != null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_CAREER
+            );
         }
 
         if (!currentlyEmployed && endYearMonth == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_CAREER
+            );
         }
 
         if (endYearMonth != null
                 && endYearMonth.isBefore(startYearMonth)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_CAREER
+            );
         }
 
         if (employmentType == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_CAREER
+            );
         }
 
         if (employmentType == EmploymentType.OTHER
                 && (customEmploymentType == null
                 || customEmploymentType.isBlank())) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_CAREER
+            );
         }
 
         if (jobTitle == null || jobTitle.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_CAREER
+            );
         }
 
         this.companyName = companyName.trim();

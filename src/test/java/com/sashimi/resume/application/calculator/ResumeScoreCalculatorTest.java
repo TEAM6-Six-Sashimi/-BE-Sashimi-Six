@@ -194,9 +194,9 @@ class ResumeScoreCalculatorTest {
                 "한국대학교",
                 YearMonth.of(2016, 3),
                 YearMonth.of(2020, 2),
-                EducationDegree.BACHELOR,
-                "컴퓨터공학과",
                 GraduationStatus.GRADUATED,
+                "컴퓨터공학과",
+                EducationDegree.BACHELOR,
                 null
         );
     }

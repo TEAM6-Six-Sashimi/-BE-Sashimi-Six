@@ -34,6 +34,12 @@ public record ReviewResumeResult(
                 EnumSet.noneOf(ResumeReviewSection.class);
 
         for (SectionFeedbackResult feedback : feedbacks) {
+            if (feedback == null) {
+                throw new BusinessException(
+                        ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
+                );
+            }
+
             if (!sections.add(feedback.section())) {
                 throw new BusinessException(
                         ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK

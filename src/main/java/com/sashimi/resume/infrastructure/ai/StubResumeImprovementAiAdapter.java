@@ -27,6 +27,15 @@ public class StubResumeImprovementAiAdapter
             );
         }
 
+        if (sections.stream().anyMatch(
+                section -> section == null
+                        || section.score() >= 80
+        )) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
+            );
+        }
+
         if (prompt == null) {
             throw new BusinessException(
                     ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK

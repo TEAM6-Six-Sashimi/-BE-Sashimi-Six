@@ -1,8 +1,11 @@
 package com.sashimi.credit.infrastructure.persistence;
 
 import com.sashimi.credit.domain.model.CreditChargePayment;
+import com.sashimi.credit.domain.model.CreditChargePaymentStatus;
 import com.sashimi.credit.domain.repository.CreditChargePaymentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -28,5 +31,27 @@ public class CreditChargePaymentRepositoryAdapter implements CreditChargePayment
     public Optional<CreditChargePayment> findByOrderIdForUpdate(String orderId) {
         return springDataCreditChargePaymentRepository.findByOrderIdForUpdate(orderId)
                 .map(CreditChargePaymentJpaEntity::toDomain);
+    }
+
+    @Override
+    public PageResult findCompletedByUserId(Long userId, int page, int size) {
+        Page<CreditChargePaymentJpaEntity> result =
+                springDataCreditChargePaymentRepository
+                        .findAllByUserIdAndStatusOrderByApprovedAtDescIdDesc(
+                                userId,
+                                CreditChargePaymentStatus.DONE,
+                                PageRequest.of(page, size)
+                        );
+
+        return new PageResult(
+                result.getContent()
+                        .stream()
+                        .map(CreditChargePaymentJpaEntity::toDomain)
+                        .toList(),
+                result.getTotalElements(),
+                result.getTotalPages(),
+                result.getNumber(),
+                result.getSize()
+        );
     }
 }

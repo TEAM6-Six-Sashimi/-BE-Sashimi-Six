@@ -25,25 +25,42 @@ public class ResumeEducation {
             String minorOrResearch
     ) {
         if (schoolName == null || schoolName.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        if (startYearMonth == null || endYearMonth == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        if (endYearMonth.isBefore(startYearMonth)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        if (graduationStatus == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        if (major == null || major.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
-        if (degree == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_EDUCATION
+            );
         }
 
-        this.schoolName = schoolName;
+        if (startYearMonth == null || endYearMonth == null) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_EDUCATION
+            );
+        }
+
+        if (endYearMonth.isBefore(startYearMonth)) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_EDUCATION
+            );
+        }
+
+        if (graduationStatus == null) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_EDUCATION
+            );
+        }
+
+        if (major == null || major.isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_EDUCATION
+            );
+        }
+
+        if (degree == null) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_INVALID_EDUCATION
+            );
+        }
+
+        this.schoolName = schoolName.trim();
         this.startYearMonth = startYearMonth;
         this.endYearMonth = endYearMonth;
         this.graduationStatus = graduationStatus;
