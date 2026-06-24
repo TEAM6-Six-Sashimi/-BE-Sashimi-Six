@@ -2,6 +2,7 @@ package com.sashimi.credit.domain.repository;
 
 import com.sashimi.credit.domain.model.CreditChargePayment;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CreditChargePaymentRepository {
@@ -11,4 +12,9 @@ public interface CreditChargePaymentRepository {
     Optional<CreditChargePayment> findByOrderId(String orderId);
 
     Optional<CreditChargePayment> findByOrderIdForUpdate(String orderId);
+
+    PageResult findCompletedByUserId(Long userId, int page, int size);
+
+    record PageResult(List<CreditChargePayment> content, long totalElements, int totalPages, int page, int size) {
+    }
 }

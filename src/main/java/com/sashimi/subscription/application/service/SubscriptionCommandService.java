@@ -8,6 +8,8 @@ import com.sashimi.subscription.domain.repository.SubscriptionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @Transactional
 public class SubscriptionCommandService
@@ -31,6 +33,16 @@ public class SubscriptionCommandService
                                         ErrorCode.SUBSCRIPTION_NOT_FOUND
                                 )
                         );
+
+        if (!subscription.isActive(LocalDateTime.now())) {
+            subscriptionRepository.save(
+                    subscription.expire()
+            );
+
+            throw new BusinessException(
+                    ErrorCode.SUBSCRIPTION_NOT_ACTIVE
+            );
+        }
 
         Subscription cancelled =
                 subscription.cancelRenewal();
