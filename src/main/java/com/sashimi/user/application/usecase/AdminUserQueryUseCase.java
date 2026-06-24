@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface AdminUserQueryUseCase {
 
-    List<AdminUserListResponse> getUsers(String keyword, String role);
+    List<AdminUserListResponse> getUsers();
 
     AdminUserDetailResponse getUserDetail(Long userId);
 }

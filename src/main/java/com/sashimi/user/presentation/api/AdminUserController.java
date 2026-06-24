@@ -21,13 +21,10 @@ public class AdminUserController {
 
     private final AdminUserQueryUseCase adminUserQueryUseCase;
 
-    @Operation(summary = "전체 회원 목록 조회", description = "이름/아이디/이메일 검색, 역할 필터, 가입일 최신순 정렬. ROLE_ADMIN 권한 필요.")
+    @Operation(summary = "전체 회원 목록 조회", description = "전체 회원 목록을 가입일 최신순으로 반환합니다. ROLE_ADMIN 권한 필요.")
     @GetMapping
-    public ResponseEntity<List<AdminUserListResponse>> getUsers(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String role
-    ) {
-        return ResponseEntity.ok(adminUserQueryUseCase.getUsers(keyword, role));
+    public ResponseEntity<List<AdminUserListResponse>> getUsers() {
+        return ResponseEntity.ok(adminUserQueryUseCase.getUsers());
     }
 
     @Operation(summary = "회원 상세 조회", description = "특정 회원의 기본 정보를 조회합니다. ROLE_ADMIN 권한 필요.")
