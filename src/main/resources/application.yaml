@@ -11,9 +11,16 @@ spring:
       mode: never
 
   flyway:
-    locations: classpath:db/migration
+    locations:
+      - classpath:db/migration/common
+      - classpath:db/migration/be1
+      - classpath:db/migration/be2
+      - classpath:db/migration/be3
+      - classpath:db/migration/be4
+      - classpath:db/migration/be5
     baseline-on-migrate: true
     encoding: UTF-8
+    out-of-order: true
 
 
   jpa:
