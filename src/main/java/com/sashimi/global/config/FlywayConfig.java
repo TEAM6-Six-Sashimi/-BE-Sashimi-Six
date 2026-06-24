@@ -16,7 +16,14 @@ public class FlywayConfig {
     public Flyway flyway(DataSource dataSource) {
         return Flyway.configure()
                 .dataSource(dataSource)
-                .locations("classpath:db/migration")
+                .locations(
+                        "classpath:db/migration/common",
+                        "classpath:db/migration/be1",
+                        "classpath:db/migration/be2",
+                        "classpath:db/migration/be3",
+                        "classpath:db/migration/be4",
+                        "classpath:db/migration/be5"
+                )
                 .baselineOnMigrate(true)
                 .encoding(StandardCharsets.UTF_8)
                 .load();
