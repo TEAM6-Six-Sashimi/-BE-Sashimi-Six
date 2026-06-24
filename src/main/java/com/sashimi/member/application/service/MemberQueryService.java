@@ -1,5 +1,7 @@
 package com.sashimi.member.application.service;
 
+import com.sashimi.category.domain.model.Category;
+import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.member.application.usecase.MemberQueryUseCase;
@@ -29,6 +31,7 @@ public class MemberQueryService implements MemberQueryUseCase {
 
     private final InstructorApplicationRepository instructorApplicationRepository;
     private final UserRepository userRepository;
+    private final CategoryRepository categoryRepository;
 
     @Override
     public List<InstructorApplicationListResponse> getPendingInstructorApplications() {
@@ -37,7 +40,10 @@ public class MemberQueryService implements MemberQueryUseCase {
                 .map(application -> {
                     User user = userRepository.findById(application.getUserId())
                             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-                    return InstructorApplicationListResponse.of(application, user);
+                    String categoryName = categoryRepository.findById(application.getCategoryId())
+                            .map(Category::getName)
+                            .orElse(null);
+                    return InstructorApplicationListResponse.of(application, user, categoryName);
                 })
                 .toList();
     }
