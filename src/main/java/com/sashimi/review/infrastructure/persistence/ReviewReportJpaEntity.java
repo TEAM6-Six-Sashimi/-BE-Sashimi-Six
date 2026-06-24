@@ -53,9 +53,11 @@ public class ReviewReportJpaEntity {
     }
 
     public static ReviewReportJpaEntity fromDomain(ReviewReport report) {
-        return new ReviewReportJpaEntity(
+        ReviewReportJpaEntity entity = new ReviewReportJpaEntity(
                 report.getReviewId(), report.getReporterId(), report.getCategory(),
                 report.getReason(), report.getStatus(), report.getCreatedAt()
         );
+        entity.id = report.getId();
+        return entity;
     }
 }
