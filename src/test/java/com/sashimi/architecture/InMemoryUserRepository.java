@@ -1,5 +1,6 @@
 package com.sashimi.architecture;
 
+import com.sashimi.user.domain.model.Role;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.model.UserStatus;
 import com.sashimi.user.domain.repository.UserRepository;
@@ -23,7 +24,7 @@ public class InMemoryUserRepository implements UserRepository {
                     user.getEmail(), user.getPhone(), user.getBirthDate(),
                     user.getRole(), user.getStatus(), user.isEmailVerified(),
                     user.getReferralCode(), user.getInterestCategoryIds(),
-                    user.getCreatedAt(), user.getDeactivatedAt(),
+                    user.getCreatedAt(), user.getDeactivatedAt(), user.getLastLoginAt(),
                     user.isMarketingConsent(), user.isEmailConsent(), user.isAiConsent()
             );
             store.put(saved.getId(), saved);
@@ -79,6 +80,20 @@ public class InMemoryUserRepository implements UserRepository {
         return store.values().stream()
                 .filter(u -> u.getStatus() == status)
                 .filter(u -> u.getDeactivatedAt() != null && u.getDeactivatedAt().isBefore(dateTime))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<User> searchForAdmin(String keyword, Role role) {
+        return store.values().stream()
+                .filter(u -> u.getStatus() != UserStatus.DELETED)
+                .filter(u -> role == null || u.getRole() == role)
+                .filter(u -> keyword == null || keyword.isBlank()
+                        || u.getName().contains(keyword)
+                        || u.getLoginId().contains(keyword)
+                        || u.getEmail().contains(keyword))
+                .sorted(Comparator.comparing(User::getCreatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
     }
 }

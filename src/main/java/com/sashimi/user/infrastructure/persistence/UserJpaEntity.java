@@ -68,6 +68,9 @@ public class UserJpaEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deactivatedAt;
 
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
     @Column(name = "marketing_consent", nullable = false)
     private boolean marketingConsent;
 
@@ -92,6 +95,7 @@ public class UserJpaEntity {
         entity.referralCode = user.getReferralCode();
         entity.interestCategoryIds = user.getInterestCategoryIds();
         entity.deactivatedAt = user.getDeactivatedAt();
+        entity.lastLoginAt = user.getLastLoginAt();
         entity.marketingConsent = user.isMarketingConsent();
         entity.emailConsent = user.isEmailConsent();
         entity.aiConsent = user.isAiConsent();
@@ -101,6 +105,6 @@ public class UserJpaEntity {
     public User toDomain() {
         return new User(id, name, loginId, password, email, phone, birthDate, role, status,
                 emailVerified, referralCode, interestCategoryIds, createdAt, deactivatedAt,
-                marketingConsent, emailConsent, aiConsent);
+                lastLoginAt, marketingConsent, emailConsent, aiConsent);
     }
 }

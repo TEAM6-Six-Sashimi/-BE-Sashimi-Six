@@ -1,5 +1,6 @@
 package com.sashimi.user.infrastructure.persistence;
 
+import com.sashimi.user.domain.model.Role;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.model.UserStatus;
 import com.sashimi.user.domain.repository.UserRepository;
@@ -70,6 +71,11 @@ public class UserRepositoryAdapter implements UserRepository {
                 .toList();
     }
 
-
-
+    @Override
+    public List<User> searchForAdmin(String keyword, Role role) {
+        return springDataUserRepository.searchForAdmin(keyword, role)
+                .stream()
+                .map(UserJpaEntity::toDomain)
+                .toList();
+    }
 }

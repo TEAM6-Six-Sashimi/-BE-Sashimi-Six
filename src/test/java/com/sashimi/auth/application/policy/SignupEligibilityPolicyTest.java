@@ -129,7 +129,7 @@ class SignupEligibilityPolicyTest {
                 true,
                 "REF12345",
                 List.of(10L),
-                null, null,
+                null, null, null,
                 false, false, false
         );
     }

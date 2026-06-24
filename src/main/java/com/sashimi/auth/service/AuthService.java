@@ -182,6 +182,9 @@ public class AuthService {
         User user = userRepository.findByLoginId(authentication.getName())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
+        user.updateLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
         TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
 
         LocalDateTime refreshExpiryDate = LocalDateTime.now()

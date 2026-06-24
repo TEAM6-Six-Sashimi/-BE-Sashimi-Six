@@ -2,6 +2,7 @@ package com.sashimi.user.application.service;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.security.jwt.JwtTokenProvider;
 import com.sashimi.token.service.RefreshService;
 import com.sashimi.user.application.command.ChangePasswordCommand;
 import com.sashimi.user.application.command.WithdrawUserCommand;
@@ -31,6 +32,7 @@ class UserAccountServiceTest {
     private UserRepository userRepository;
     private PasswordEncoder passwordEncoder;
     private RefreshService refreshService;
+    private JwtTokenProvider jwtTokenProvider;
     private ApplicationEventPublisher eventPublisher;
 
     private UserAccountService userAccountService;
@@ -40,12 +42,14 @@ class UserAccountServiceTest {
         userRepository = mock(UserRepository.class);
         passwordEncoder = mock(PasswordEncoder.class);
         refreshService = mock(RefreshService.class);
+        jwtTokenProvider = mock(JwtTokenProvider.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
 
         userAccountService = new UserAccountService(
                 userRepository,
                 passwordEncoder,
                 refreshService,
+                jwtTokenProvider,
                 eventPublisher
         );
     }
@@ -150,7 +154,7 @@ class UserAccountServiceTest {
                 true,
                 "ABC12345",
                 List.of(1L),
-                null, null,
+                null, null, null,
                 false, false, false
         );
     }

@@ -1,5 +1,6 @@
 package com.sashimi.user.domain.repository;
 
+import com.sashimi.user.domain.model.Role;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.model.UserStatus;
 
@@ -26,4 +27,6 @@ public interface UserRepository {
     boolean existsByReferralCode(String referralCode);
 
     List<User> findAllByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime);
+
+    List<User> searchForAdmin(String keyword, Role role);
 }
