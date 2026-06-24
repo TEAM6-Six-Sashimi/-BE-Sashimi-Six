@@ -5,6 +5,9 @@ import com.sashimi.certificate.application.command.RegisterCertificateCommand;
 import com.sashimi.certificate.application.usecase.CertificateCommandUseCase;
 import com.sashimi.certificate.application.usecase.CertificateQueryUseCase;
 import com.sashimi.certificate.presentation.api.response.CertificateResponse;
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -12,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,13 +36,19 @@ public class CertificateController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "자격증 등록 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "OCR 검증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 계정만 접근 가능"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping(value = "/{userId}/certificates", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<CertificateResponse>> registerCertificates(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long userId,
             @RequestPart("files") List<MultipartFile> files
     ) throws Exception {
+        if (!principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         List<RegisterCertificateCommand.FileEntry> fileEntries = new java.util.ArrayList<>();
         for (MultipartFile file : files) {
             fileEntries.add(new RegisterCertificateCommand.FileEntry(
@@ -57,14 +67,20 @@ public class CertificateController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "자격증 삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 계정만 접근 가능"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "자격증을 찾을 수 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @DeleteMapping("/{userId}/certificates/{certificationId}")
     public ResponseEntity<Void> deleteCertificate(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long userId,
             @PathVariable Long certificationId
     ) {
+        if (!principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         certificateCommandUseCase.deleteCertificate(
                 new DeleteCertificateCommand(userId, certificationId)
         );
@@ -75,12 +91,18 @@ public class CertificateController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 계정만 접근 가능"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @GetMapping("/{userId}/certificates")
     public ResponseEntity<List<CertificateResponse>> getCertificates(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long userId
     ) {
+        if (!principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         return ResponseEntity.ok(certificateQueryUseCase.getCertificates(userId));
     }
 }
