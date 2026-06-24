@@ -114,8 +114,8 @@ public class EmailVerificationService implements EmailVerificationUseCase {
 
     private String createSubject(VerificationPurpose purpose) {
         return switch (purpose) {
-            case SIGNUP -> "[Sashimi Six] 회원가입 이메일 인증 코드";
-            case PASSWORD_RESET -> "[Sashimi Six] 비밀번호 재설정 인증 코드";
+            case SIGNUP -> "[FitGyeok] 회원가입 이메일 인증 코드";
+            case PASSWORD_RESET -> "[FitGyeok] 비밀번호 재설정 인증 코드";
         };
     }
 
