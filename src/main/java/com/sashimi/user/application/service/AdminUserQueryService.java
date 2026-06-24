@@ -22,7 +22,7 @@ public class AdminUserQueryService implements AdminUserQueryUseCase {
 
     @Override
     public List<AdminUserListResponse> getUsers() {
-        return userRepository.searchForAdmin(null, null)
+        return userRepository.findAllForAdmin()
                 .stream()
                 .map(AdminUserListResponse::from)
                 .toList();

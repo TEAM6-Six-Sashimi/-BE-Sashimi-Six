@@ -1,6 +1,5 @@
 package com.sashimi.architecture;
 
-import com.sashimi.user.domain.model.Role;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.model.UserStatus;
 import com.sashimi.user.domain.repository.UserRepository;
@@ -84,14 +83,9 @@ public class InMemoryUserRepository implements UserRepository {
     }
 
     @Override
-    public List<User> searchForAdmin(String keyword, Role role) {
+    public List<User> findAllForAdmin() {
         return store.values().stream()
                 .filter(u -> u.getStatus() != UserStatus.DELETED)
-                .filter(u -> role == null || u.getRole() == role)
-                .filter(u -> keyword == null || keyword.isBlank()
-                        || u.getName().contains(keyword)
-                        || u.getLoginId().contains(keyword)
-                        || u.getEmail().contains(keyword))
                 .sorted(Comparator.comparing(User::getCreatedAt,
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
