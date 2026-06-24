@@ -72,6 +72,11 @@ public enum ErrorCode {
     PAYMENT_SUBSCRIPTION_PLAN_REQUIRED(400, "PAYMENT_012", "구독권 결제에는 구독 플랜이 필요합니다."),
     PAYMENT_PLAN_NOT_ALLOWED(400, "PAYMENT_013", "강의 또는 장바구니 결제에는 구독 플랜을 전달할 수 없습니다."),
     PAYMENT_SUBSCRIPTION_COURSE_ID_NOT_ALLOWED(400, "PAYMENT_014", "구독권 결제에는 강의 ID를 전달할 수 없습니다."),
+    PAYMENT_IDEMPOTENCY_KEY_INVALID(400, "PAYMENT_015", "결제 멱등성 키가 올바르지 않습니다."),
+    PAYMENT_IDEMPOTENCY_KEY_CONFLICT(409, "PAYMENT_016", "동일한 멱등성 키가 다른 결제 요청에 사용되었습니다."),
+    PAYMENT_IDEMPOTENCY_PROCESSING(409, "PAYMENT_017", "동일한 결제 요청이 처리 중입니다."),
+    PAYMENT_IDEMPOTENCY_RESULT_INVALID(500, "PAYMENT_018", "기존 결제 결과를 복원할 수 없습니다."),
+    PAYMENT_IDEMPOTENCY_FAILED(409, "PAYMENT_019", "이전에 실패한 결제 요청입니다. 새로운 멱등성 키로 다시 요청해 주세요."),
 
     CREDIT_INVALID_AMOUNT(400, "CREDIT_001", "크레딧 금액이 올바르지 않습니다."),
     CREDIT_INSUFFICIENT_BALANCE(400, "CREDIT_002", "크레딧 잔액이 부족합니다."),

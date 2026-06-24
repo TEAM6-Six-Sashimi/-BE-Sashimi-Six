@@ -10,6 +10,7 @@ import com.sashimi.payment.presentation.api.response.PaymentPreviewResponse;
 import com.sashimi.payment.presentation.api.response.PaymentResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -158,6 +159,11 @@ public class PaymentController {
     @PostMapping("/checkout")
     public ResponseEntity<PaymentResponse> checkout(
             @AuthenticationPrincipal CustomUserPrincipal principal,
+            @Parameter(description = "중복 결제 방지를 위한 요청 식별 키",
+                    required = true,
+                    example = "550e8400-e29b-41d4-a716-446655440000")
+            @RequestHeader(value = "Idempotency-Key", required = false)
+            String idempotencyKey,
             @RequestBody @Valid PaymentCheckoutRequest request
     ) {
         PaymentCommandUseCase.PaymentResult result =
@@ -167,7 +173,8 @@ public class PaymentController {
                                 request.purchaseType(),
                                 request.courseId(),
                                 request.planCode(),
-                                request.agreed()
+                                request.agreed(),
+                                idempotencyKey
                         )
                 );
 
