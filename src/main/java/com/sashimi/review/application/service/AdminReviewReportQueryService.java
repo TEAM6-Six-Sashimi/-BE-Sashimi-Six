@@ -68,7 +68,9 @@ public class AdminReviewReportQueryService implements AdminReviewReportQueryUseC
                 reporterLoginId,
                 report.getCreatedAt(),
                 report.getCategory(),
-                report.getReason()
+                report.getReason(),
+                review.getStatus(),
+                report.getStatus()
         );
     }
 }

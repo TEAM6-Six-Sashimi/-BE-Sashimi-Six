@@ -2,6 +2,7 @@ package com.sashimi.review.application.usecase;
 
 import com.sashimi.review.domain.model.ReviewReportCategory;
 import com.sashimi.review.domain.model.ReviewReportStatus;
+import com.sashimi.review.domain.model.ReviewStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,6 +29,8 @@ public interface AdminReviewReportQueryUseCase {
             String reporterLoginId,
             LocalDateTime reportedAt,
             ReviewReportCategory category,
-            String reason
+            String reason,
+            ReviewStatus reviewStatus,
+            ReviewReportStatus reportStatus
     ) {}
 }
