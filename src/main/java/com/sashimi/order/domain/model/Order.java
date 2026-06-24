@@ -14,7 +14,8 @@ public class Order {
     private final Long userId;
 
     private Order(Long id, String orderNo, Long totalAmount, Long discountAmount,
-                  Long finalAmount, OrderStatus status, LocalDateTime createdAt, Long userId) {
+                  Long finalAmount, OrderStatus status, LocalDateTime createdAt, Long userId
+    ) {
         this.id = id;
         this.orderNo = orderNo;
         this.totalAmount = totalAmount;

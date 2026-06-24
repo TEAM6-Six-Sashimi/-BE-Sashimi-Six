@@ -100,6 +100,15 @@ public class CreditChargePayment {
         }
     }
 
+    public void validatePaymentKey(String paymentKey) {
+        if (this.paymentKey == null
+                || !this.paymentKey.equals(paymentKey)) {
+            throw new BusinessException(
+                    ErrorCode.CREDIT_EXTERNAL_PAYMENT_RESPONSE_MISMATCH
+            );
+        }
+    }
+
     public void markDone(
             String paymentKey,
             String paymentMethod,
@@ -130,6 +139,10 @@ public class CreditChargePayment {
 
         this.status = CreditChargePaymentStatus.FAILED;
         this.failureReason = failureReason;
+    }
+
+    public boolean isFailed() {
+        return status == CreditChargePaymentStatus.FAILED;
     }
 
     public boolean isDone() {

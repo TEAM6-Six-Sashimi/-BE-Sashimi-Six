@@ -67,7 +67,7 @@ class PaymentCommandServiceTest {
     private SubscriptionRepository subscriptionRepository;
     private SubscriptionPaymentRepository subscriptionPaymentRepository;
 
-    private PaymentCommandService paymentCommandService;
+    private PaymentCheckoutTransactionService paymentCommandService;
 
     @BeforeEach
     void setUp() {
@@ -98,7 +98,7 @@ class PaymentCommandServiceTest {
         subscriptionPaymentRepository =
                 mock(SubscriptionPaymentRepository.class);
 
-        paymentCommandService = new PaymentCommandService(
+        paymentCommandService = new PaymentCheckoutTransactionService(
                 cartItemRepository,
                 coursePurchasePolicy,
                 enrollmentPort,
