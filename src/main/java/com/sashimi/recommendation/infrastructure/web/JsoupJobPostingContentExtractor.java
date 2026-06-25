@@ -8,6 +8,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
 
+import java.net.InetAddress;
+import java.net.URI;
+
 @Component
 public class JsoupJobPostingContentExtractor implements JobPostingContentExtractor {
 
@@ -44,10 +47,13 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
+        validatePublicHttpUrl(sourceUrl);
+
         try {
             Document document = Jsoup.connect(sourceUrl)
                     .userAgent("Mozilla/5.0")
                     .timeout(TIMEOUT_MILLIS)
+                    .followRedirects(false)
                     .get();
 
             document.select("script, style, noscript").remove();
@@ -74,5 +80,35 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
         }
 
         return text.substring(0, MAX_TEXT_LENGTH);
+    }
+
+    private void validatePublicHttpUrl(String sourceUrl) {
+        try {
+            URI uri = URI.create(sourceUrl);
+
+            String scheme = uri.getScheme();
+            if (scheme == null
+                    || !(scheme.equalsIgnoreCase("http")
+                    || scheme.equalsIgnoreCase("https"))) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+
+            if (uri.getHost() == null || uri.getHost().isBlank()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+
+            InetAddress address = InetAddress.getByName(uri.getHost());
+
+            if (address.isLoopbackAddress()
+                    || address.isLinkLocalAddress()
+                    || address.isSiteLocalAddress()
+                    || address.isAnyLocalAddress()) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
     }
 }

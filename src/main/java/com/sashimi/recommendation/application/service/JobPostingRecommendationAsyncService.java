@@ -10,11 +10,16 @@ import com.sashimi.recommendation.application.port.JobPostingRecommendationAnaly
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzeResult;
 import com.sashimi.recommendation.domain.model.JobPostingRecommendation;
 import com.sashimi.recommendation.domain.repository.JobPostingRecommendationRepository;
+import com.sashimi.resume.domain.model.Resume;
+import com.sashimi.resume.domain.repository.ResumeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -25,19 +30,28 @@ public class JobPostingRecommendationAsyncService {
     private final AiPromptRepository aiPromptRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final CertificateRecommendationEnricher certificateRecommendationEnricher;
+    private final ResumeRepository resumeRepository;
+    private final OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter;
+    private final CourseRecommendationMatcher courseRecommendationMatcher;
 
     public JobPostingRecommendationAsyncService(
             JobPostingRecommendationRepository recommendationRepository,
             JobPostingRecommendationAnalyzePort analyzePort,
             AiPromptRepository aiPromptRepository,
             ApplicationEventPublisher eventPublisher,
-            CertificateRecommendationEnricher certificateRecommendationEnricher
+            CertificateRecommendationEnricher certificateRecommendationEnricher,
+            ResumeRepository resumeRepository,
+            OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter,
+            CourseRecommendationMatcher courseRecommendationMatcher
     ) {
         this.recommendationRepository = recommendationRepository;
         this.analyzePort = analyzePort;
         this.aiPromptRepository = aiPromptRepository;
         this.eventPublisher = eventPublisher;
         this.certificateRecommendationEnricher = certificateRecommendationEnricher;
+        this.resumeRepository = resumeRepository;
+        this.ownedCertificateRecommendationFilter = ownedCertificateRecommendationFilter;
+        this.courseRecommendationMatcher = courseRecommendationMatcher;
     }
 
     @Async
@@ -54,14 +68,25 @@ public class JobPostingRecommendationAsyncService {
 
             JobPostingRecommendationAnalyzeResult analyzeResult = analyzePort.analyze(recommendation, prompt);
 
+            Optional<Resume> resume = findResumeForCertificateFilter(recommendation);
+
+            var filteredCertificates = ownedCertificateRecommendationFilter.filter(
+                    analyzeResult.certificates(),
+                    resume.orElse(null)
+            );
+
             var enrichedCertificates = certificateRecommendationEnricher.enrich(
-                    analyzeResult.certificates()
+                    filteredCertificates
+            );
+
+            var matchedCourses = courseRecommendationMatcher.match(
+                    enrichedCertificates
             );
 
             JobPostingRecommendation analyzedRecommendation = recommendation.analyzed(
                     analyzeResult.summary(),
-                    analyzeResult.fitAnalysis(),
-                    analyzeResult.courses(),
+                    recommendation.resumeBased() ? analyzeResult.fitAnalysis() : null,
+                    matchedCourses,
                     enrichedCertificates
             );
 
@@ -77,7 +102,7 @@ public class JobPostingRecommendationAsyncService {
                             savedRecommendation.userId(),
                             savedRecommendation.recommendationId(),
                             savedRecommendation.summary() == null ? null : savedRecommendation.summary().jobRole(),
-                            savedRecommendation.createdAt()
+                            LocalDateTime.now()
                     )
             );
 
@@ -87,5 +112,18 @@ public class JobPostingRecommendationAsyncService {
             JobPostingRecommendation failedRecommendation = recommendation.failed();
             recommendationRepository.save(failedRecommendation);
         }
+    }
+
+    private Optional<Resume> findResumeForCertificateFilter(
+            JobPostingRecommendation recommendation
+    ) {
+        if (recommendation.resumeId() == null) {
+            return Optional.empty();
+        }
+
+        return resumeRepository.findByIdAndUserId(
+                recommendation.resumeId(),
+                recommendation.userId()
+        );
     }
 }

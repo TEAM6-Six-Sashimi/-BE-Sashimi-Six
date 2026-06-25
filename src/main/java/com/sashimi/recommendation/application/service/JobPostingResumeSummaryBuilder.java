@@ -48,8 +48,7 @@ public class JobPostingResumeSummaryBuilder {
                                 education.degree(),
                                 education.graduationStatus()
                         ))
-                .toList()
-                .toString();
+                .collect(java.util.stream.Collectors.joining("\n"));
     }
 
     private String buildCareers(
@@ -93,6 +92,10 @@ public class JobPostingResumeSummaryBuilder {
         YearMonth end = career.currentlyEmployed()
                 ? YearMonth.now()
                 : career.endYearMonth();
+
+        if (end == null) {
+            return "%s ~ 종료월 미입력".formatted(career.startYearMonth());
+        }
 
         long months = ChronoUnit.MONTHS.between(
                 career.startYearMonth(),
