@@ -66,6 +66,9 @@ dependencies {
 // AWS SDK
     implementation platform('software.amazon.awssdk:bom:2.26.31')
     implementation 'software.amazon.awssdk:s3'
+
+// CODEF
+    implementation 'io.codef.api:easycodef-java:1.0.6'
 }
 
 tasks.named('test') {

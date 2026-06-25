@@ -2,6 +2,7 @@ package com.sashimi.certificate.application.service;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.certificate.application.command.RegisterCertificateCommand;
+import com.sashimi.certificate.application.port.CertificationVerificationPort;
 import com.sashimi.certificate.application.port.OcrPort;
 import com.sashimi.certificate.domain.model.UserCertification;
 import com.sashimi.certificate.domain.repository.UserCertificationRepository;
@@ -19,20 +20,23 @@ class CertificateCommandServiceTest {
 
     private UserCertificationRepository userCertificationRepository;
     private OcrPort ocrPort;
+    private CertificationVerificationPort certificationVerificationPort;
     private CertificateCommandService certificateCommandService;
 
     @BeforeEach
     void setUp() {
         userCertificationRepository = mock(UserCertificationRepository.class);
         ocrPort = mock(OcrPort.class);
+        certificationVerificationPort = mock(CertificationVerificationPort.class);
         certificateCommandService = new CertificateCommandService(
                 userCertificationRepository,
-                ocrPort
+                ocrPort,
+                certificationVerificationPort
         );
     }
 
     @Test
-    void OCR_성공시_자격증이_VERIFIED로_저장된다() {
+    void OCR_성공시_자격증이_PENDING으로_저장된다() {
         // given
         byte[] fileBytes = "test".getBytes();
         String fileName = "자격증.pdf";
