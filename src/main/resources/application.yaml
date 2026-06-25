@@ -40,6 +40,10 @@ management:
   endpoint:
     health:
       show-details: always
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
 
 jwt:
   access-token-validity-in-milliseconds: 10800000

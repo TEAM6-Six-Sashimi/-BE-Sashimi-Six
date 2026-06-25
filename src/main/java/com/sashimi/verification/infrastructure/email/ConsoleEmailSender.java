@@ -12,6 +12,6 @@ public class ConsoleEmailSender implements EmailSender {
 
     @Override
     public void send(String to, String subject, String content) {
-        log.info("Email send requested. to={}, subject={}, content={}", to, subject, content);
+        log.info("event=email_sent to={} subject={}", to, subject);
     }
 }
