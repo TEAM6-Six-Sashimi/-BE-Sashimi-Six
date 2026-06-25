@@ -4,7 +4,6 @@ import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzeResult;
 import com.sashimi.recommendation.domain.model.CertificateRecommendation;
-import com.sashimi.recommendation.domain.model.CourseRecommendation;
 import com.sashimi.recommendation.domain.model.FitAnalysisCategory;
 import com.sashimi.recommendation.domain.model.FitAnalysisItem;
 import com.sashimi.recommendation.domain.model.FitStatus;
@@ -93,22 +92,7 @@ public class StubJobPostingRecommendationAnalyzeAdapter
                                 "보통"
                         )
                 ),
-                List.of(
-                        new CourseRecommendation(
-                                1L,
-                                "실무에서 바로 쓰는 GraphQL 완전 정복",
-                                "김민준",
-                                "GraphQL",
-                                "공고의 우대사항인 GraphQL 역량을 보완하는 데 적합합니다."
-                        ),
-                        new CourseRecommendation(
-                                2L,
-                                "Docker & Kubernetes 입문부터 실전까지",
-                                "이서연",
-                                "Docker",
-                                "Docker 기반 배포 환경 이해를 높이는 데 도움이 됩니다."
-                        )
-                )
+                List.of()
         );
     }
 }

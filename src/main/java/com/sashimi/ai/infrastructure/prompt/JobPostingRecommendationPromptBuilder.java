@@ -41,7 +41,9 @@ public class JobPostingRecommendationPromptBuilder {
             - Analyze fit against the user's resume information if resumeBased is true.
             - If resumeBased is false, still provide summary, recommended certificates, and courses, but use NOT_SATISFIED or PARTIALLY_SATISFIED conservatively for fitAnalysis.
             - Recommend certificates that the user does not already have when possible.
-            - Recommend courses related to recommended certificates or missing skills.
+            - Do not generate real course recommendations.
+            - Set courses to an empty array.
+            - The backend will match recommended certificates with internal LMS courses.
             - Return Korean text for human-facing fields.
 
             Important enum rules:
@@ -106,15 +108,7 @@ public class JobPostingRecommendationPromptBuilder {
                   "difficulty": "보통"
                 }
               ],
-              "courses": [
-                {
-                  "courseId": null,
-                  "title": "추천 강의명",
-                  "instructor": "강사명",
-                  "matchedSkill": "SQL",
-                  "reason": "부족한 역량 보완에 도움이 되는 강의입니다."
-                }
-              ]
+              "courses": []
             }
 
             Prompt name: %s
