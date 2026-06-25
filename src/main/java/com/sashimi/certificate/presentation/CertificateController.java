@@ -2,8 +2,10 @@ package com.sashimi.certificate.presentation;
 
 import com.sashimi.certificate.application.command.DeleteCertificateCommand;
 import com.sashimi.certificate.application.command.RegisterCertificateCommand;
+import com.sashimi.certificate.application.command.VerifyCertificateCommand;
 import com.sashimi.certificate.application.usecase.CertificateCommandUseCase;
 import com.sashimi.certificate.application.usecase.CertificateQueryUseCase;
+import com.sashimi.certificate.presentation.api.request.VerifyCertificateRequest;
 import com.sashimi.certificate.presentation.api.response.CertificateResponse;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -85,6 +87,31 @@ public class CertificateController {
                 new DeleteCertificateCommand(userId, certificationId)
         );
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "자격증 진위 검증", description = "CODEF PASS 인증으로 자격증 진위 여부를 검증합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검증 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "검증 실패 또는 자격증 불일치"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 계정만 접근 가능"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "자격증을 찾을 수 없음")
+    })
+    @PostMapping("/{userId}/certificates/{certificationId}/verify")
+    public ResponseEntity<Void> verifyCertificate(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable Long userId,
+            @PathVariable Long certificationId,
+            @RequestBody VerifyCertificateRequest request
+    ) {
+        if (!principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        certificateCommandUseCase.verifyCertificate(
+                new VerifyCertificateCommand(certificationId, userId, request.userName(), request.identity(), request.phoneNo())
+        );
+        return ResponseEntity.ok().build();
     }
 
     @Operation(summary = "자격증 목록 조회", description = "사용자의 자격증 목록을 조회합니다.")
