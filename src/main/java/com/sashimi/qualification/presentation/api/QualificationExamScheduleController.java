@@ -23,6 +23,10 @@ public class QualificationExamScheduleController {
     public ResponseEntity<QualificationExamScheduleResponse> getNext(
             @RequestParam String qualificationName
     ) {
+        if (qualificationName == null || qualificationName.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         return repository
                 .findFirstByQualificationNameAndDocExamStartDateGreaterThanEqualOrderByDocExamStartDateAsc(
                         qualificationName,
