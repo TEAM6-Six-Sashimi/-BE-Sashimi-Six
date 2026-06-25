@@ -13,6 +13,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
@@ -345,10 +346,15 @@ public class QualificationExamScheduleSyncService {
             return null;
         }
 
-        return LocalDate.of(
-                Integer.parseInt(value.substring(0, 4)),
-                Integer.parseInt(value.substring(4, 6)),
-                Integer.parseInt(value.substring(6, 8))
+        String trimmed = value.trim();
+
+        if (!trimmed.matches("\\d{8}")) {
+            return null;
+        }
+
+        return LocalDate.parse(
+                trimmed,
+                DateTimeFormatter.BASIC_ISO_DATE
         );
     }
 

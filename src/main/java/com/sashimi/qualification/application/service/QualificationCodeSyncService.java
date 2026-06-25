@@ -111,6 +111,9 @@ public class QualificationCodeSyncService {
             LocalDateTime syncedAt
     ) {
         String jmCd = childText(item, "jmcd");
+        if (jmCd == null || jmCd.isBlank()) {
+            return;
+        }
         String qualificationName = childText(item, "jmfldnm");
         String qualificationTypeCode = childText(item, "qualgbcd");
         String qualificationTypeName = childText(item, "qualgbnm");

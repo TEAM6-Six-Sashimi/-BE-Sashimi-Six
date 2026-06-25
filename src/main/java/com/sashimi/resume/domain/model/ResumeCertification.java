@@ -36,11 +36,18 @@ public class ResumeCertification {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
+        String normalizedScoreOrGrade = normalize(scoreOrGrade);
+
+        if (normalizedScoreOrGrade != null && normalizedScoreOrGrade.length() > 100) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
         this.name = name.trim();
         this.type = type;
         this.issuer = issuer.trim();
         this.acquiredDate = acquiredDate;
-        this.scoreOrGrade = normalize(scoreOrGrade);
+        this.scoreOrGrade = normalizedScoreOrGrade;
+
     }
 
     private String normalize(String value) {

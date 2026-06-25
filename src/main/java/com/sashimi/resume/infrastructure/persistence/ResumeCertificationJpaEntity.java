@@ -58,7 +58,7 @@ public class ResumeCertificationJpaEntity {
     )
     private LocalDate acquiredDate;
 
-    @Column(name = "score_or_grade")
+    @Column(name = "score_or_grade", length = 100)
     private String scoreOrGrade;
 
     @Column(
