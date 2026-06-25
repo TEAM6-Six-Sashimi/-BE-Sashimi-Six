@@ -18,13 +18,13 @@ public class CodefCertificationAdapter implements CertificationVerificationPort 
     private static final String CERT_API_URL = "/v1/kr/public/mw/national-technical-certification/info";
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${codef.client-id}")
+    @Value("${codef.client-id:}")
     private String clientId;
 
-    @Value("${codef.client-secret}")
+    @Value("${codef.client-secret:}")
     private String clientSecret;
 
-    @Value("${codef.public-key}")
+    @Value("${codef.public-key:}")
     private String publicKey;
 
     @Override

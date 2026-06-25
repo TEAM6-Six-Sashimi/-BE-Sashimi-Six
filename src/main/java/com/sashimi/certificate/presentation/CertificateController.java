@@ -89,6 +89,7 @@ public class CertificateController {
         return ResponseEntity.noContent().build();
     }
 
+/*
     @Operation(summary = "자격증 진위 검증", description = "CODEF PASS 인증으로 자격증 진위 여부를 검증합니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "검증 성공"),
@@ -113,6 +114,7 @@ public class CertificateController {
         );
         return ResponseEntity.ok().build();
     }
+*/
 
     @Operation(summary = "자격증 목록 조회", description = "사용자의 자격증 목록을 조회합니다.")
     @ApiResponses({
