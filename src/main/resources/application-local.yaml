@@ -67,13 +67,13 @@ toss:
 
 external:
   ncs:
-    service-key: ${NCS_SERVICE_KEY}
+    service-key: ${NCS_SERVICE_KEY:}
   qualification-exam-schedule:
-    service-key: ${QUALIFICATION_EXAM_SERVICE_KEY}
+    service-key: ${QUALIFICATION_EXAM_SERVICE_KEY:}
   qualification-code:
-    service-key: ${QUALIFICATION_CODE_SERVICE_KEY}
+    service-key: ${QUALIFICATION_CODE_SERVICE_KEY:}
 
 codef:
-  client-id: ${CODEF_CLIENT_ID}
-  client-secret: ${CODEF_CLIENT_SECRET}
-  public-key: ${CODEF_PUBLIC_KEY}
+  client-id: ${CODEF_CLIENT_ID:}
+  client-secret: ${CODEF_CLIENT_SECRET:}
+  public-key: ${CODEF_PUBLIC_KEY:}
