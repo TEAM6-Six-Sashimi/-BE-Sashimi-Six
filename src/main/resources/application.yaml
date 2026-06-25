@@ -1,5 +1,6 @@
 spring:
-
+  application:
+    name: sashimi
 
   servlet:
     multipart:
@@ -30,6 +31,15 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
 
 jwt:
   access-token-validity-in-milliseconds: 10800000
