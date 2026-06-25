@@ -52,6 +52,16 @@ external:
     base-url: https://apis.data.go.kr/B490007/ncsInfo
     service-key: ${NCS_SERVICE_KEY}
     num-of-rows: 100
+
+  qualification-exam-schedule:
+    base-url: https://apis.data.go.kr/B490007/qualExamSchd
+    service-key: ${QUALIFICATION_EXAM_SERVICE_KEY}
+    num-of-rows: 50
+
+  qualification-code:
+    base-url: http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC
+    service-key: ${QUALIFICATION_CODE_SERVICE_KEY}
+
 # 배포 시 환경 변수를 정상적으로 사용하는 방법
 
 # 1. 구성 편집에 들어있는 환경 변수들을 별도의 파일에 작성한다. ex) .env or application-prod 해당 파일에.
