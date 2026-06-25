@@ -14,23 +14,17 @@ public record JobPostingRecommendationResponse(
         @Schema(description = "채용공고 추천 ID", example = "1")
         Long recommendationId,
 
-        @Schema(description = "AI가 분석한 직무명", example = "Frontend Developer")
-        String jobTitle,
-
         @Schema(description = "채용공고 분석 상태", example = "COMPLETED")
         RecommendationAnalysisStatus analysisStatus,
 
         @Schema(description = "이력서 기반 분석 여부", example = "true")
         boolean resumeBased,
 
-        @Schema(description = "이력서와 채용공고 요구 역량의 일치율. 이력서가 없으면 null", example = "56")
-        Integer matchRate,
+        @Schema(description = "채용공고 요약")
+        JobPostingSummaryResponse summary,
 
-        @ArraySchema(
-                schema = @Schema(implementation = RequiredSkillRecommendationResponse.class),
-                arraySchema = @Schema(description = "채용공고에서 추출된 요구 역량 목록")
-        )
-        List<RequiredSkillRecommendationResponse> requiredSkills,
+        @Schema(description = "공고 적합도 분석")
+        JobFitAnalysisResponse fitAnalysis,
 
         @ArraySchema(
                 schema = @Schema(implementation = CertificateRecommendationResponse.class),
@@ -40,7 +34,7 @@ public record JobPostingRecommendationResponse(
 
         @ArraySchema(
                 schema = @Schema(implementation = CourseRecommendationResponse.class),
-                arraySchema = @Schema(description = "역량 보완을 위한 추천 강의 목록")
+                arraySchema = @Schema(description = "추천 자격증 기반 강의 목록")
         )
         List<CourseRecommendationResponse> courses,
 
@@ -50,13 +44,10 @@ public record JobPostingRecommendationResponse(
     public static JobPostingRecommendationResponse from(JobPostingRecommendation recommendation) {
         return new JobPostingRecommendationResponse(
                 recommendation.recommendationId(),
-                recommendation.jobTitle(),
                 recommendation.analysisStatus(),
                 recommendation.resumeBased(),
-                recommendation.matchRate(),
-                recommendation.requiredSkills().stream()
-                        .map(RequiredSkillRecommendationResponse::from)
-                        .toList(),
+                JobPostingSummaryResponse.from(recommendation.summary()),
+                JobFitAnalysisResponse.from(recommendation.fitAnalysis()),
                 recommendation.certificates().stream()
                         .map(CertificateRecommendationResponse::from)
                         .toList(),

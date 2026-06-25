@@ -40,6 +40,13 @@ public class CategoryPortAdapter implements CategoryPort {
     }
 
     @Override
+    public String getMainCategoryNameById(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND))
+                .getName();
+    }
+
+    @Override
     public Long getNcsInfoIdByCategoryId(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND))

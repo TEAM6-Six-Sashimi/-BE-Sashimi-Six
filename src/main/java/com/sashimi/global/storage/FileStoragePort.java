@@ -16,4 +16,10 @@ public interface FileStoragePort {
     /** 영상 객체에 아카이브 태그(archive=true) 부착 → 라이프사이클이 콜드 스토리지로 이동 */
     void archiveFile(String s3Key);
     byte[] downloadPrivate(String s3Key);
+
+    /** 영상 시청용 presigned URL (sashimi-videos) */
+    String generateVideoUrl(String s3Key, int expiryMinutes);
+
+    /** 강의 자료 다운로드용 presigned URL (sashimi-attachments) */
+    String generateAttachmentUrl(String s3Key, int expiryMinutes);
 }

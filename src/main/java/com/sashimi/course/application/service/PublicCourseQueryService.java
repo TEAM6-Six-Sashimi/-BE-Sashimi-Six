@@ -1,6 +1,7 @@
 package com.sashimi.course.application.service;
 
 import com.sashimi.course.application.port.CategoryPort;
+import com.sashimi.course.application.port.CourseReviewPort;
 import com.sashimi.course.application.port.InstructorPort;
 import com.sashimi.course.application.port.NcsInfoQueryPort;
 import com.sashimi.course.application.port.NcsInfoView;
@@ -12,6 +13,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.storage.FileStoragePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,10 +29,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PublicCourseQueryService implements PublicCourseQueryUseCase {
 
+    /** 미리보기 영상 presigned URL 만료 (분) */
+    private static final int PREVIEW_VIDEO_URL_EXPIRY_MINUTES = 120;
+
     private final CourseRepository courseRepository;
     private final CategoryPort categoryPort;
     private final InstructorPort instructorPort;
     private final NcsInfoQueryPort ncsInfoQueryPort;
+    private final FileStoragePort fileStoragePort;
+    private final CourseReviewPort courseReviewPort;
 
     @Override
     public List<PublicCourseView> getAllApprovedCourses() {
@@ -61,7 +68,8 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
         if (course.getStatus() != CourseStatus.APPROVED) {
             throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
         }
-        String instructorName = instructorPort.getInstructorName(course.getInstructorId());
+        InstructorPort.InstructorInfo instructorInfo = instructorPort.getInstructorInfo(course.getInstructorId());
+        String mainCategoryName = categoryPort.getMainCategoryNameById(course.getCategoryId());
         String categoryName = categoryPort.getCategoryNameById(course.getCategoryId());
 
         Long ncsInfoId = categoryPort.getNcsInfoIdByCategoryId(course.getCategoryId());
@@ -71,10 +79,17 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                 .map(s -> new PublicCourseDetailView.SessionView(
                         s.getId(),
                         s.getTitle(),
-                        s.isPreview() ? s.getVideoUrl() : null,
+                        s.isPreview() ? resolveVideoUrl(s.getVideoUrl()) : null,
                         s.getDurationSeconds(),
                         s.getSessionOrder(),
                         s.isPreview()
+                ))
+                .toList();
+
+        List<PublicCourseDetailView.ReviewView> reviews = courseReviewPort.findActiveReviewsByCourseId(courseId)
+                .stream()
+                .map(r -> new PublicCourseDetailView.ReviewView(
+                        r.reviewId(), r.rating(), r.content(), r.writerLoginId(), r.createdAt()
                 ))
                 .toList();
 
@@ -82,8 +97,20 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                 course.getId(), course.getTitle(), course.getDescription(),
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getTotalDuration(), course.getRatingAvg(), course.getReviewCount(),
-                course.getStudentCount(), instructorName, categoryName, ncs, sessions
+                course.getStudentCount(),
+                new PublicCourseDetailView.InstructorView(
+                        instructorInfo.name(), instructorInfo.profileImagePath(),
+                        instructorInfo.bio(), instructorInfo.mainCareers(), instructorInfo.portfolioUrl()
+                ),
+                mainCategoryName, categoryName, ncs, course.getApprovedAt(), sessions, reviews
         );
+    }
+
+    private String resolveVideoUrl(String key) {
+        if (key == null || key.isBlank() || key.startsWith("http")) {
+            return key;
+        }
+        return fileStoragePort.generateVideoUrl(key, PREVIEW_VIDEO_URL_EXPIRY_MINUTES);
     }
 
     private Set<Long> resolvePopularIds(List<Course> courses) {

@@ -13,7 +13,7 @@ public class CourseArchiveScheduler {
 
     private final CourseCommandUseCase courseCommandUseCase;
 
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 0 2 * * *", zone = "Asia/Seoul")
     public void archiveInactiveCourses() {
         log.info("[CourseArchive] 비공개+무수강 강의 영상 아카이브 시작");
         int archived = courseCommandUseCase.archiveInactiveCourses();
