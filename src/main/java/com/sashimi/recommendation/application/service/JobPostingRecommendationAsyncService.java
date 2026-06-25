@@ -24,17 +24,20 @@ public class JobPostingRecommendationAsyncService {
     private final JobPostingRecommendationAnalyzePort analyzePort;
     private final AiPromptRepository aiPromptRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final CertificateRecommendationEnricher certificateRecommendationEnricher;
 
     public JobPostingRecommendationAsyncService(
             JobPostingRecommendationRepository recommendationRepository,
             JobPostingRecommendationAnalyzePort analyzePort,
             AiPromptRepository aiPromptRepository,
-            ApplicationEventPublisher eventPublisher
+            ApplicationEventPublisher eventPublisher,
+            CertificateRecommendationEnricher certificateRecommendationEnricher
     ) {
         this.recommendationRepository = recommendationRepository;
         this.analyzePort = analyzePort;
         this.aiPromptRepository = aiPromptRepository;
         this.eventPublisher = eventPublisher;
+        this.certificateRecommendationEnricher = certificateRecommendationEnricher;
     }
 
     @Async
@@ -51,12 +54,16 @@ public class JobPostingRecommendationAsyncService {
 
             JobPostingRecommendationAnalyzeResult analyzeResult = analyzePort.analyze(recommendation, prompt);
 
+            var enrichedCertificates = certificateRecommendationEnricher.enrich(
+                    analyzeResult.certificates()
+            );
+
             JobPostingRecommendation analyzedRecommendation = recommendation.analyzed(
                     analyzeResult.jobTitle(),
                     analyzeResult.matchRate(),
                     analyzeResult.requiredSkills(),
                     analyzeResult.courses(),
-                    analyzeResult.certificates()
+                    enrichedCertificates
             );
 
             JobPostingRecommendation savedRecommendation = recommendationRepository.save(analyzedRecommendation);

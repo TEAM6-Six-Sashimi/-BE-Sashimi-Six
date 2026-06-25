@@ -2,6 +2,7 @@ package com.sashimi.resume.infrastructure.persistence;
 
 import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.model.ResumeCareer;
+import com.sashimi.resume.domain.model.ResumeCertification;
 import com.sashimi.resume.domain.model.ResumeEducation;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -73,6 +74,15 @@ public class ResumeJpaEntity {
     @OrderBy("careerOrder ASC")
     private  List<ResumeCareerJpaEntity> careers = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "resume",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    @OrderBy("certificationOrder ASC")
+    private List<ResumeCertificationJpaEntity> certifications = new ArrayList<>();
+
     protected ResumeJpaEntity() {
     }
 
@@ -98,6 +108,10 @@ public class ResumeJpaEntity {
                 resume.careers()
         );
 
+        entity.replaceCertifications(
+                resume.certifications()
+        );
+
         return entity;
     }
 
@@ -121,6 +135,10 @@ public class ResumeJpaEntity {
 
         replaceCareers(
                 resume.careers()
+        );
+
+        replaceCertifications(
+                resume.certifications()
         );
     }
 
@@ -160,6 +178,24 @@ public class ResumeJpaEntity {
         }
     }
 
+    private void replaceCertifications(
+            List<ResumeCertification> newCertifications
+    ) {
+        certifications.clear();
+
+        for (int index = 0;
+             index < newCertifications.size();
+             index++) {
+            certifications.add(
+                    ResumeCertificationJpaEntity.from(
+                            this,
+                            newCertifications.get(index),
+                            index
+                    )
+            );
+        }
+    }
+
     public Resume toDomain() {
         List<ResumeEducation> domainEducations =
                 educations.stream()
@@ -177,12 +213,21 @@ public class ResumeJpaEntity {
                         )
                         .toList();
 
+        List<ResumeCertification> domainCertifications =
+                certifications.stream()
+                        .map(
+                                ResumeCertificationJpaEntity
+                                        ::toDomain
+                        )
+                        .toList();
+
         return Resume.restore(
                 resumeId,
                 userId,
                 domainEducations,
                 entryLevel,
                 domainCareers,
+                domainCertifications,
                 defaultResume,
                 createdAt,
                 updatedAt

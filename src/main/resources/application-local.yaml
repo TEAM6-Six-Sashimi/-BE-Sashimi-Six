@@ -68,3 +68,7 @@ toss:
 external:
   ncs:
     service-key: ${NCS_SERVICE_KEY}
+  qualification-exam-schedule:
+    service-key: ${QUALIFICATION_EXAM_SERVICE_KEY}
+  qualification-code:
+    service-key: ${QUALIFICATION_CODE_SERVICE_KEY}

@@ -103,6 +103,7 @@ public class ResumeController {
                         request.toEducations(),
                         request.entryLevel(),
                         request.toCareers(),
+                        request.toCertifications(),
                         Boolean.TRUE.equals(request.defaultResume())
                 )
         );
@@ -158,6 +159,7 @@ public class ResumeController {
                         request.toEducations(),
                         request.entryLevel(),
                         request.toCareers(),
+                        request.toCertifications(),
                         request.defaultResume()
                 )
         );

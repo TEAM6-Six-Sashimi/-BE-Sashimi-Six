@@ -14,6 +14,7 @@ public class Resume {
     private final List<ResumeEducation> educations;
     private final boolean entryLevel;
     private final List<ResumeCareer> careers;
+    private final List<ResumeCertification> certifications;
     private final boolean defaultResume;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
@@ -24,17 +25,19 @@ public class Resume {
             List<ResumeEducation> educations,
             boolean entryLevel,
             List<ResumeCareer> careers,
+            List<ResumeCertification> certifications,
             boolean defaultResume,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
-        validate(userId, educations, entryLevel, careers);
+        validate(userId, educations, entryLevel, careers, certifications);
 
         this.resumeId = resumeId;
         this.userId = userId;
         this.educations = List.copyOf(educations);
         this.entryLevel = entryLevel;
         this.careers = List.copyOf(careers);
+        this.certifications = List.copyOf(certifications);
         this.defaultResume = defaultResume;
         this.createdAt = createdAt == null
                 ? LocalDateTime.now()
@@ -47,6 +50,7 @@ public class Resume {
             List<ResumeEducation> educations,
             boolean entryLevel,
             List<ResumeCareer> careers,
+            List<ResumeCertification> certifications,
             boolean defaultResume
     ) {
         return new Resume(
@@ -55,6 +59,7 @@ public class Resume {
                 educations,
                 entryLevel,
                 careers,
+                certifications,
                 defaultResume,
                 LocalDateTime.now(),
                 null
@@ -67,6 +72,7 @@ public class Resume {
             List<ResumeEducation> educations,
             boolean entryLevel,
             List<ResumeCareer> careers,
+            List<ResumeCertification> certifications,
             boolean defaultResume,
             LocalDateTime createdAt,
             LocalDateTime updatedAt
@@ -83,6 +89,7 @@ public class Resume {
                 educations,
                 entryLevel,
                 careers,
+                certifications,
                 defaultResume,
                 createdAt,
                 updatedAt
@@ -93,6 +100,7 @@ public class Resume {
             List<ResumeEducation> educations,
             Boolean entryLevel,
             List<ResumeCareer> careers,
+            List<ResumeCertification> certifications,
             Boolean defaultResume
     ) {
         List<ResumeEducation> updatedEducations =
@@ -104,6 +112,9 @@ public class Resume {
         List<ResumeCareer> updatedCareers =
                 careers == null ? this.careers : careers;
 
+        List<ResumeCertification> updatedCertifications =
+                certifications == null ? this.certifications : certifications;
+
         boolean updatedDefaultResume =
                 defaultResume == null ? this.defaultResume : defaultResume;
 
@@ -113,6 +124,7 @@ public class Resume {
                 updatedEducations,
                 updatedEntryLevel,
                 updatedCareers,
+                updatedCertifications,
                 updatedDefaultResume,
                 this.createdAt,
                 LocalDateTime.now()
@@ -126,6 +138,7 @@ public class Resume {
                 this.educations,
                 this.entryLevel,
                 this.careers,
+                this.certifications,
                 this.defaultResume,
                 this.createdAt,
                 this.updatedAt
@@ -135,7 +148,8 @@ public class Resume {
             Long userId,
             List<ResumeEducation> educations,
             boolean entryLevel,
-            List<ResumeCareer> careers
+            List<ResumeCareer> careers,
+            List<ResumeCertification> certifications
     ) {
         if (educations == null
                 || educations.isEmpty()
@@ -150,6 +164,11 @@ public class Resume {
             throw new BusinessException(
                     ErrorCode.INVALID_INPUT_VALUE
             );
+        }
+
+        if (certifications == null
+                || certifications.stream().anyMatch(Objects::isNull)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
     }
 
@@ -171,6 +190,10 @@ public class Resume {
 
     public List<ResumeCareer> careers() {
         return careers;
+    }
+
+    public List<ResumeCertification> certifications() {
+        return certifications;
     }
 
     public boolean defaultResume() {
