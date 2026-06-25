@@ -37,7 +37,7 @@ public class JobPostingRecommendationController {
 
     @Operation(
             summary = "채용공고 기반 추천 요청",
-            description = "채용공고 내용을 저장하고 AI 분석을 비동기로 요청합니다. 응답은 PENDING 상태로 반환되며, 분석 결과는 단건 조회 API로 확인합니다."
+            description = "채용공고 URL 또는 텍스트를 입력받아 AI 분석을 비동기로 요청합니다. resumeId가 있으면 해당 이력서와 비교 분석합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "202", description = "채용공고 기반 추천 요청 접수 성공",
@@ -45,6 +45,8 @@ public class JobPostingRecommendationController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 또는 입력값 오류",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "이력서를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "서버 오류",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
@@ -59,6 +61,7 @@ public class JobPostingRecommendationController {
         JobPostingRecommendation recommendation = commandUseCase.create(
                 new CreateJobPostingRecommendationCommand(
                         principal.getId(),
+                        request.resumeId(),
                         request.inputType(),
                         request.sourceUrl(),
                         request.rawContent()
@@ -70,7 +73,7 @@ public class JobPostingRecommendationController {
 
     @Operation(
             summary = "채용공고 추천 결과 조회",
-            description = "채용공고 추천 ID로 AI 분석 상태와 결과를 조회합니다. PENDING이면 분석 중이며, COMPLETED이면 요구 역량, 추천 자격증, 추천 강의가 함께 반환됩니다."
+            description = "채용공고 추천 ID로 AI 분석 상태와 결과를 조회합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "채용공고 추천 결과 조회 성공",

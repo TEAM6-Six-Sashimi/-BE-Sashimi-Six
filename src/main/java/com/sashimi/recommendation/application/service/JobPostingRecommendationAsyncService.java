@@ -59,27 +59,24 @@ public class JobPostingRecommendationAsyncService {
             );
 
             JobPostingRecommendation analyzedRecommendation = recommendation.analyzed(
-                    analyzeResult.jobTitle(),
-                    analyzeResult.matchRate(),
-                    analyzeResult.requiredSkills(),
+                    analyzeResult.summary(),
+                    analyzeResult.fitAnalysis(),
                     analyzeResult.courses(),
                     enrichedCertificates
             );
 
             JobPostingRecommendation savedRecommendation = recommendationRepository.save(analyzedRecommendation);
 
-            log.info("🗃️ 채용공고 추천 비동기 분석 완료: userId={}, recommendationId={}, jobTitle={}, matchRate={}",
+            log.info("채용공고 추천 비동기 분석 완료: userId={}, recommendationId={}, jobRole={}",
                     savedRecommendation.userId(),
                     savedRecommendation.recommendationId(),
-                    savedRecommendation.jobTitle(),
-                    savedRecommendation.matchRate());
+                    savedRecommendation.summary() == null ? null : savedRecommendation.summary().jobRole());
 
             eventPublisher.publishEvent(
                     new JobPostingRecommendationAnalyzedEvent(
                             savedRecommendation.userId(),
                             savedRecommendation.recommendationId(),
-                            savedRecommendation.jobTitle(),
-                            savedRecommendation.matchRate(),
+                            savedRecommendation.summary() == null ? null : savedRecommendation.summary().jobRole(),
                             savedRecommendation.createdAt()
                     )
             );

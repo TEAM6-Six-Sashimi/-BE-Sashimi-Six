@@ -5,8 +5,7 @@ import java.time.LocalDateTime;
 public record JobPostingRecommendationAnalyzedEvent (
         Long userId,
         Long recommendationId,
-        String jobTitle,
-        Integer matchRate,
+        String jobRole,
         LocalDateTime analyzedAt
 ) {
 }
