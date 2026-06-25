@@ -21,37 +21,53 @@ public class JobPostingRecommendationService implements
     private final JobPostingRecommendationRepository recommendationRepository;
     private final JobPostingRecommendationPolicy recommendationPolicy;
     private final JobPostingRecommendationAsyncService asyncService;
+    private final JobPostingResumeSummaryBuilder resumeSummaryBuilder;
 
     public JobPostingRecommendationService(
             JobPostingRecommendationRepository recommendationRepository,
             JobPostingRecommendationPolicy recommendationPolicy,
-            JobPostingRecommendationAsyncService asyncService
+            JobPostingRecommendationAsyncService asyncService,
+            JobPostingResumeSummaryBuilder resumeSummaryBuilder
     ) {
         this.recommendationRepository = recommendationRepository;
         this.recommendationPolicy = recommendationPolicy;
         this.asyncService = asyncService;
+        this.resumeSummaryBuilder = resumeSummaryBuilder;
     }
 
     @Override
     @Transactional
     public JobPostingRecommendation create(CreateJobPostingRecommendationCommand command) {
-        log.info("채용공고 추천 요청 접수: userId={}, inputType={}, hasSourceUrl={}, rawContentLength={}",
+        log.info("채용공고 추천 요청 접수: userId={}, resumeId={}, inputType={}, hasSourceUrl={}, rawContentLength={}",
                 command.userId(),
+                command.resumeId(),
                 command.inputType(),
                 command.sourceUrl() != null,
                 command.rawContent() == null ? 0 : command.rawContent().length());
 
-        boolean hasResume = recommendationPolicy.isResumeBased(command.userId());
+        var resume = recommendationPolicy.findResumeForAnalysis(
+                command.userId(),
+                command.resumeId()
+        );
+
+        boolean hasResume = resume.isPresent();
+
+        String resumeContent = resume
+                .map(resumeSummaryBuilder::build)
+                .orElse("");
 
         JobPostingRecommendation recommendation = JobPostingRecommendation.create(
                 command.userId(),
+                command.resumeId(),
                 command.inputType(),
                 command.sourceUrl(),
                 command.rawContent(),
+                resumeContent,
                 hasResume
         );
 
-        JobPostingRecommendation savedRecommendation = recommendationRepository.save(recommendation);
+        JobPostingRecommendation savedRecommendation =
+                recommendationRepository.save(recommendation);
 
         log.info("채용공고 추천 분석 대기 상태 저장: userId={}, recommendationId={}, resumeBased={}, analysisStatus={}",
                 savedRecommendation.userId(),
@@ -74,15 +90,22 @@ public class JobPostingRecommendationService implements
     @Override
     @Transactional(readOnly = true)
     public JobPostingRecommendation getById(Long userId, Long recommendationId) {
-        log.debug("채용공고 추천 단건 조회 요청: userId={}, recommendationId={}", userId, recommendationId);
+        log.debug("채용공고 추천 결과 조회 요청: userId={}, recommendationId={}",
+                userId,
+                recommendationId);
 
-        JobPostingRecommendation recommendation = recommendationRepository.findByIdAndUserId(recommendationId, userId)
-                .orElseThrow(() -> {
-                    log.warn("채용공고 추천 단건 조회 실패: userId={}, recommendationId={}", userId, recommendationId);
-                    return new BusinessException(ErrorCode.JOB_POSTING_RECOMMENDATION_NOT_FOUND);
-                });
+        JobPostingRecommendation recommendation =
+                recommendationRepository.findByIdAndUserId(recommendationId, userId)
+                        .orElseThrow(() -> {
+                            log.warn("채용공고 추천 결과 조회 실패: userId={}, recommendationId={}",
+                                    userId,
+                                    recommendationId);
+                            return new BusinessException(
+                                    ErrorCode.JOB_POSTING_RECOMMENDATION_NOT_FOUND
+                            );
+                        });
 
-        log.debug("채용공고 추천 단건 조회 성공: userId={}, recommendationId={}, analysisStatus={}",
+        log.debug("채용공고 추천 결과 조회 성공: userId={}, recommendationId={}, analysisStatus={}",
                 recommendation.userId(),
                 recommendation.recommendationId(),
                 recommendation.analysisStatus());

@@ -69,6 +69,9 @@ dependencies {
 
 // CODEF
     implementation 'io.codef.api:easycodef-java:1.0.6'
+
+    // HTML parsing
+    implementation 'org.jsoup:jsoup:1.17.2'
 }
 
 tasks.named('test') {
