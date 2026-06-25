@@ -65,7 +65,7 @@ public class InstructorCourseController {
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @RequestBody CreateCourseRequest request) {
         List<CreateSessionCommand> sessionCommands = request.sessions().stream()
-                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), 0, 0, s.preview(),
+                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), s.durationSeconds(), 0, s.preview(),
                         s.attachmentName(), s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
                 .toList();
 
@@ -83,7 +83,7 @@ public class InstructorCourseController {
             @PathVariable Long courseId,
             @RequestBody UpdateCourseRequest request) {
         List<CreateSessionCommand> sessionCommands = request.sessions().stream()
-                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), 0, 0, s.preview(),
+                .map(s -> new CreateSessionCommand(s.title(), s.videoUrl(), s.durationSeconds(), 0, s.preview(),
                         s.attachmentName(), s.attachmentUrl(), s.attachmentType(), s.attachmentSize()))
                 .toList();
 

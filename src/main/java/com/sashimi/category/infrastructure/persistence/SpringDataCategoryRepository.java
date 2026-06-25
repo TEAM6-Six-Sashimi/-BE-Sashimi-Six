@@ -18,4 +18,7 @@ public interface SpringDataCategoryRepository extends JpaRepository<CategoryJpaE
 
     @Query("select coalesce(max(c.mainCategoryId), 0) from CategoryJpaEntity c")
     Long findMaxMainCategoryId();
+
+    @Query("select coalesce(max(c.sortOrder), 0) from CategoryJpaEntity c")
+    int findMaxSortOrder();
 }

@@ -6,5 +6,6 @@ public interface CategoryPort {
     List<Long> getCategoryIdsByName(String categoryName);
     Long getCategoryIdBySubCategoryName(String subCategoryName);
     String getCategoryNameById(Long categoryId);
+    String getMainCategoryNameById(Long categoryId);
     Long getNcsInfoIdByCategoryId(Long categoryId);
 }

@@ -25,7 +25,8 @@ public class CategoryCommandService implements CategoryCommandUseCase {
         }
         Long mainCategoryId = categoryRepository.findMainCategoryIdByName(command.name())
                 .orElseGet(() -> categoryRepository.findMaxMainCategoryId() + 1);
-        Category category = Category.create(mainCategoryId, command.name(), command.subCategory(), 0);
+        int nextSortOrder = categoryRepository.findMaxSortOrder() + 1;
+        Category category = Category.create(mainCategoryId, command.name(), command.subCategory(), nextSortOrder);
         return categoryRepository.save(category).getId();
     }
 

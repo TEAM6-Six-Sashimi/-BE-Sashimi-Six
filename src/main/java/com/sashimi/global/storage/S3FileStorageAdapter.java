@@ -166,6 +166,28 @@ public class S3FileStorageAdapter implements FileStoragePort {
         }
     }
 
+    @Override
+    public String generateVideoUrl(String s3Key, int expiryMinutes) {
+        return presign(properties.getS3().getBucketVideos(), s3Key, expiryMinutes);
+    }
+
+    @Override
+    public String generateAttachmentUrl(String s3Key, int expiryMinutes) {
+        return presign(properties.getS3().getBucketAttachments(), s3Key, expiryMinutes);
+    }
+
+    private String presign(String bucket, String s3Key, int expiryMinutes) {
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(Duration.ofMinutes(expiryMinutes))
+                .getObjectRequest(GetObjectRequest.builder()
+                        .bucket(bucket)
+                        .key(s3Key)
+                        .build())
+                .build();
+
+        return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
     private String getExtension(String originalFilename) {
         if (originalFilename == null || !originalFilename.contains(".")) return "";
         return originalFilename.substring(originalFilename.lastIndexOf("."));

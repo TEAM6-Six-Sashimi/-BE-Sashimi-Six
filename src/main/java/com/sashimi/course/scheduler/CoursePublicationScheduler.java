@@ -13,7 +13,7 @@ public class CoursePublicationScheduler {
 
     private final CourseCommandUseCase courseCommandUseCase;
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     public void closeExpiredCourses() {
         log.info("[CoursePublication] 공개 기간 만료 강의 비공개 처리 시작");
         int closed = courseCommandUseCase.closeExpiredCourses();
