@@ -25,6 +25,7 @@ public class FlywayConfig {
                         "classpath:db/migration/be5"
                 )
                 .baselineOnMigrate(true)
+                .outOfOrder(true)
                 .encoding(StandardCharsets.UTF_8)
                 .load();
 

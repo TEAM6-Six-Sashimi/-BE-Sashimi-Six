@@ -32,6 +32,7 @@ public class ResumeCommandService implements ResumeCommandUseCase {
                 command.educations(),
                 command.entryLevel(),
                 command.careers(),
+                command.certifications(),
                 command.defaultResume()
         );
 
@@ -65,6 +66,7 @@ public class ResumeCommandService implements ResumeCommandUseCase {
                 command.educations(),
                 command.entryLevel(),
                 command.careers(),
+                command.certifications(),
                 command.defaultResume()
         );
 
