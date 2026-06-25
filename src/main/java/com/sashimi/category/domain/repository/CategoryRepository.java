@@ -17,4 +17,5 @@ public interface CategoryRepository {
     boolean existsBySubCategory(String subCategory);
     Optional<Long> findMainCategoryIdByName(String name);
     Long findMaxMainCategoryId();
+    int findMaxSortOrder();
 }

@@ -91,4 +91,9 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
     public Long findMaxMainCategoryId() {
         return springDataCategoryRepository.findMaxMainCategoryId();
     }
+
+    @Override
+    public int findMaxSortOrder() {
+        return springDataCategoryRepository.findMaxSortOrder();
+    }
 }

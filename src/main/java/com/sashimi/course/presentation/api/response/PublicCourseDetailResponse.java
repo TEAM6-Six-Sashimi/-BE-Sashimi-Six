@@ -4,6 +4,7 @@ import com.sashimi.course.application.query.PublicCourseDetailView;
 import com.sashimi.course.domain.model.CourseDifficulty;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record PublicCourseDetailResponse(
@@ -17,11 +18,22 @@ public record PublicCourseDetailResponse(
         BigDecimal ratingAvg,
         int reviewCount,
         int studentCount,
-        String instructorName,
+        InstructorResponse instructor,
+        String mainCategoryName,
         String categoryName,
         NcsInfoResponse ncs,
-        List<SessionResponse> sessions
+        LocalDateTime approvedAt,
+        List<SessionResponse> sessions,
+        List<ReviewResponse> reviews
 ) {
+    public record InstructorResponse(
+            String name,
+            String profileImagePath,
+            String bio,
+            List<String> mainCareers,
+            String portfolioUrl
+    ) {}
+
     public record SessionResponse(
             Long sessionId,
             String title,
@@ -38,17 +50,22 @@ public record PublicCourseDetailResponse(
             int totalAbilityUnitCount
     ) {}
 
+    public record ReviewResponse(
+            Long reviewId,
+            int rating,
+            String content,
+            String writerLoginId,
+            LocalDateTime createdAt
+    ) {}
+
     public static PublicCourseDetailResponse from(PublicCourseDetailView view) {
-        List<SessionResponse> sessions = view.sessions().stream()
-                .map(s -> new SessionResponse(
-                        s.sessionId(),
-                        s.title(),
-                        s.videoUrl(),
-                        s.durationSeconds(),
-                        s.sessionOrder(),
-                        s.preview()
-                ))
-                .toList();
+        InstructorResponse instructor = new InstructorResponse(
+                view.instructor().name(),
+                view.instructor().profileImagePath(),
+                view.instructor().bio(),
+                view.instructor().mainCareers(),
+                view.instructor().portfolioUrl()
+        );
 
         NcsInfoResponse ncs = view.ncs() == null ? null : new NcsInfoResponse(
                 view.ncs().categoryPath(),
@@ -57,21 +74,26 @@ public record PublicCourseDetailResponse(
                 view.ncs().totalAbilityUnitCount()
         );
 
+        List<SessionResponse> sessions = view.sessions().stream()
+                .map(s -> new SessionResponse(
+                        s.sessionId(), s.title(), s.videoUrl(),
+                        s.durationSeconds(), s.sessionOrder(), s.preview()
+                ))
+                .toList();
+
+        List<ReviewResponse> reviews = view.reviews().stream()
+                .map(r -> new ReviewResponse(
+                        r.reviewId(), r.rating(), r.content(),
+                        r.writerLoginId(), r.createdAt()
+                ))
+                .toList();
+
         return new PublicCourseDetailResponse(
-                view.courseId(),
-                view.title(),
-                view.description(),
-                view.price(),
-                view.difficulty(),
-                view.thumbnail(),
-                view.totalDuration(),
-                view.ratingAvg(),
-                view.reviewCount(),
-                view.studentCount(),
-                view.instructorName(),
-                view.categoryName(),
-                ncs,
-                sessions
+                view.courseId(), view.title(), view.description(),
+                view.price(), view.difficulty(), view.thumbnail(),
+                view.totalDuration(), view.ratingAvg(), view.reviewCount(),
+                view.studentCount(), instructor, view.mainCategoryName(),
+                view.categoryName(), ncs, view.approvedAt(), sessions, reviews
         );
     }
 }

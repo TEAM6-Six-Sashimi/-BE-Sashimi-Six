@@ -107,6 +107,16 @@ public class LocalFileStorageAdapter implements FileStoragePort {
         }
     }
 
+    @Override
+    public String generateVideoUrl(String s3Key, int expiryMinutes) {
+        return baseUrl + "/uploads/" + s3Key;
+    }
+
+    @Override
+    public String generateAttachmentUrl(String s3Key, int expiryMinutes) {
+        return baseUrl + "/uploads/" + s3Key;
+    }
+
     private String getExtension(String originalFilename) {
         if (originalFilename == null || !originalFilename.contains(".")) return "";
         return originalFilename.substring(originalFilename.lastIndexOf("."));

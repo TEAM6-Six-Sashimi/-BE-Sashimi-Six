@@ -4,6 +4,7 @@ import com.sashimi.course.domain.model.CourseDifficulty;
 import com.sashimi.course.application.port.NcsInfoView;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record PublicCourseDetailView(
@@ -17,11 +18,22 @@ public record PublicCourseDetailView(
         BigDecimal ratingAvg,
         int reviewCount,
         int studentCount,
-        String instructorName,
+        InstructorView instructor,
+        String mainCategoryName,
         String categoryName,
         NcsInfoView ncs,
-        List<SessionView> sessions
+        LocalDateTime approvedAt,
+        List<SessionView> sessions,
+        List<ReviewView> reviews
 ) {
+    public record InstructorView(
+            String name,
+            String profileImagePath,
+            String bio,
+            List<String> mainCareers,
+            String portfolioUrl
+    ) {}
+
     public record SessionView(
             Long sessionId,
             String title,
@@ -29,5 +41,13 @@ public record PublicCourseDetailView(
             int durationSeconds,
             int sessionOrder,
             boolean preview
+    ) {}
+
+    public record ReviewView(
+            Long reviewId,
+            int rating,
+            String content,
+            String writerLoginId,
+            LocalDateTime createdAt
     ) {}
 }
