@@ -132,6 +132,7 @@ public enum ErrorCode {
     AI_CONSENT_REQUIRED(403, "AI_007", "AI 기능을 사용하려면 개인정보 AI 활용 동의가 필요합니다."),
 
     RESUME_NOT_FOUND(404, "RESUME_404", "이력서를 찾을 수 없습니다."),
+    RESUME_ALREADY_EXISTS(409, "RESUME_005", "이미 작성된 이력서가 있습니다."),
     RESUME_INVALID_EDUCATION(400, "RESUME_001", "학력 정보가 올바르지 않습니다."),
     RESUME_INVALID_CAREER(400, "RESUME_002", "경력 정보가 올바르지 않습니다."),
     RESUME_INVALID_REVIEW_SCORE(400, "RESUME_003", "이력서 평가 점수가 올바르지 않습니다."),
