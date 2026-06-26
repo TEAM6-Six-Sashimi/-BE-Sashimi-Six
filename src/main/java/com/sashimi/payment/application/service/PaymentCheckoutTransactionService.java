@@ -326,7 +326,6 @@ public class PaymentCheckoutTransactionService {
                         userId,
                         order.getOrderNo(),
                         plan,
-                        payment.getAmount(),
                         payment.getPaidAt()
                 )
         );

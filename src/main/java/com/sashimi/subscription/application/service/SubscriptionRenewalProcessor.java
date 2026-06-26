@@ -104,7 +104,6 @@ public class SubscriptionRenewalProcessor {
                         subscription.getUserId(),
                         order.getOrderNo(),
                         subscription.getPlan(),
-                        payment.getAmount(),
                         payment.getPaidAt()
                 )
         );

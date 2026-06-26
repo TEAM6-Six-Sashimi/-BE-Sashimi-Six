@@ -42,16 +42,6 @@ public class CreditChargeTransactionService {
             return createCompletedResult(payment);
         }
 
-        payment.markDone(
-                response.paymentKey(),
-                response.method(),
-                response.approvedAt() == null
-                        ? null
-                        : response.approvedAt().toLocalDateTime()
-        );
-
-        paymentRepository.save(payment);
-
         Credit credit = creditRepository
                 .findByUserIdForUpdate(command.userId())
                 .orElseGet(() -> Credit.create(command.userId(), 0L));
@@ -59,6 +49,17 @@ public class CreditChargeTransactionService {
         credit.add(payment.getAmount());
 
         Credit savedCredit = creditRepository.save(credit);
+
+        payment.markDone(
+                response.paymentKey(),
+                response.method(),
+                response.approvedAt() == null
+                        ? null
+                        : response.approvedAt().toLocalDateTime(),
+                savedCredit.getBalance()
+        );
+
+        paymentRepository.save(payment);
 
         log.info(
                 "크레딧 토스 충전 완료 - userId={}, orderId={}, paymentMethod={}, amount={}, balance={}",
@@ -99,13 +100,14 @@ public class CreditChargeTransactionService {
     private CreditChargeConfirmResult createCompletedResult(
             CreditChargePayment payment
     ) {
-        Credit credit = creditRepository.findByUserId(payment.getUserId())
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
-                ));
+        if (payment.getBalanceAfter() == null) {
+            throw new BusinessException(
+                    ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+            );
+        }
 
         return new CreditChargeConfirmResult(
-                credit.getBalance(),
+                payment.getBalanceAfter(),
                 payment.getOrderId(),
                 payment.getPaymentKey(),
                 payment.getAmount()
