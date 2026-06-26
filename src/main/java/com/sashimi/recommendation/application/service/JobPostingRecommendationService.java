@@ -1,5 +1,6 @@
 package com.sashimi.recommendation.application.service;
 
+import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.command.CreateJobPostingRecommendationCommand;
@@ -22,22 +23,27 @@ public class JobPostingRecommendationService implements
     private final JobPostingRecommendationPolicy recommendationPolicy;
     private final JobPostingRecommendationAsyncService asyncService;
     private final JobPostingResumeSummaryBuilder resumeSummaryBuilder;
+    private final AiFeatureAccessPolicy aiFeatureAccessPolicy;
 
     public JobPostingRecommendationService(
             JobPostingRecommendationRepository recommendationRepository,
             JobPostingRecommendationPolicy recommendationPolicy,
             JobPostingRecommendationAsyncService asyncService,
-            JobPostingResumeSummaryBuilder resumeSummaryBuilder
+            JobPostingResumeSummaryBuilder resumeSummaryBuilder,
+            AiFeatureAccessPolicy aiFeatureAccessPolicy
     ) {
         this.recommendationRepository = recommendationRepository;
         this.recommendationPolicy = recommendationPolicy;
         this.asyncService = asyncService;
         this.resumeSummaryBuilder = resumeSummaryBuilder;
+        this.aiFeatureAccessPolicy = aiFeatureAccessPolicy;
     }
 
     @Override
     @Transactional
     public JobPostingRecommendation create(CreateJobPostingRecommendationCommand command) {
+        aiFeatureAccessPolicy.validate(command.userId());
+
         log.info("채용공고 추천 요청 접수: userId={}, resumeId={}, inputType={}, hasSourceUrl={}, rawContentLength={}",
                 command.userId(),
                 command.resumeId(),
