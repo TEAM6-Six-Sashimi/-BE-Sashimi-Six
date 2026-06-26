@@ -3,6 +3,9 @@ package com.sashimi.certificate.infrastructure;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashimi.certificate.application.port.OcrPort;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,7 +22,10 @@ import java.util.regex.Pattern;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class OcrAdapter implements OcrPort {
+
+    private final MeterRegistry meterRegistry;
 
     @Value("${clova.ocr.secret-key}")
     private String secretKey;
@@ -31,6 +37,7 @@ public class OcrAdapter implements OcrPort {
 
     @Override
     public OcrResult extractCertificateInfo(byte[] fileBytes, String fileName) {
+        Timer.Sample sample = Timer.start(meterRegistry);
         try {
             String requestBody = buildRequestBody(fileBytes, fileName);
 
@@ -46,14 +53,22 @@ public class OcrAdapter implements OcrPort {
 
             if (response.statusCode() != 200) {
                 log.error("Clova OCR 호출 실패: status={}, body={}", response.statusCode(), response.body());
+                meterRegistry.counter("ocr.result.total", "status", "failure").increment();
                 return new OcrResult(null, null, null, false);
             }
 
-            return parseOcrResponse(response.body());
+            OcrResult result = parseOcrResponse(response.body());
+            meterRegistry.counter("ocr.result.total", "status", result.success() ? "success" : "failure").increment();
+            return result;
 
         } catch (Exception e) {
             log.error("Clova OCR 호출 중 예외 발생", e);
+            meterRegistry.counter("ocr.result.total", "status", "failure").increment();
             return new OcrResult(null, null, null, false);
+        } finally {
+            sample.stop(Timer.builder("ocr.request.duration")
+                    .description("Clova OCR 처리 시간")
+                    .register(meterRegistry));
         }
     }
 
@@ -104,6 +119,12 @@ public class OcrAdapter implements OcrPort {
     }
 
     private String extractCertName(String text) {
+        Pattern compPattern = Pattern.compile("컴퓨터활용능력\\s*(\\d급)");
+        Matcher compMatcher = compPattern.matcher(text);
+        if (compMatcher.find()) {
+            return "컴퓨터활용능력 " + compMatcher.group(1);
+        }
+
         String[] keywords = {"기술사", "기능장", "기사", "산업기사", "기능사", "준전문가"};
         String[] tokens = text.split("\\s+");
         for (int i = 0; i < tokens.length; i++) {
@@ -132,7 +153,7 @@ public class OcrAdapter implements OcrPort {
 
     private LocalDate extractIssueDate(String text) {
         Pattern passPattern = Pattern.compile(
-                "합\\s*격\\s*일\\s*자\\s*:?\\s*(\\d{4})년\\s*(\\d{1,2})월\\s*(\\d{1,2})일"
+                "합\\s*격\\s*일\\s*자\\s*:?\\s*(\\d{4})\\s*년\\s*(\\d{1,2})\\s*월\\s*(\\d{1,2})"
         );
         Matcher passMatcher = passPattern.matcher(text);
         if (passMatcher.find()) {
@@ -143,7 +164,19 @@ public class OcrAdapter implements OcrPort {
             );
         }
 
-        Pattern pattern = Pattern.compile("(\\d{4})[년.\\-]\\s*(\\d{1,2})[월.\\-]\\s*(\\d{1,2})");
+        Pattern acquirePattern = Pattern.compile(
+                "(\\d{4})\\s*년\\s*(\\d{1,2})\\s*월\\s*(\\d{1,2})\\s*일[^.]*?취득"
+        );
+        Matcher acquireMatcher = acquirePattern.matcher(text);
+        if (acquireMatcher.find()) {
+            return LocalDate.of(
+                    Integer.parseInt(acquireMatcher.group(1)),
+                    Integer.parseInt(acquireMatcher.group(2)),
+                    Integer.parseInt(acquireMatcher.group(3))
+            );
+        }
+
+        Pattern pattern = Pattern.compile("(\\d{4})\\s*[년.\\-]\\s*(\\d{1,2})\\s*[월.\\-]\\s*(\\d{1,2})");
         Matcher matcher = pattern.matcher(text);
         if (matcher.find()) {
             return LocalDate.of(
