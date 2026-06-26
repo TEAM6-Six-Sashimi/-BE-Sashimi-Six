@@ -9,4 +9,8 @@ public interface OrderItemRepository {
     OrderItem save(OrderItem orderItem);
 
     List<OrderItem> findAllByOrderId(Long orderId);
+
+    List<OrderItem> findAllCourseItemsByOrderIdIn(
+            List<Long> orderIds
+    );
 }

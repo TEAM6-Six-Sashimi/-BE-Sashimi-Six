@@ -1,5 +1,8 @@
 package com.sashimi.subscription.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.time.LocalDateTime;
 
 public class SubscriptionPayment {
@@ -27,8 +30,23 @@ public class SubscriptionPayment {
             Long amount,
             SubscriptionBillingType billingType,
             LocalDateTime paidAt,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean validateCurrentPlanPrice
     ) {
+        validate(
+                subscriptionId,
+                orderId,
+                paymentId,
+                userId,
+                orderNo,
+                plan,
+                amount,
+                billingType,
+                paidAt,
+                createdAt,
+                validateCurrentPlanPrice
+        );
+
         this.id = id;
         this.subscriptionId = subscriptionId;
         this.orderId = orderId;
@@ -49,7 +67,6 @@ public class SubscriptionPayment {
             Long userId,
             String orderNo,
             SubscriptionPlan plan,
-            Long amount,
             LocalDateTime paidAt
     ) {
         return new SubscriptionPayment(
@@ -60,10 +77,36 @@ public class SubscriptionPayment {
                 userId,
                 orderNo,
                 plan,
-                amount,
+                plan.getPrice(),
                 SubscriptionBillingType.INITIAL,
                 paidAt,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                true
+        );
+    }
+
+    public static SubscriptionPayment renewal(
+            Long subscriptionId,
+            Long orderId,
+            Long paymentId,
+            Long userId,
+            String orderNo,
+            SubscriptionPlan plan,
+            LocalDateTime paidAt
+    ) {
+        return new SubscriptionPayment(
+                null,
+                subscriptionId,
+                orderId,
+                paymentId,
+                userId,
+                orderNo,
+                plan,
+                plan.getPrice(),
+                SubscriptionBillingType.RENEWAL,
+                paidAt,
+                LocalDateTime.now(),
+                true
         );
     }
 
@@ -91,11 +134,12 @@ public class SubscriptionPayment {
                 amount,
                 billingType,
                 paidAt,
-                createdAt
+                createdAt,
+                false
         );
     }
 
-    public static SubscriptionPayment renewal(
+    private void validate(
             Long subscriptionId,
             Long orderId,
             Long paymentId,
@@ -103,21 +147,38 @@ public class SubscriptionPayment {
             String orderNo,
             SubscriptionPlan plan,
             Long amount,
-            LocalDateTime paidAt
+            SubscriptionBillingType billingType,
+            LocalDateTime paidAt,
+            LocalDateTime createdAt,
+            boolean validateCurrentPlanPrice
     ) {
-        return new SubscriptionPayment(
-                null,
-                subscriptionId,
-                orderId,
-                paymentId,
-                userId,
-                orderNo,
-                plan,
-                amount,
-                SubscriptionBillingType.RENEWAL,
-                paidAt,
-                LocalDateTime.now()
-        );
+        if (subscriptionId == null
+                || subscriptionId <= 0
+                || orderId == null
+                || orderId <= 0
+                || paymentId == null
+                || paymentId <= 0
+                || userId == null
+                || userId <= 0
+                || orderNo == null
+                || orderNo.isBlank()
+                || plan == null
+                || amount == null
+                || amount <= 0
+                || billingType == null
+                || paidAt == null
+                || createdAt == null) {
+            throw new BusinessException(
+                    ErrorCode.SUBSCRIPTION_PAYMENT_INVALID
+            );
+        }
+
+        if (validateCurrentPlanPrice
+                && !amount.equals(plan.getPrice())) {
+            throw new BusinessException(
+                    ErrorCode.SUBSCRIPTION_PAYMENT_INVALID
+            );
+        }
     }
 
     public Long getId() { return id; }

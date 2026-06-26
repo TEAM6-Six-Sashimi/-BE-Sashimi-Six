@@ -22,10 +22,10 @@ public class AiFeatureAccessPolicy {
     }
 
     public void validate(Long userId) {
-        activeSubscriptionPolicy.validate(userId);
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        activeSubscriptionPolicy.validate(userId);
 
         if (!user.isAiConsent()) {
             throw new BusinessException(ErrorCode.AI_CONSENT_REQUIRED);

@@ -65,16 +65,6 @@ public class PaymentIdempotency {
         }
     }
 
-    public void restartProcessing() {
-        if (status != PaymentIdempotencyStatus.PROCESSING) {
-            throw new BusinessException(
-                    ErrorCode.PAYMENT_IDEMPOTENCY_RESULT_INVALID
-            );
-        }
-
-        resultJson = null;
-        updatedAt = LocalDateTime.now();
-    }
 
     public void complete(String resultJson) {
         if (status != PaymentIdempotencyStatus.PROCESSING
