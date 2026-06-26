@@ -1,6 +1,7 @@
 package com.sashimi.resume.application.service;
 
 import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.resume.application.result.ReviewResumeResult;
@@ -33,7 +34,10 @@ public class ResumeReviewService implements ReviewResumeUseCase {
             Long resumeId,
             Long userId
     ) {
-        aiFeatureAccessPolicy.validate(userId);
+        aiFeatureAccessPolicy.validate(
+                userId,
+                AiMetrics.FEATURE_RESUME_REVIEW
+        );
 
         Resume resume = resumeRepository
                 .findByIdAndUserId(resumeId, userId)
