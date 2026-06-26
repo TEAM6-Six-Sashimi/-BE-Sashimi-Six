@@ -41,3 +41,9 @@ Thumbs.db
 # Logs
 logs/
 *.log
+
+# Local upload files
+uploads/
+
+# Local DB data files
+data/
