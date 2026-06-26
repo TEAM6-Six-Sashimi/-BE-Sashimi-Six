@@ -30,7 +30,8 @@ public class CreditChargePayment {
             CreditChargePaymentStatus status,
             String failureReason,
             LocalDateTime requestedAt,
-            LocalDateTime approvedAt
+            LocalDateTime approvedAt,
+            boolean allowLegacyDoneWithoutBalanceAfter
     ) {
         if (userId == null
                 || orderId == null
@@ -41,14 +42,12 @@ public class CreditChargePayment {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        if (status == CreditChargePaymentStatus.DONE
-                && (paymentKey == null
-                || paymentKey.isBlank()
-                || balanceAfter == null
-                || balanceAfter < 0
-                || approvedAt == null)) {
-            throw new BusinessException(
-                    ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+        if (status == CreditChargePaymentStatus.DONE) {
+            validateDoneState(
+                    paymentKey,
+                    balanceAfter,
+                    approvedAt,
+                    allowLegacyDoneWithoutBalanceAfter
             );
         }
 
@@ -83,7 +82,8 @@ public class CreditChargePayment {
                 CreditChargePaymentStatus.READY,
                 null,
                 LocalDateTime.now(),
-                null
+                null,
+                false
         );
     }
 
@@ -111,7 +111,8 @@ public class CreditChargePayment {
                 status,
                 failureReason,
                 requestedAt,
-                approvedAt
+                approvedAt,
+                true
         );
     }
 
@@ -152,12 +153,12 @@ public class CreditChargePayment {
             );
         }
 
-        if (paymentKey == null
-                || paymentKey.isBlank()
-                || balanceAfter == null
-                || balanceAfter < 0) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+        validateDoneState(
+                paymentKey,
+                balanceAfter,
+                approvedAt,
+                false
+        );
 
         this.paymentKey = paymentKey;
         this.paymentMethod = paymentMethod;
@@ -177,6 +178,37 @@ public class CreditChargePayment {
 
         this.status = CreditChargePaymentStatus.FAILED;
         this.failureReason = failureReason;
+    }
+
+    private void validateDoneState(
+            String paymentKey,
+            Long balanceAfter,
+            LocalDateTime approvedAt,
+            boolean allowLegacyDoneWithoutBalanceAfter
+    ) {
+        if (paymentKey == null
+                || paymentKey.isBlank()
+                || approvedAt == null) {
+            throw new BusinessException(
+                    ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+            );
+        }
+
+        if (balanceAfter == null) {
+            if (allowLegacyDoneWithoutBalanceAfter) {
+                return;
+            }
+
+            throw new BusinessException(
+                    ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+            );
+        }
+
+        if (balanceAfter < 0) {
+            throw new BusinessException(
+                    ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+            );
+        }
     }
 
     public boolean isFailed() {
