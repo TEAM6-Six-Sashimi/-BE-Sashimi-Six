@@ -22,7 +22,6 @@ public class OutboxEmailScheduler {
 
     // Redis Consumer가 즉시 처리; 이 스케줄러는 Redis 유실 시 fallback
     @Scheduled(fixedDelay = 30000)
-    @Transactional
     public void processOutbox() {
         List<EmailOutboxJpaEntity> pending = outboxRepository.findByStatus(OutboxStatus.PENDING);
 
@@ -31,19 +30,22 @@ public class OutboxEmailScheduler {
         log.info("event=outbox_processing count={}", pending.size());
 
         for (EmailOutboxJpaEntity outbox : pending) {
+            int claimed = outboxRepository.claimForProcessing(outbox.getId());
+            if (claimed == 0) continue;
+
             try {
                 emailSender.send(outbox.getToEmail(), outbox.getSubject(), outbox.getContent());
                 outbox.markSent();
                 outboxMetrics.recordSent();
-                log.info("event=outbox_sent to={}", outbox.getToEmail());
+                log.info("event=outbox_sent outboxId={}", outbox.getId());
             } catch (Exception e) {
                 outbox.markFailed(MAX_RETRY);
                 if (outbox.getRetryCount() >= MAX_RETRY) {
                     outboxMetrics.recordFailed();
-                    log.error("event=outbox_exhausted to={} 최대 재시도 초과", outbox.getToEmail(), e);
+                    log.error("event=outbox_exhausted outboxId={} 최대 재시도 초과", outbox.getId(), e);
                 } else {
                     outboxMetrics.recordRetry();
-                    log.warn("event=outbox_retry_scheduled to={} retry={}", outbox.getToEmail(), outbox.getRetryCount(), e);
+                    log.warn("event=outbox_retry_scheduled outboxId={} retry={}", outbox.getId(), outbox.getRetryCount(), e);
                 }
             }
             outboxRepository.save(outbox);

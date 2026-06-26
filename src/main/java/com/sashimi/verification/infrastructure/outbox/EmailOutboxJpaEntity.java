@@ -58,7 +58,8 @@ public class EmailOutboxJpaEntity {
         this.retryCount++;
         if (this.retryCount >= maxRetry) {
             this.status = OutboxStatus.FAILED;
+        } else {
+            this.status = OutboxStatus.PENDING;
         }
-        // maxRetry 미만이면 PENDING 유지 → 다음 스케줄러 실행 시 재시도
     }
 }
