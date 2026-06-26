@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-@Profile("local")
+@Profile("local & !gemini")
 public class InMemoryAiPromptRepositoryAdapter
         implements AiPromptRepository {
 

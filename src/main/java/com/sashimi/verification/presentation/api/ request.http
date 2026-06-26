@@ -4,7 +4,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "targetEmail": "barkmin9@naver.com",
+  "targetEmail": "bagminseo1999@gmail.com",
   "purpose": "SIGNUP"
 }
 
@@ -15,7 +15,7 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "targetEmail": "barkmin9@naver.com",
+  "targetEmail": "bagminseo1999@gmail.com",
   "purpose": "SIGNUP",
   "code": "NOLY5WC2"
 }

@@ -21,6 +21,11 @@ public class TraceIdFilter extends OncePerRequestFilter {
     public static final String TRACE_ID = "traceId";
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/actuator");
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
