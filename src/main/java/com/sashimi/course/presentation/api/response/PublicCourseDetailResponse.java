@@ -1,13 +1,16 @@
 package com.sashimi.course.presentation.api.response;
 
+import com.sashimi.course.application.query.CourseViewerType;
 import com.sashimi.course.application.query.PublicCourseDetailView;
 import com.sashimi.course.domain.model.CourseDifficulty;
+import com.sashimi.course.domain.model.CourseStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public record PublicCourseDetailResponse(
+        CourseViewerType viewerType,
         Long courseId,
         String title,
         String description,
@@ -23,6 +26,10 @@ public record PublicCourseDetailResponse(
         String categoryName,
         NcsInfoResponse ncs,
         LocalDateTime approvedAt,
+        CourseStatus status,
+        String rejectReason,
+        BigDecimal progressRate,
+        Boolean completed,
         List<SessionResponse> sessions,
         List<ReviewResponse> reviews
 ) {
@@ -36,11 +43,16 @@ public record PublicCourseDetailResponse(
 
     public record SessionResponse(
             Long sessionId,
+            String sessionUid,
             String title,
             String videoUrl,
             int durationSeconds,
             int sessionOrder,
-            boolean preview
+            boolean preview,
+            String attachmentName,
+            String attachmentUrl,
+            String attachmentType,
+            Long attachmentSize
     ) {}
 
     public record NcsInfoResponse(
@@ -76,8 +88,10 @@ public record PublicCourseDetailResponse(
 
         List<SessionResponse> sessions = view.sessions().stream()
                 .map(s -> new SessionResponse(
-                        s.sessionId(), s.title(), s.videoUrl(),
-                        s.durationSeconds(), s.sessionOrder(), s.preview()
+                        s.sessionId(), s.sessionUid(), s.title(), s.videoUrl(),
+                        s.durationSeconds(), s.sessionOrder(), s.preview(),
+                        s.attachmentName(), s.attachmentUrl(),
+                        s.attachmentType(), s.attachmentSize()
                 ))
                 .toList();
 
@@ -89,11 +103,13 @@ public record PublicCourseDetailResponse(
                 .toList();
 
         return new PublicCourseDetailResponse(
-                view.courseId(), view.title(), view.description(),
+                view.viewerType(), view.courseId(), view.title(), view.description(),
                 view.price(), view.difficulty(), view.thumbnail(),
                 view.totalDuration(), view.ratingAvg(), view.reviewCount(),
                 view.studentCount(), instructor, view.mainCategoryName(),
-                view.categoryName(), ncs, view.approvedAt(), sessions, reviews
+                view.categoryName(), ncs, view.approvedAt(),
+                view.status(), view.rejectReason(), view.progressRate(), view.completed(),
+                sessions, reviews
         );
     }
 }

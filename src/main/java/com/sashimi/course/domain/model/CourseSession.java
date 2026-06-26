@@ -49,7 +49,6 @@ public class CourseSession {
                                        int sessionOrder, boolean preview,
                                        String attachmentName, String attachmentUrl,
                                        String attachmentType, Long attachmentSize) {
-        if (durationSeconds <= 0) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         return new CourseSession(null, UUID.randomUUID().toString(), null, title, videoUrl,
                 durationSeconds, sessionOrder, preview,
                 attachmentName, attachmentUrl, attachmentType, attachmentSize,

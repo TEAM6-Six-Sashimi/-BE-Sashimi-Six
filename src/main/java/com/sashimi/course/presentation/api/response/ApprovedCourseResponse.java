@@ -8,6 +8,7 @@ public record ApprovedCourseResponse(
         Long courseId,
         Long categoryId,
         String title,
+        String thumbnail,
         Long price,
         BigDecimal ratingAvg,
         int studentCount
@@ -17,6 +18,7 @@ public record ApprovedCourseResponse(
                 course.getId(),
                 course.getCategoryId(),
                 course.getTitle(),
+                course.getThumbnail(),
                 course.getPrice(),
                 course.getRatingAvg(),
                 course.getStudentCount()

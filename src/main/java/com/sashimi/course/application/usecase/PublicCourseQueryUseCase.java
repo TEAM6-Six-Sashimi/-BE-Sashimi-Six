@@ -9,5 +9,5 @@ public interface PublicCourseQueryUseCase {
     List<PublicCourseView> getAllApprovedCourses();
     List<PublicCourseView> getCoursesByCategory(String categoryName);
     List<PublicCourseView> getCoursesBySubCategory(Long categoryId);
-    PublicCourseDetailView getCourseDetail(Long courseId);
+    PublicCourseDetailView getCourseDetail(Long courseId, Long userId, boolean isAdmin);
 }
