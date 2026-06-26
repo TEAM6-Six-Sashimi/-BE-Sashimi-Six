@@ -9,6 +9,8 @@ import com.sashimi.payment.presentation.api.response.PaymentHistoryResponse;
 import com.sashimi.payment.presentation.api.response.PaymentPreviewResponse;
 import com.sashimi.payment.presentation.api.response.PaymentResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
+import com.sashimi.payment.application.command.PaymentPurchaseType;
+import com.sashimi.payment.metric.PaymentMetrics;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,13 +33,16 @@ public class PaymentController {
 
     private final PaymentCommandUseCase paymentCommandUseCase;
     private final PaymentQueryUseCase paymentQueryUseCase;
+    private final PaymentMetrics paymentMetrics;
 
     public PaymentController(
             PaymentCommandUseCase paymentCommandUseCase,
-            PaymentQueryUseCase paymentQueryUseCase
+            PaymentQueryUseCase paymentQueryUseCase,
+            PaymentMetrics paymentMetrics
     ) {
         this.paymentCommandUseCase = paymentCommandUseCase;
         this.paymentQueryUseCase = paymentQueryUseCase;
+        this.paymentMetrics = paymentMetrics;
     }
 
     @Operation(
@@ -79,6 +84,10 @@ public class PaymentController {
         PaymentQueryUseCase.PaymentPreview preview =
                 paymentQueryUseCase.getCoursePreview(principal.getId(), courseId);
 
+        paymentMetrics.recordPaymentPreview(
+                PaymentPurchaseType.COURSE
+        );
+
         return ResponseEntity.ok(PaymentPreviewResponse.from(preview));
     }
 
@@ -114,6 +123,10 @@ public class PaymentController {
     ) {
         PaymentQueryUseCase.PaymentPreview preview =
                 paymentQueryUseCase.getCartPreview(principal.getId());
+
+        paymentMetrics.recordPaymentPreview(
+                PaymentPurchaseType.CART
+        );
 
         return ResponseEntity.ok(PaymentPreviewResponse.from(preview));
     }
