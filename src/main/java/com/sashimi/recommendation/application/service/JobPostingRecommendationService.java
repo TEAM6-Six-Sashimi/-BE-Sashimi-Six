@@ -1,6 +1,7 @@
 package com.sashimi.recommendation.application.service;
 
 import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.command.CreateJobPostingRecommendationCommand;
@@ -42,7 +43,10 @@ public class JobPostingRecommendationService implements
     @Override
     @Transactional
     public JobPostingRecommendation create(CreateJobPostingRecommendationCommand command) {
-        aiFeatureAccessPolicy.validate(command.userId());
+        aiFeatureAccessPolicy.validate(
+                command.userId(),
+                AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION
+        );
 
         log.info("채용공고 추천 요청 접수: userId={}, resumeId={}, inputType={}, hasSourceUrl={}, rawContentLength={}",
                 command.userId(),

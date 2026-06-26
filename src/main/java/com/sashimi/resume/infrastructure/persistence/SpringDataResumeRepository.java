@@ -2,7 +2,6 @@ package com.sashimi.resume.infrastructure.persistence;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface SpringDataResumeRepository
@@ -13,9 +12,11 @@ public interface SpringDataResumeRepository
             Long userId
     );
 
-    List<ResumeJpaEntity> findAllByUserIdOrderByCreatedAtDesc(
+    Optional<ResumeJpaEntity> findFirstByUserIdOrderByCreatedAtDesc(
             Long userId
     );
+
+    boolean existsByUserId(Long userId);
 
     void deleteByResumeIdAndUserId(
             Long resumeId,
