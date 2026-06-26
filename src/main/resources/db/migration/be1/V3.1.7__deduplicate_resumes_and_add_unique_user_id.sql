@@ -7,7 +7,7 @@ JOIN (
             resume_id,
             ROW_NUMBER() OVER (
                 PARTITION BY user_id
-                ORDER BY COALESCE(updated_at, created_at) DESC, resume_id DESC
+                ORDER BY created_at DESC, resume_id DESC
             ) AS rn
         FROM resumes
     ) ranked_resumes
@@ -16,4 +16,4 @@ JOIN (
 ON r.resume_id = duplicated_resumes.resume_id;
 
 ALTER TABLE resumes
-    ADD CONSTRAINT uq_resumes_user_id UNIQUE (user_id);
+ADD CONSTRAINT uq_resumes_user_id UNIQUE (user_id);
