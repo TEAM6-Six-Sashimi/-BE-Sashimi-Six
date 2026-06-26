@@ -122,6 +122,7 @@ public enum ErrorCode {
     AI_RESPONSE_EMPTY(502, "AI_004", "AI 응답이 비어 있습니다."),
     AI_RESPONSE_PARSE_FAILED(502, "AI_005", "AI 응답 결과를 파싱할 수 없습니다."),
     AI_PROMPT_NOT_FOUND(404, "AI_006", "활성화된 AI 프롬프트를 찾을 수 없습니다."),
+    AI_CONSENT_REQUIRED(403, "AI_007", "AI 기능을 사용하려면 개인정보 AI 활용 동의가 필요합니다."),
 
     RESUME_NOT_FOUND(404, "RESUME_404", "이력서를 찾을 수 없습니다."),
     RESUME_INVALID_EDUCATION(400, "RESUME_001", "학력 정보가 올바르지 않습니다."),
