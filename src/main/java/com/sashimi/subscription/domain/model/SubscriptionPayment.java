@@ -30,7 +30,8 @@ public class SubscriptionPayment {
             Long amount,
             SubscriptionBillingType billingType,
             LocalDateTime paidAt,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean validateCurrentPlanPrice
     ) {
         validate(
                 subscriptionId,
@@ -42,7 +43,8 @@ public class SubscriptionPayment {
                 amount,
                 billingType,
                 paidAt,
-                createdAt
+                createdAt,
+                validateCurrentPlanPrice
         );
 
         this.id = id;
@@ -78,7 +80,8 @@ public class SubscriptionPayment {
                 plan.getPrice(),
                 SubscriptionBillingType.INITIAL,
                 paidAt,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                true
         );
     }
 
@@ -102,7 +105,8 @@ public class SubscriptionPayment {
                 plan.getPrice(),
                 SubscriptionBillingType.RENEWAL,
                 paidAt,
-                LocalDateTime.now()
+                LocalDateTime.now(),
+                true
         );
     }
 
@@ -130,7 +134,8 @@ public class SubscriptionPayment {
                 amount,
                 billingType,
                 paidAt,
-                createdAt
+                createdAt,
+                false
         );
     }
 
@@ -144,7 +149,8 @@ public class SubscriptionPayment {
             Long amount,
             SubscriptionBillingType billingType,
             LocalDateTime paidAt,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean validateCurrentPlanPrice
     ) {
         if (subscriptionId == null
                 || subscriptionId <= 0
@@ -158,6 +164,7 @@ public class SubscriptionPayment {
                 || orderNo.isBlank()
                 || plan == null
                 || amount == null
+                || amount <= 0
                 || billingType == null
                 || paidAt == null
                 || createdAt == null) {
@@ -166,7 +173,8 @@ public class SubscriptionPayment {
             );
         }
 
-        if (!amount.equals(plan.getPrice())) {
+        if (validateCurrentPlanPrice
+                && !amount.equals(plan.getPrice())) {
             throw new BusinessException(
                     ErrorCode.SUBSCRIPTION_PAYMENT_INVALID
             );
