@@ -68,7 +68,8 @@ public class AdminCourseController {
                 .map(course -> AdminCoursePendingResponse.of(
                         course,
                         categoryPort.getCategoryNameById(course.getCategoryId()),
-                        instructorPort.getInstructorName(course.getInstructorId())
+                        instructorPort.getInstructorName(course.getInstructorId()),
+                        instructorPort.getInstructorLoginId(course.getInstructorId())
                 ))
                 .toList();
         return ResponseEntity.ok(courses);
