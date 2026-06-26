@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Profile("local")
+@Profile("local & !gemini")
 public class StubResumeImprovementAiAdapter
         implements ResumeImprovementAiPort {
 
