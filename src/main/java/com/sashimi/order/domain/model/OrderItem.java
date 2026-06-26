@@ -1,5 +1,7 @@
 package com.sashimi.order.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 
 public class OrderItem {
 
@@ -13,8 +15,28 @@ public class OrderItem {
     private final OrderItemType itemType;
     private final Long itemId;
 
-    private OrderItem(Long id, OrderItemType itemType, Long itemId, String courseTitle, Long price,
-                      Long discountAmount, Long finalPrice, Long orderId, Long courseId) {
+    private OrderItem(
+            Long id,
+            OrderItemType itemType,
+            Long itemId,
+            String courseTitle,
+            Long price,
+            Long discountAmount,
+            Long finalPrice,
+            Long orderId,
+            Long courseId
+    ) {
+        validate(
+                itemType,
+                itemId,
+                courseTitle,
+                price,
+                discountAmount,
+                finalPrice,
+                orderId,
+                courseId
+        );
+
         this.id = id;
         this.courseTitle = courseTitle;
         this.price = price;
@@ -26,35 +48,55 @@ public class OrderItem {
         this.itemId = itemId;
     }
 
-    public static OrderItem create(String courseTitle, Long price, Long orderId, Long courseId) {
-        return createCourse(courseTitle, price, orderId, courseId);
-    }
-
-    public static OrderItem createCourse(String courseTitle, Long price, Long orderId, Long courseId) {
-        return new OrderItem(null, OrderItemType.COURSE, courseId, courseTitle, price, 0L, price, orderId, courseId);
-    }
-
-    public static OrderItem createSubscription(String planName, Long price, Long orderId, Long subscriptionId) {
-        return new OrderItem(null, OrderItemType.AI_SUBSCRIPTION, subscriptionId, planName, price, 0L, price, orderId, null);
-    }
-
-    public static OrderItem restore(Long id, String courseTitle, Long price, Long discountAmount,
-                                    Long finalPrice, Long orderId, Long courseId) {
+    public static OrderItem createCourse(
+            String courseTitle,
+            Long price,
+            Long orderId,
+            Long courseId
+    ) {
         return new OrderItem(
-                id,
+                null,
                 OrderItemType.COURSE,
                 courseId,
                 courseTitle,
                 price,
-                discountAmount,
-                finalPrice,
+                0L,
+                price,
                 orderId,
                 courseId
         );
     }
 
-    public static OrderItem restore(Long id, OrderItemType itemType, Long itemId, String courseTitle, Long price,
-                                    Long discountAmount, Long finalPrice, Long orderId, Long courseId) {
+    public static OrderItem createSubscription(
+            String planName,
+            Long price,
+            Long orderId,
+            Long subscriptionId
+    ) {
+        return new OrderItem(
+                null,
+                OrderItemType.AI_SUBSCRIPTION,
+                subscriptionId,
+                planName,
+                price,
+                0L,
+                price,
+                orderId,
+                null
+        );
+    }
+
+    public static OrderItem restore(
+            Long id,
+            OrderItemType itemType,
+            Long itemId,
+            String courseTitle,
+            Long price,
+            Long discountAmount,
+            Long finalPrice,
+            Long orderId,
+            Long courseId
+    ) {
         return new OrderItem(
                 id,
                 itemType,
@@ -68,6 +110,57 @@ public class OrderItem {
         );
     }
 
+    private void validate(
+            OrderItemType itemType,
+            Long itemId,
+            String courseTitle,
+            Long price,
+            Long discountAmount,
+            Long finalPrice,
+            Long orderId,
+            Long courseId
+    ) {
+        if (itemType == null
+                || itemId == null
+                || itemId <= 0
+                || courseTitle == null
+                || courseTitle.isBlank()
+                || orderId == null
+                || orderId <= 0) {
+            throw new BusinessException(
+                    ErrorCode.ORDER_ITEM_INVALID
+            );
+        }
+
+        if (price == null
+                || discountAmount == null
+                || finalPrice == null
+                || price <= 0
+                || discountAmount < 0
+                || finalPrice <= 0
+                || discountAmount > price
+                || !finalPrice.equals(price - discountAmount)) {
+            throw new BusinessException(
+                    ErrorCode.ORDER_ITEM_INVALID
+            );
+        }
+
+        if (itemType == OrderItemType.COURSE) {
+            if (courseId == null || !courseId.equals(itemId)) {
+                throw new BusinessException(
+                        ErrorCode.ORDER_ITEM_INVALID
+                );
+            }
+        }
+
+        if (itemType == OrderItemType.AI_SUBSCRIPTION
+                && courseId != null) {
+            throw new BusinessException(
+                    ErrorCode.ORDER_ITEM_INVALID
+            );
+        }
+    }
+
     public Long getId() { return id; }
     public String getCourseTitle() { return courseTitle; }
     public Long getPrice() { return price; }
@@ -77,7 +170,4 @@ public class OrderItem {
     public Long getCourseId() { return courseId; }
     public OrderItemType getItemType() { return itemType; }
     public Long getItemId() { return itemId; }
-
-
-
 }

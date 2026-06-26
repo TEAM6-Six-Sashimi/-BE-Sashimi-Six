@@ -134,13 +134,14 @@ public class CreditCommandService implements CreditCommandUseCase {
         if (payment.isDone()) {
             payment.validatePaymentKey(command.paymentKey());
 
-            Credit credit = creditRepository.findByUserId(command.userId())
-                    .orElseThrow(() -> new BusinessException(
-                            ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
-                    ));
+            if (payment.getBalanceAfter() == null) {
+                throw new BusinessException(
+                        ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+                );
+            }
 
             return new CreditChargeConfirmResult(
-                    credit.getBalance(),
+                    payment.getBalanceAfter(),
                     payment.getOrderId(),
                     payment.getPaymentKey(),
                     payment.getAmount()

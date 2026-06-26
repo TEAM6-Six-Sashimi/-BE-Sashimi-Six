@@ -67,10 +67,6 @@ public class PaymentCommandService
                         ErrorCode.PAYMENT_IDEMPOTENCY_FAILED
                 );
 
-                case RESTARTED ->
-                        idempotencyId =
-                                resolution.idempotencyId();
-
                 default -> throw new BusinessException(
                         ErrorCode
                                 .PAYMENT_IDEMPOTENCY_RESULT_INVALID
@@ -109,7 +105,9 @@ public class PaymentCommandService
                 + ":"
                 + valueOf(command.courseId())
                 + ":"
-                + valueOf(command.planCode());
+                + valueOf(command.planCode())
+                + ":"
+                + valueOf(command.agreed());
     }
 
     private String valueOf(Object value) {
