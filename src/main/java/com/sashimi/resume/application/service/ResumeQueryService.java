@@ -8,20 +8,25 @@ import com.sashimi.resume.domain.repository.ResumeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 public class ResumeQueryService implements ResumeQueryUseCase {
 
     private final ResumeRepository resumeRepository;
 
-    public ResumeQueryService(ResumeRepository resumeRepository) {
+    public ResumeQueryService(
+            ResumeRepository resumeRepository
+    ) {
         this.resumeRepository = resumeRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Resume> getMyResumes(Long userId) {
-        return resumeRepository.findAllByUserId(userId);
+    public Resume getMyResume(Long userId) {
+        return resumeRepository.findByUserId(userId)
+                .orElseThrow(() ->
+                        new BusinessException(
+                                ErrorCode.RESUME_NOT_FOUND
+                        )
+                );
     }
 }

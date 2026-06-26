@@ -27,6 +27,12 @@ public class ResumeCommandService implements ResumeCommandUseCase {
 
     @Override
     public Resume create(CreateResumeCommand command) {
+        if (resumeRepository.existsByUserId(command.userId())) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_ALREADY_EXISTS
+            );
+        }
+
         Resume resume = Resume.create(
                 command.userId(),
                 command.educations(),

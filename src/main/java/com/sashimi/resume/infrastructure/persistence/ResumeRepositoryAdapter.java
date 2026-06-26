@@ -7,7 +7,6 @@ import com.sashimi.resume.domain.repository.ResumeRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -23,6 +22,28 @@ public class ResumeRepositoryAdapter
     ) {
         this.springDataRepository =
                 springDataRepository;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Resume> findByUserId(
+            Long userId
+    ) {
+        return springDataRepository
+                .findFirstByUserIdOrderByCreatedAtDesc(
+                        userId
+                )
+                .map(ResumeJpaEntity::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByUserId(
+            Long userId
+    ) {
+        return springDataRepository.existsByUserId(
+                userId
+        );
     }
 
     @Override
@@ -61,8 +82,7 @@ public class ResumeRepositoryAdapter
                         )
                         .orElseThrow(() ->
                                 new BusinessException(
-                                        ErrorCode
-                                                .RESUME_NOT_FOUND
+                                        ErrorCode.RESUME_NOT_FOUND
                                 )
                         );
 
@@ -71,20 +91,6 @@ public class ResumeRepositoryAdapter
         springDataRepository.flush();
 
         return existingEntity.toDomain();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Resume> findAllByUserId(
-            Long userId
-    ) {
-        return springDataRepository
-                .findAllByUserIdOrderByCreatedAtDesc(
-                        userId
-                )
-                .stream()
-                .map(ResumeJpaEntity::toDomain)
-                .toList();
     }
 
     @Override
