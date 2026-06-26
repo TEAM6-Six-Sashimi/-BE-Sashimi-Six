@@ -67,7 +67,7 @@ public class ResumeRepositoryAdapter
                     ResumeJpaEntity.from(resume);
 
             ResumeJpaEntity savedEntity =
-                    springDataRepository.save(
+                    springDataRepository.saveAndFlush(
                             newEntity
                     );
 
