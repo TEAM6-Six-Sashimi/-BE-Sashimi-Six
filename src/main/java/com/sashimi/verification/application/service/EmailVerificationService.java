@@ -4,16 +4,20 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
 import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
-import com.sashimi.verification.application.port.EmailSender;
 import com.sashimi.verification.presentation.api.response.EmailVerificationConfirmResult;
 import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResult;
 import com.sashimi.verification.application.usecase.EmailVerificationUseCase;
 import com.sashimi.verification.domain.model.EmailVerification;
 import com.sashimi.verification.domain.model.VerificationPurpose;
 import com.sashimi.verification.domain.repository.EmailVerificationRepository;
+import com.sashimi.verification.infrastructure.outbox.EmailOutboxJpaEntity;
+import com.sashimi.verification.infrastructure.outbox.SpringDataEmailOutboxRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import com.sashimi.verification.application.policy.EmailVerificationPolicy;
 import java.time.LocalDateTime;
 import java.util.Locale;
@@ -26,10 +30,13 @@ public class EmailVerificationService implements EmailVerificationUseCase {
     private static final long EXPIRE_MINUTES = 10;
 
 
+    private static final String OUTBOX_QUEUE_KEY = "email_outbox_queue";
+
     private final EmailVerificationRepository emailVerificationRepository;
     private final VerificationCodeGenerator verificationCodeGenerator;
-    private final EmailSender emailSender;
+    private final SpringDataEmailOutboxRepository emailOutboxRepository;
     private final EmailVerificationPolicy emailVerificationPolicy;
+    private final StringRedisTemplate redisTemplate;
 
     @Override
     public EmailVerificationRequestResult requestEmailVerification(RequestEmailVerificationCommand command) {
@@ -54,11 +61,20 @@ public class EmailVerificationService implements EmailVerificationUseCase {
 
         emailVerificationRepository.save(emailVerification);
 
-        emailSender.send(
-                targetEmail,
-                createSubject(command.getPurpose()),
-                createContent(code)
+        EmailOutboxJpaEntity outbox = emailOutboxRepository.save(
+                EmailOutboxJpaEntity.create(
+                        targetEmail,
+                        createSubject(command.getPurpose()),
+                        createContent(code)
+                )
         );
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                redisTemplate.opsForList().leftPush(OUTBOX_QUEUE_KEY, outbox.getId().toString());
+            }
+        });
 
         return new EmailVerificationRequestResult(
                 targetEmail,

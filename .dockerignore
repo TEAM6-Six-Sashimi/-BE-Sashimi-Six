@@ -1,0 +1,15 @@
+.git
+.gradle
+.idea
+.claude
+build
+logs
+tmp
+uploads
+k6
+*.iml
+*.log
+*.jar
+*.war
+.env
+deploy/*.env
