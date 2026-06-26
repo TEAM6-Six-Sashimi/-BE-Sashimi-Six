@@ -8,6 +8,8 @@ import com.sashimi.payment.application.usecase.PaymentCommandUseCase.PaymentResu
 import com.sashimi.payment.domain.model.PaymentIdempotency;
 import com.sashimi.payment.domain.repository.PaymentIdempotencyRepository;
 import com.sashimi.payment.application.command.PaymentPurchaseType;
+import com.sashimi.payment.metric.PaymentMetrics;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,55 +21,72 @@ import java.util.Map;
 @Transactional
 public class PaymentCheckoutTransactionService {
 
-    private final Map<PaymentPurchaseType, PaymentCheckoutProcessor>
-            processors;
-
+    private final Map<PaymentPurchaseType, PaymentCheckoutProcessor> processors;
     private final PaymentIdempotencyRepository paymentIdempotencyRepository;
     private final PaymentResultJsonCodec paymentResultJsonCodec;
+    private final PaymentMetrics paymentMetrics;
 
     public PaymentCheckoutTransactionService(
             List<PaymentCheckoutProcessor> processors,
             PaymentIdempotencyRepository paymentIdempotencyRepository,
-            PaymentResultJsonCodec paymentResultJsonCodec
+            PaymentResultJsonCodec paymentResultJsonCodec,
+            PaymentMetrics paymentMetrics
     ) {
-        this.processors = new EnumMap<>(
-                PaymentPurchaseType.class
-        );
-
+        this.processors = new EnumMap<>(PaymentPurchaseType.class);
         for (PaymentCheckoutProcessor processor : processors) {
-            this.processors.put(
-                    processor.supports(),
-                    processor
+            this.processors.put(processor.supports(), processor
             );
         }
-
         this.paymentIdempotencyRepository = paymentIdempotencyRepository;
         this.paymentResultJsonCodec = paymentResultJsonCodec;
+        this.paymentMetrics = paymentMetrics;
     }
 
     public PaymentResult execute(
             PaymentCheckoutCommand command,
             Long idempotencyId
     ) {
-        validateCheckoutRequest(command);
+        Timer.Sample sample = paymentMetrics.startTimer();
 
-        PaymentCheckoutProcessor processor =
-                processors.get(command.purchaseType());
+        try {
+            validateCheckoutRequest(command);
 
-        if (processor == null) {
-            throw new BusinessException(
-                    ErrorCode.PAYMENT_INVALID_CHECKOUT_REQUEST
+            PaymentCheckoutProcessor processor =
+                    processors.get(command.purchaseType());
+
+            if (processor == null) {
+                throw new BusinessException(
+                        ErrorCode.PAYMENT_INVALID_CHECKOUT_REQUEST
+                );
+            }
+
+            PaymentResult result = processor.checkout(command);
+
+            completeIdempotency(
+                    idempotencyId,
+                    result
             );
+
+            paymentMetrics.recordPaymentCompleted(
+                    command.purchaseType()
+            );
+
+            paymentMetrics.recordPaymentProcessingSuccess(
+                    sample,
+                    command.purchaseType()
+            );
+
+            return result;
+        } catch (RuntimeException e) {
+            paymentMetrics.recordPaymentProcessingFailure(
+                    sample,
+                    command == null
+                            ? null
+                            : command.purchaseType()
+            );
+
+            throw e;
         }
-
-        PaymentResult result = processor.checkout(command);
-
-        completeIdempotency(
-                idempotencyId,
-                result
-        );
-
-        return result;
     }
 
     private void validateCheckoutRequest(
