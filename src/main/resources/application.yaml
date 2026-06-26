@@ -2,6 +2,13 @@ spring:
   application:
     name: sashimi
 
+  profiles:
+    group:
+      prod:
+        - s3
+        - gemini
+        - mailgun
+
   servlet:
     multipart:
       max-file-size: 100MB

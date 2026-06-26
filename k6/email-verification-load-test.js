@@ -10,7 +10,9 @@ const passwordResetRequests = new Counter('password_reset_verification_requests'
 export const options = {
     stages: [
         { duration: '10s', target: 10 },
-        { duration: '30s', target: 30 },
+        { duration: '40s', target: 30 },
+        { duration: '40s', target: 50 },
+        { duration: '180s', target: 50 },
         { duration: '10s', target: 0 },
     ],
     thresholds: {
@@ -39,17 +41,14 @@ export default function () {
     let payload;
 
     if (isSignup) {
-        // 회원가입 이메일 인증 — 가짜 이메일 (Mailgun이 처리 후 bounce)
         payload = JSON.stringify({
-            targetEmail: `test.signup.${__VU}.${__ITER}@test-sashimi.com`,
+            targetEmail: `bagminseo1999+signup${__VU}${__ITER}@gmail.com`,
             purpose: 'SIGNUP',
         });
         signupRequests.add(1);
     } else {
-        // 비밀번호 재설정 이메일 인증 — 기존 유저 이메일
-        const email = EXISTING_EMAILS[__VU % EXISTING_EMAILS.length];
         payload = JSON.stringify({
-            targetEmail: email,
+            targetEmail: `bagminseo1999+reset${__VU}${__ITER}@gmail.com`,
             purpose: 'PASSWORD_RESET',
         });
         passwordResetRequests.add(1);
