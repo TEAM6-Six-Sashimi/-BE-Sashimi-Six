@@ -4,9 +4,12 @@ import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzeResult;
 import com.sashimi.recommendation.domain.model.CertificateRecommendation;
-import com.sashimi.recommendation.domain.model.CourseRecommendation;
+import com.sashimi.recommendation.domain.model.FitAnalysisCategory;
+import com.sashimi.recommendation.domain.model.FitAnalysisItem;
+import com.sashimi.recommendation.domain.model.FitStatus;
+import com.sashimi.recommendation.domain.model.JobFitAnalysis;
 import com.sashimi.recommendation.domain.model.JobPostingRecommendation;
-import com.sashimi.recommendation.domain.model.RequiredSkillRecommendation;
+import com.sashimi.recommendation.domain.model.JobPostingSummary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -22,65 +25,74 @@ public class StubJobPostingRecommendationAnalyzeAdapter
             JobPostingRecommendation recommendation,
             AiPrompt prompt
     ) {
-        boolean resumeBased = recommendation.resumeBased();
+        JobPostingSummary summary = new JobPostingSummary(
+                "프론트엔드 개발자",
+                List.of(
+                        "React/TypeScript/Next.js 실무 경험 3년 이상",
+                        "REST API 연동 및 상태관리 경험",
+                        "Git 기반 협업 경험"
+                ),
+                List.of(
+                        "GraphQL 또는 Apollo Client 경험",
+                        "AWS S3, CloudFront 등 클라우드 서비스 활용 경험",
+                        "Docker 또는 CI/CD 파이프라인 구성 경험"
+                ),
+                "관련 경력 3년 이상",
+                "사용자 중심의 프론트엔드 개발 및 유지보수, React 기반 SPA 설계 및 구현, 백엔드 팀과의 API 연동"
+        );
+
+        JobFitAnalysis fitAnalysis = new JobFitAnalysis(
+                new FitAnalysisItem(
+                        FitAnalysisCategory.EDUCATION,
+                        FitStatus.SATISFIED,
+                        "학사 이상",
+                        "컴퓨터공학과 학사",
+                        "학력은 공고에서 요구하는 조건을 충족합니다.",
+                        List.of()
+                ),
+                new FitAnalysisItem(
+                        FitAnalysisCategory.CAREER,
+                        FitStatus.PARTIALLY_SATISFIED,
+                        "관련 경력 3년 이상",
+                        "프론트엔드 개발 1년 6개월",
+                        "관련 경력이 있으나 요구 연차에는 다소 부족합니다.",
+                        List.of("관련 경력 1년 6개월")
+                ),
+                new FitAnalysisItem(
+                        FitAnalysisCategory.CERTIFICATION,
+                        FitStatus.PARTIALLY_SATISFIED,
+                        "정보처리기사, SQLD",
+                        "정보처리기사",
+                        "필수 자격증은 보유했지만 SQLD를 취득하면 적합도를 높일 수 있습니다.",
+                        List.of("SQLD")
+                ),
+                List.of(
+                        "학력 조건은 충족합니다.",
+                        "경력은 일부 충족 상태이므로 프로젝트 경험을 보완하는 것이 좋습니다.",
+                        "SQLD 자격증을 취득하면 데이터 활용 역량을 보완할 수 있습니다."
+                )
+        );
 
         return new JobPostingRecommendationAnalyzeResult(
-                "Frontend Developer",
-                resumeBased ? 56 : null,
-                List.of(
-                        new RequiredSkillRecommendation("React", "Frontend", resumeBased ? true : null),
-                        new RequiredSkillRecommendation("TypeScript", "Frontend", resumeBased ? true : null),
-                        new RequiredSkillRecommendation("Next.js", "Frontend", resumeBased ? true : null),
-                        new RequiredSkillRecommendation("GraphQL", "API", resumeBased ? false : null),
-                        new RequiredSkillRecommendation("AWS", "Cloud", resumeBased ? false : null),
-                        new RequiredSkillRecommendation("Docker", "DevOps", resumeBased ? false : null)
-                ),
-                List.of(
-                        new CourseRecommendation(
-                                1L,
-                                "실무에서 바로 쓰는 GraphQL 완전 정복",
-                                "김민준",
-                                "GraphQL",
-                                "공고에서 GraphQL 역량을 요구하므로 보완 학습에 적합합니다."
-                        ),
-                        new CourseRecommendation(
-                                2L,
-                                "Docker & Kubernetes 입문부터 실전까지",
-                                "이서준",
-                                "Docker",
-                                "컨테이너 기반 운영 역량을 보완하기 위한 강의입니다."
-                        ),
-                        new CourseRecommendation(
-                                3L,
-                                "AWS 기초부터 배포까지",
-                                "박지훈",
-                                "AWS",
-                                "클라우드 배포 경험을 보완하는 데 도움이 됩니다."
-                        )
-                ),
+                summary,
+                fitAnalysis,
                 List.of(
                         new CertificateRecommendation(
-                                1L,
-                                "AWS Cloud Practitioner",
-                                "클라우드 기초 이해와 AWS 서비스 활용 역량을 증명하는 데 적합합니다.",
-                                List.of("AWS"),
-                                "쉬움"
-                        ),
-                        new CertificateRecommendation(
-                                2L,
+                                null,
                                 "정보처리기사",
-                                "소프트웨어 개발 전반의 기본 역량을 증명하는 데 도움이 됩니다.",
-                                List.of("CI/CD", "Git"),
+                                "소프트웨어 개발 전반의 기본 역량을 증명할 수 있는 자격증입니다.",
+                                List.of("소프트웨어 개발", "데이터베이스", "네트워크"),
                                 "보통"
                         ),
                         new CertificateRecommendation(
-                                3L,
-                                "AWS Solutions Architect",
-                                "AWS 인프라 설계 및 운영 역량을 보완하는 데 적합합니다.",
-                                List.of("AWS", "Docker"),
-                                "어려움"
+                                null,
+                                "SQLD",
+                                "데이터 조회와 모델링 역량을 보완하여 백엔드 및 프론트엔드 협업 이해도를 높일 수 있습니다.",
+                                List.of("SQL", "데이터베이스"),
+                                "보통"
                         )
-                )
+                ),
+                List.of()
         );
     }
 }

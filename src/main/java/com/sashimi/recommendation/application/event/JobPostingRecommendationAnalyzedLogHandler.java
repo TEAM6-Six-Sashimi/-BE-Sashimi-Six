@@ -12,11 +12,10 @@ public class JobPostingRecommendationAnalyzedLogHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(JobPostingRecommendationAnalyzedEvent event) {
         log.info(
-                "Job posting recommendation analyzed. userId={}, recommendationId={}, jobTitle={}, matchRate={}, analyzedAt={}",
+                "Job posting recommendation analyzed. userId={}, recommendationId={}, jobRole={}, analyzedAt={}",
                 event.userId(),
                 event.recommendationId(),
-                event.jobTitle(),
-                event.matchRate(),
+                event.jobRole(),
                 event.analyzedAt()
         );
     }

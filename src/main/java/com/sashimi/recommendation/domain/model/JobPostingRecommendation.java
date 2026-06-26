@@ -7,14 +7,15 @@ public class JobPostingRecommendation {
 
     private final Long recommendationId;
     private final Long userId;
+    private final Long resumeId;
     private final RecommendationInputType inputType;
     private final String sourceUrl;
     private final String rawContent;
-    private final String jobTitle;
+    private final String resumeContent;
     private final RecommendationAnalysisStatus analysisStatus;
     private final boolean resumeBased;
-    private final Integer matchRate;
-    private final List<RequiredSkillRecommendation> requiredSkills;
+    private final JobPostingSummary summary;
+    private final JobFitAnalysis fitAnalysis;
     private final List<CourseRecommendation> courses;
     private final List<CertificateRecommendation> certificates;
     private final LocalDateTime createdAt;
@@ -22,51 +23,56 @@ public class JobPostingRecommendation {
     private JobPostingRecommendation(
             Long recommendationId,
             Long userId,
+            Long resumeId,
             RecommendationInputType inputType,
             String sourceUrl,
             String rawContent,
-            String jobTitle,
+            String resumeContent,
             RecommendationAnalysisStatus analysisStatus,
             boolean resumeBased,
-            Integer matchRate,
-            List<RequiredSkillRecommendation> requiredSkills,
+            JobPostingSummary summary,
+            JobFitAnalysis fitAnalysis,
             List<CourseRecommendation> courses,
             List<CertificateRecommendation> certificates,
             LocalDateTime createdAt
     ) {
         this.recommendationId = recommendationId;
         this.userId = userId;
+        this.resumeId = resumeId;
         this.inputType = inputType;
         this.sourceUrl = sourceUrl;
         this.rawContent = rawContent;
-        this.jobTitle = jobTitle;
+        this.resumeContent = resumeContent;
         this.analysisStatus = analysisStatus;
         this.resumeBased = resumeBased;
-        this.matchRate = matchRate;
-        this.requiredSkills = requiredSkills;
-        this.courses = courses;
-        this.certificates = certificates;
+        this.summary = summary;
+        this.fitAnalysis = fitAnalysis;
+        this.courses = courses == null ? List.of() : courses;
+        this.certificates = certificates == null ? List.of() : certificates;
         this.createdAt = createdAt;
     }
 
     public static JobPostingRecommendation create(
             Long userId,
+            Long resumeId,
             RecommendationInputType inputType,
             String sourceUrl,
             String rawContent,
+            String resumeContent,
             boolean hasResume
     ) {
         return new JobPostingRecommendation(
                 null,
                 userId,
+                resumeId,
                 inputType,
                 sourceUrl,
                 rawContent,
-                null,
+                resumeContent,
                 RecommendationAnalysisStatus.PENDING,
                 hasResume,
                 null,
-                List.of(),
+                null,
                 List.of(),
                 List.of(),
                 LocalDateTime.now()
@@ -74,23 +80,23 @@ public class JobPostingRecommendation {
     }
 
     public JobPostingRecommendation analyzed(
-            String jobTitle,
-            Integer matchRate,
-            List<RequiredSkillRecommendation> requiredSkills,
+            JobPostingSummary summary,
+            JobFitAnalysis fitAnalysis,
             List<CourseRecommendation> courses,
             List<CertificateRecommendation> certificates
     ) {
         return new JobPostingRecommendation(
                 recommendationId,
                 userId,
+                resumeId,
                 inputType,
                 sourceUrl,
                 rawContent,
-                jobTitle,
+                resumeContent,
                 RecommendationAnalysisStatus.COMPLETED,
                 resumeBased,
-                resumeBased ? matchRate : null,
-                requiredSkills,
+                summary,
+                fitAnalysis,
                 courses,
                 certificates,
                 createdAt
@@ -101,14 +107,15 @@ public class JobPostingRecommendation {
         return new JobPostingRecommendation(
                 recommendationId,
                 userId,
+                resumeId,
                 inputType,
                 sourceUrl,
                 rawContent,
-                jobTitle,
+                resumeContent,
                 RecommendationAnalysisStatus.FAILED,
                 resumeBased,
-                matchRate,
-                requiredSkills,
+                summary,
+                fitAnalysis,
                 courses,
                 certificates,
                 createdAt
@@ -119,14 +126,15 @@ public class JobPostingRecommendation {
         return new JobPostingRecommendation(
                 recommendationId,
                 userId,
+                resumeId,
                 inputType,
                 sourceUrl,
                 rawContent,
-                jobTitle,
+                resumeContent,
                 analysisStatus,
                 resumeBased,
-                matchRate,
-                requiredSkills,
+                summary,
+                fitAnalysis,
                 courses,
                 certificates,
                 createdAt
@@ -141,6 +149,10 @@ public class JobPostingRecommendation {
         return userId;
     }
 
+    public Long resumeId() {
+        return resumeId;
+    }
+
     public RecommendationInputType inputType() {
         return inputType;
     }
@@ -153,8 +165,8 @@ public class JobPostingRecommendation {
         return rawContent;
     }
 
-    public String jobTitle() {
-        return jobTitle;
+    public String resumeContent() {
+        return resumeContent;
     }
 
     public RecommendationAnalysisStatus analysisStatus() {
@@ -165,12 +177,12 @@ public class JobPostingRecommendation {
         return resumeBased;
     }
 
-    public Integer matchRate() {
-        return matchRate;
+    public JobPostingSummary summary() {
+        return summary;
     }
 
-    public List<RequiredSkillRecommendation> requiredSkills() {
-        return requiredSkills;
+    public JobFitAnalysis fitAnalysis() {
+        return fitAnalysis;
     }
 
     public List<CourseRecommendation> courses() {

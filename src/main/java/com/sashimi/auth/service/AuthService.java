@@ -31,10 +31,18 @@ import com.sashimi.verification.application.command.RequestEmailVerificationComm
 import com.sashimi.verification.application.usecase.EmailVerificationUseCase;
 import com.sashimi.verification.domain.model.VerificationPurpose;
 import com.sashimi.verification.presentation.api.response.EmailVerificationRequestResult;
+import com.sashimi.auth.metric.AuthMetrics;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import com.sashimi.security.principal.CustomUserPrincipal;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,11 +61,13 @@ import java.util.Objects;
 @Transactional
 public class AuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private static final String REFERRAL_CODE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int REFERRAL_CODE_LENGTH = 8;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final AuthenticationManager authenticationManager;
+    private final AuthMetrics authMetrics;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
@@ -172,27 +182,50 @@ public class AuthService {
     }
 
     public TokenResponseDto login(LoginRequestDto request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getLoginId(),
-                        request.getPassword()
-                )
-        );
+        Timer.Sample timerSample = authMetrics.startTimer();
 
-        User user = userRepository.findByLoginId(authentication.getName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        try {
+            Authentication authentication;
+            try {
+                authentication = authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                request.getLoginId(),
+                                request.getPassword()
+                        )
+                );
+            } catch (AuthenticationException e) {
+                authMetrics.recordLoginFailed(resolveFailureReason(e));
+                log.warn("event=login_failed loginId={} reason={}", request.getLoginId(), resolveFailureReason(e));
+                throw e;
+            }
 
-        user.updateLastLoginAt(LocalDateTime.now());
-        userRepository.save(user);
+            User user = userRepository.findByLoginId(authentication.getName())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
+            user.updateLastLoginAt(LocalDateTime.now());
+            userRepository.save(user);
 
-        LocalDateTime refreshExpiryDate = LocalDateTime.now()
-                .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
+            TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
 
-        refreshService.saveOrUpdate(user, tokenResponse.getRefreshToken(), refreshExpiryDate);
+            LocalDateTime refreshExpiryDate = LocalDateTime.now()
+                    .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
 
-        return tokenResponse.withName(user.getName());
+            refreshService.saveOrUpdate(user, tokenResponse.getRefreshToken(), refreshExpiryDate);
+
+            authMetrics.recordLoginSuccess();
+            log.info("event=login_success userId={}", user.getId());
+
+            return tokenResponse.withName(user.getName());
+        } finally {
+            authMetrics.stopTimer(timerSample);
+        }
+    }
+
+    private String resolveFailureReason(AuthenticationException e) {
+        if (e instanceof BadCredentialsException) return "bad_credentials";
+        if (e instanceof DisabledException) return "account_disabled";
+        if (e instanceof LockedException) return "account_locked";
+        return "unknown";
     }
 
     public TokenResponseDto reissue(String refreshTokenValue) {
