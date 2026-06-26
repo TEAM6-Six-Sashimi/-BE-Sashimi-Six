@@ -9,6 +9,7 @@ import com.sashimi.resume.application.usecase.ResumeCommandUseCase;
 import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.repository.ResumeRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +43,15 @@ public class ResumeCommandService implements ResumeCommandUseCase {
                 command.defaultResume()
         );
 
-        Resume savedResume = resumeRepository.save(resume);
+        Resume savedResume;
+
+        try {
+            savedResume = resumeRepository.save(resume);
+        } catch (DataIntegrityViolationException exception) {
+            throw new BusinessException(
+                    ErrorCode.RESUME_ALREADY_EXISTS
+            );
+        }
 
         log.info(
                 "이력서 생성: userId={}, resumeId={}, entryLevel={}, defaultResume={}",
