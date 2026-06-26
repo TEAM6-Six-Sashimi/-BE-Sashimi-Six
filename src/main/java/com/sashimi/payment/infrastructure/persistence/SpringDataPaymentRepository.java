@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface SpringDataPaymentRepository extends JpaRepository<PaymentJpaEntity, Long> {
 
-    List<PaymentJpaEntity> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+    List<PaymentJpaEntity> findAllByUserIdOrderByCreatedAtDescIdDesc(Long userId);
 }
