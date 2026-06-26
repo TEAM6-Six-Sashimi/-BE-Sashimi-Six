@@ -6,7 +6,7 @@ spring:
     group:
       prod:
         - s3
-        - gemini
+        - openai
         - mailgun
 
   servlet:
@@ -56,9 +56,10 @@ jwt:
   access-token-validity-in-milliseconds: 10800000
   refresh-token-validity-in-milliseconds: 1209600000
 
-gemini:
-  model: gemini-2.0-flash
-  base-url: https://generativelanguage.googleapis.com/v1beta
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-4o-mini}
+  base-url: https://api.openai.com/v1
   timeout-seconds: 30
 
 toss:

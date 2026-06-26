@@ -1,8 +1,8 @@
 package com.sashimi.recommendation.infrastructure.ai;
 
 import com.sashimi.ai.domain.model.AiPrompt;
-import com.sashimi.ai.infrastructure.gemini.GeminiResponseCleaner;
-import com.sashimi.ai.infrastructure.gemini.GeminiTextClient;
+import com.sashimi.ai.infrastructure.openai.AiResponseCleaner;
+import com.sashimi.ai.infrastructure.openai.OpenAiTextClient;
 import com.sashimi.ai.infrastructure.prompt.JobPostingRecommendationPromptBuilder;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -27,22 +27,22 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Profile("gemini")
-public class GeminiJobPostingRecommendationAnalyzeAdapter
+@Profile("openai")
+public class OpenAiJobPostingRecommendationAnalyzeAdapter
         implements JobPostingRecommendationAnalyzePort {
 
     private final ObjectMapper objectMapper;
     private final JobPostingRecommendationPromptBuilder promptBuilder;
-    private final GeminiTextClient geminiTextClient;
+    private final OpenAiTextClient openAiTextClient;
 
-    public GeminiJobPostingRecommendationAnalyzeAdapter(
+    public OpenAiJobPostingRecommendationAnalyzeAdapter(
             ObjectMapper objectMapper,
             JobPostingRecommendationPromptBuilder promptBuilder,
-            GeminiTextClient geminiTextClient
+            OpenAiTextClient openAiTextClient
     ) {
         this.objectMapper = objectMapper;
         this.promptBuilder = promptBuilder;
-        this.geminiTextClient = geminiTextClient;
+        this.openAiTextClient = openAiTextClient;
     }
 
     @Override
@@ -50,36 +50,58 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
             JobPostingRecommendation recommendation,
             AiPrompt aiPrompt
     ) {
-        String prompt = promptBuilder.build(recommendation, aiPrompt);
+        String prompt = promptBuilder.build(
+                recommendation,
+                aiPrompt
+        );
 
-        log.info("채용공고 AI 추천 요청: recommendationId={}, inputType={}, resumeBased={}, promptLength={}",
+        log.info(
+                "채용공고 AI 추천 요청: recommendationId={}, inputType={}, resumeBased={}, promptLength={}",
                 recommendation.recommendationId(),
                 recommendation.inputType(),
                 recommendation.resumeBased(),
-                prompt == null ? 0 : prompt.length());
+                prompt == null ? 0 : prompt.length()
+        );
 
-        String generatedText = geminiTextClient.generate(prompt);
+        String generatedText = openAiTextClient.generate(
+                prompt
+        );
 
         JobPostingRecommendationAnalyzeResult result =
                 parseAnalysisResult(generatedText);
 
-        log.info("채용공고 AI 추천 결과: recommendationId={}, certificateCount={}, courseCount={}",
+        log.info(
+                "채용공고 AI 추천 결과: recommendationId={}, certificateCount={}, courseCount={}",
                 recommendation.recommendationId(),
                 result.certificates().size(),
-                result.courses().size());
+                result.courses().size()
+        );
 
         return result;
     }
 
-    private JobPostingRecommendationAnalyzeResult parseAnalysisResult(String generatedText) {
+    private JobPostingRecommendationAnalyzeResult parseAnalysisResult(
+            String generatedText
+    ) {
         try {
-            String jsonText = GeminiResponseCleaner.removeMarkdownFence(generatedText);
+            String jsonText =
+                    AiResponseCleaner.removeMarkdownFence(
+                            generatedText
+                    );
+
             JsonNode root = objectMapper.readTree(jsonText);
 
-            JobPostingSummary summary = parseSummary(root.path("summary"));
-            JobFitAnalysis fitAnalysis = parseFitAnalysis(root.path("fitAnalysis"));
-            List<CertificateRecommendation> certificates = parseCertificates(root.path("certificates"));
-            List<CourseRecommendation> courses = parseCourses(root.path("courses"));
+            JobPostingSummary summary =
+                    parseSummary(root.path("summary"));
+
+            JobFitAnalysis fitAnalysis =
+                    parseFitAnalysis(root.path("fitAnalysis"));
+
+            List<CertificateRecommendation> certificates =
+                    parseCertificates(root.path("certificates"));
+
+            List<CourseRecommendation> courses =
+                    parseCourses(root.path("courses"));
 
             return new JobPostingRecommendationAnalyzeResult(
                     summary,
@@ -87,26 +109,38 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
                     certificates,
                     courses
             );
-        } catch (Exception e) {
-            log.error("채용공고 AI 추천 응답 파싱 실패: generatedTextLength={}",
+        } catch (Exception exception) {
+            log.error(
+                    "채용공고 AI 추천 응답 파싱 실패: generatedTextLength={}",
                     generatedText == null ? 0 : generatedText.length(),
-                    e);
+                    exception
+            );
 
-            throw new BusinessException(ErrorCode.AI_RESPONSE_PARSE_FAILED);
+            throw new BusinessException(
+                    ErrorCode.AI_RESPONSE_PARSE_FAILED
+            );
         }
     }
 
-    private JobPostingSummary parseSummary(JsonNode summaryNode) {
+    private JobPostingSummary parseSummary(
+            JsonNode summaryNode
+    ) {
         return new JobPostingSummary(
                 summaryNode.path("jobRole").asText(),
-                parseStringArray(summaryNode.path("requiredQualifications")),
-                parseStringArray(summaryNode.path("preferredQualifications")),
+                parseStringArray(
+                        summaryNode.path("requiredQualifications")
+                ),
+                parseStringArray(
+                        summaryNode.path("preferredQualifications")
+                ),
                 summaryNode.path("experienceRequirement").asText(),
                 summaryNode.path("mainTaskSummary").asText()
         );
     }
 
-    private JobFitAnalysis parseFitAnalysis(JsonNode fitAnalysisNode) {
+    private JobFitAnalysis parseFitAnalysis(
+            JsonNode fitAnalysisNode
+    ) {
         return new JobFitAnalysis(
                 parseFitAnalysisItem(
                         FitAnalysisCategory.EDUCATION,
@@ -120,7 +154,9 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
                         FitAnalysisCategory.CERTIFICATION,
                         fitAnalysisNode.path("certification")
                 ),
-                parseStringArray(fitAnalysisNode.path("overallComments"))
+                parseStringArray(
+                        fitAnalysisNode.path("overallComments")
+                )
         );
     }
 
@@ -130,67 +166,91 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
     ) {
         return new FitAnalysisItem(
                 category,
-                parseFitStatus(itemNode.path("status").asText()),
+                parseFitStatus(
+                        itemNode.path("status").asText()
+                ),
                 itemNode.path("requiredCondition").asText(),
                 itemNode.path("userCondition").asText(),
                 itemNode.path("comment").asText(),
-                parseStringArray(itemNode.path("missingItems"))
+                parseStringArray(
+                        itemNode.path("missingItems")
+                )
         );
     }
 
-    private FitStatus parseFitStatus(String value) {
+    private FitStatus parseFitStatus(
+            String value
+    ) {
         if (value == null || value.isBlank()) {
             return FitStatus.NOT_SATISFIED;
         }
 
         try {
             return FitStatus.valueOf(value);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException exception) {
             return FitStatus.NOT_SATISFIED;
         }
     }
 
-    private List<CertificateRecommendation> parseCertificates(JsonNode certificatesNode) {
-        List<CertificateRecommendation> certificates = new ArrayList<>();
+    private List<CertificateRecommendation> parseCertificates(
+            JsonNode certificatesNode
+    ) {
+        List<CertificateRecommendation> certificates =
+                new ArrayList<>();
 
         if (!certificatesNode.isArray()) {
             return certificates;
         }
 
         for (JsonNode certificateNode : certificatesNode) {
-            certificates.add(new CertificateRecommendation(
-                    parseNullableLong(certificateNode.get("certificationId")),
-                    certificateNode.path("name").asText(),
-                    certificateNode.path("reason").asText(),
-                    parseStringArray(certificateNode.path("relatedSkills")),
-                    certificateNode.path("difficulty").asText()
-            ));
+            certificates.add(
+                    new CertificateRecommendation(
+                            parseNullableLong(
+                                    certificateNode.get("certificationId")
+                            ),
+                            certificateNode.path("name").asText(),
+                            certificateNode.path("reason").asText(),
+                            parseStringArray(
+                                    certificateNode.path("relatedSkills")
+                            ),
+                            certificateNode.path("difficulty").asText()
+                    )
+            );
         }
 
         return certificates;
     }
 
-    private List<CourseRecommendation> parseCourses(JsonNode coursesNode) {
-        List<CourseRecommendation> courses = new ArrayList<>();
+    private List<CourseRecommendation> parseCourses(
+            JsonNode coursesNode
+    ) {
+        List<CourseRecommendation> courses =
+                new ArrayList<>();
 
         if (!coursesNode.isArray()) {
             return courses;
         }
 
         for (JsonNode courseNode : coursesNode) {
-            courses.add(new CourseRecommendation(
-                    parseNullableLong(courseNode.get("courseId")),
-                    courseNode.path("title").asText(),
-                    courseNode.path("instructor").asText(),
-                    courseNode.path("matchedSkill").asText(),
-                    courseNode.path("reason").asText()
-            ));
+            courses.add(
+                    new CourseRecommendation(
+                            parseNullableLong(
+                                    courseNode.get("courseId")
+                            ),
+                            courseNode.path("title").asText(),
+                            courseNode.path("instructor").asText(),
+                            courseNode.path("matchedSkill").asText(),
+                            courseNode.path("reason").asText()
+                    )
+            );
         }
 
         return courses;
     }
 
-    private Long parseNullableLong(JsonNode node) {
+    private Long parseNullableLong(
+            JsonNode node
+    ) {
         if (node == null || node.isNull()) {
             return null;
         }
@@ -198,7 +258,9 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
         return node.asLong();
     }
 
-    private List<String> parseStringArray(JsonNode arrayNode) {
+    private List<String> parseStringArray(
+            JsonNode arrayNode
+    ) {
         List<String> values = new ArrayList<>();
 
         if (!arrayNode.isArray()) {
