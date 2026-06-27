@@ -35,6 +35,12 @@ public class OpenAiTextClient {
     public String generate(String prompt) {
         validateOpenAiApiKey();
 
+        if (prompt == null || prompt.isBlank()) {
+            throw new BusinessException(
+                ErrorCode.AI_API_CALL_FAILED
+            );
+        }
+        
         long startedAt = System.currentTimeMillis();
 
         log.info(
