@@ -69,14 +69,10 @@ public class PaymentIdempotencyTransactionService {
                 now,
                 PROCESSING_TIMEOUT_MINUTES
         )) {
-            existing.restartProcessing();
+            existing.fail();
+            repository.save(existing);
 
-            PaymentIdempotency saved =
-                    repository.save(existing);
-
-            return ExistingRequestResolution.restarted(
-                    saved.getId()
-            );
+            return ExistingRequestResolution.failed();
         }
 
         return ExistingRequestResolution.processing();
@@ -98,13 +94,11 @@ public class PaymentIdempotencyTransactionService {
     public enum ExistingRequestStatus {
         COMPLETED,
         PROCESSING,
-        RESTARTED,
         FAILED
     }
 
     public record ExistingRequestResolution(
             ExistingRequestStatus status,
-            Long idempotencyId,
             String resultJson
     ) {
         public static ExistingRequestResolution completed(
@@ -112,7 +106,6 @@ public class PaymentIdempotencyTransactionService {
         ) {
             return new ExistingRequestResolution(
                     ExistingRequestStatus.COMPLETED,
-                    null,
                     resultJson
             );
         }
@@ -120,17 +113,6 @@ public class PaymentIdempotencyTransactionService {
         public static ExistingRequestResolution processing() {
             return new ExistingRequestResolution(
                     ExistingRequestStatus.PROCESSING,
-                    null,
-                    null
-            );
-        }
-
-        public static ExistingRequestResolution restarted(
-                Long idempotencyId
-        ) {
-            return new ExistingRequestResolution(
-                    ExistingRequestStatus.RESTARTED,
-                    idempotencyId,
                     null
             );
         }
@@ -138,7 +120,6 @@ public class PaymentIdempotencyTransactionService {
         public static ExistingRequestResolution failed() {
             return new ExistingRequestResolution(
                     ExistingRequestStatus.FAILED,
-                    null,
                     null
             );
         }

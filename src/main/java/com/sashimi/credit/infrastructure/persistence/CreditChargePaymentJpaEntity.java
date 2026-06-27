@@ -41,6 +41,9 @@ public class CreditChargePaymentJpaEntity {
     @Column(name = "amount", nullable = false)
     private Long amount;
 
+    @Column(name = "balance_after")
+    private Long balanceAfter;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     private CreditChargePaymentStatus status;
@@ -66,6 +69,7 @@ public class CreditChargePaymentJpaEntity {
         entity.failureReason = payment.getFailureReason();
         entity.requestedAt = payment.getRequestedAt();
         entity.approvedAt = payment.getApprovedAt();
+        entity.balanceAfter = payment.getBalanceAfter();
         return entity;
     }
 
@@ -77,6 +81,7 @@ public class CreditChargePaymentJpaEntity {
                 paymentKey,
                 paymentMethod,
                 amount,
+                balanceAfter,
                 status,
                 failureReason,
                 requestedAt,

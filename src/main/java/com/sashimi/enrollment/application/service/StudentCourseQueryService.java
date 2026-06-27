@@ -31,7 +31,7 @@ public class StudentCourseQueryService implements StudentCourseQueryUseCase {
     /** 영상 시청 presigned URL 만료 (분) */
     private static final int VIDEO_URL_EXPIRY_MINUTES = 120;
     /** 자료 다운로드 presigned URL 만료 (분) */
-    private static final int ATTACHMENT_URL_EXPIRY_MINUTES = 10;
+    private static final int ATTACHMENT_URL_EXPIRY_MINUTES = 120;
 
     private final EnrollmentPort enrollmentPort;
     private final CoursePort coursePort;

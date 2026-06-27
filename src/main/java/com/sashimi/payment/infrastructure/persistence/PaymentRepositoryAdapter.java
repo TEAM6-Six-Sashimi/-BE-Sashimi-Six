@@ -11,18 +11,23 @@ public class PaymentRepositoryAdapter implements PaymentRepository {
 
     private final SpringDataPaymentRepository repository;
 
-    public PaymentRepositoryAdapter(SpringDataPaymentRepository repository) {
+    public PaymentRepositoryAdapter(
+            SpringDataPaymentRepository repository
+    ) {
         this.repository = repository;
     }
 
     @Override
     public Payment save(Payment payment) {
-        return repository.save(PaymentJpaEntity.from(payment)).toDomain();
+        return repository.save(
+                PaymentJpaEntity.from(payment)
+        ).toDomain();
     }
 
     @Override
     public List<Payment> findAllByUserId(Long userId) {
-        return repository.findAllByUserIdOrderByCreatedAtDesc(userId)
+        return repository
+                .findAllByUserIdOrderByCreatedAtDescIdDesc(userId)
                 .stream()
                 .map(PaymentJpaEntity::toDomain)
                 .toList();

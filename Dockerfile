@@ -4,7 +4,7 @@ WORKDIR /workspace
 
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle ./gradle
-RUN chmod +x ./gradlew
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
 
 COPY src ./src
 RUN ./gradlew clean bootJar --no-daemon -x test
@@ -18,7 +18,7 @@ RUN addgroup -S spring \
     && mkdir -p /app/logs /app/uploads \
     && chown -R spring:spring /app
 
-COPY --from=builder /workspace/build/libs/*.jar /app/app.jar
+COPY --from=builder /workspace/build/libs/lms-0.0.1-SNAPSHOT.jar /app/app.jar
 
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -Duser.timezone=Asia/Seoul"

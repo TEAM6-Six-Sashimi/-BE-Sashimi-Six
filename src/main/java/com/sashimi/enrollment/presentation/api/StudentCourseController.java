@@ -3,7 +3,6 @@ package com.sashimi.enrollment.presentation.api;
 import com.sashimi.enrollment.application.usecase.LearningProgressCommandUseCase;
 import com.sashimi.enrollment.application.usecase.StudentCourseQueryUseCase;
 import com.sashimi.enrollment.presentation.api.request.ReportProgressRequest;
-import com.sashimi.enrollment.presentation.api.response.EnrolledCourseDetailResponse;
 import com.sashimi.enrollment.presentation.api.response.EnrolledCourseResponse;
 import com.sashimi.enrollment.presentation.api.response.ProgressResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
@@ -32,15 +31,6 @@ public class StudentCourseController {
         List<EnrolledCourseResponse> response = studentCourseQueryUseCase.getEnrolledCourses(principal.getId())
                 .stream().map(EnrolledCourseResponse::from).toList();
         return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{courseId}")
-    public ResponseEntity<EnrolledCourseDetailResponse> getEnrolledCourseDetail(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
-            @PathVariable Long courseId) {
-        return ResponseEntity.ok(EnrolledCourseDetailResponse.from(
-                studentCourseQueryUseCase.getEnrolledCourseDetail(principal.getId(), courseId)
-        ));
     }
 
     @PostMapping("/{courseId}/sessions/{sessionId}/progress")

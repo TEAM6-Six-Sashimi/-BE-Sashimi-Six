@@ -9,6 +9,8 @@ import com.sashimi.subscription.presentation.api.response.SubscriptionPaymentHis
 import com.sashimi.subscription.presentation.api.response.SubscriptionPlansResponse;
 import com.sashimi.subscription.presentation.api.response.SubscriptionPreviewResponse;
 import com.sashimi.subscription.presentation.api.response.CancelSubscriptionResponse;
+import com.sashimi.payment.application.command.PaymentPurchaseType;
+import com.sashimi.payment.metric.PaymentMetrics;
 import org.springframework.web.bind.annotation.PostMapping;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -40,13 +42,16 @@ public class SubscriptionController {
 
     private final SubscriptionQueryUseCase subscriptionQueryUseCase;
     private final SubscriptionCommandUseCase subscriptionCommandUseCase;
+    private final PaymentMetrics paymentMetrics;
 
     public SubscriptionController(
             SubscriptionQueryUseCase subscriptionQueryUseCase,
-            SubscriptionCommandUseCase subscriptionCommandUseCase
+            SubscriptionCommandUseCase subscriptionCommandUseCase,
+            PaymentMetrics paymentMetrics
     ) {
         this.subscriptionQueryUseCase = subscriptionQueryUseCase;
         this.subscriptionCommandUseCase = subscriptionCommandUseCase;
+        this.paymentMetrics = paymentMetrics;
     }
 
     @Operation(
@@ -111,9 +116,19 @@ public class SubscriptionController {
     public ResponseEntity<SubscriptionPreviewResponse> getPreview(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable String planCode) {
+        var preview =
+                subscriptionQueryUseCase.getPreview(
+                        principal.getId(),
+                        planCode
+                );
+
+        paymentMetrics.recordPaymentPreview(
+                PaymentPurchaseType.AI_SUBSCRIPTION
+        );
+
         return ResponseEntity.ok(
-                SubscriptionPreviewResponse.from(
-                        subscriptionQueryUseCase.getPreview(principal.getId(), planCode)));
+                SubscriptionPreviewResponse.from(preview)
+        );
     }
 
     @Operation(

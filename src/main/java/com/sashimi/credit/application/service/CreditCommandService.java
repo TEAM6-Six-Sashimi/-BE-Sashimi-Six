@@ -18,6 +18,8 @@ import com.sashimi.credit.infrastructure.toss.TossPaymentClient;
 import com.sashimi.credit.infrastructure.toss.TossPaymentConfirmResponse;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.payment.metric.PaymentMetrics;
+import io.micrometer.core.instrument.Timer;
 
 import java.util.Objects;
 import org.springframework.transaction.annotation.Propagation;
@@ -44,6 +46,7 @@ public class CreditCommandService implements CreditCommandUseCase {
     private final CreditChargePaymentRepository creditChargePaymentRepository;
     private final TossPaymentClient tossPaymentClient;
     private final CreditChargeTransactionService creditChargeTransactionService;
+    private final PaymentMetrics paymentMetrics;
 
     @Override
     public void createInitialCredit(CreateInitialCreditCommand command) {
@@ -122,47 +125,78 @@ public class CreditCommandService implements CreditCommandUseCase {
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public CreditChargeConfirmResult confirmCreditCharge(ConfirmCreditChargeCommand command) {
-        CreditChargePayment payment =
-                creditChargePaymentRepository.findByOrderId(command.orderId())
-                        .orElseThrow(() -> new BusinessException(
-                                ErrorCode.CREDIT_CHARGE_PAYMENT_NOT_FOUND
-                        ));
+        Timer.Sample sample = paymentMetrics.startTimer();
 
-        payment.validateOwner(command.userId());
-        payment.validateAmount(command.amount());
+        try {
+            CreditChargePayment payment =
+                    creditChargePaymentRepository.findByOrderId(command.orderId())
+                            .orElseThrow(() -> new BusinessException(
+                                    ErrorCode.CREDIT_CHARGE_PAYMENT_NOT_FOUND
+                            ));
 
-        if (payment.isDone()) {
-            payment.validatePaymentKey(command.paymentKey());
+            payment.validateOwner(command.userId());
+            payment.validateAmount(command.amount());
 
-            Credit credit = creditRepository.findByUserId(command.userId())
-                    .orElseThrow(() -> new BusinessException(
+            if (payment.isDone()) {
+                payment.validatePaymentKey(command.paymentKey());
+
+                if (payment.getBalanceAfter() == null) {
+                    paymentMetrics.recordTossCreditChargeInconsistency(
+                            "DONE_WITHOUT_BALANCE_AFTER"
+                    );
+
+                    throw new BusinessException(
                             ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
-                    ));
+                    );
+                }
 
-            return new CreditChargeConfirmResult(
-                    credit.getBalance(),
-                    payment.getOrderId(),
-                    payment.getPaymentKey(),
-                    payment.getAmount()
-            );
-        }
+                paymentMetrics.recordCreditChargeProcessingSuccess(sample);
 
-        if (payment.isFailed()) {
-            throw new BusinessException(
-                    ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED
-            );
-        }
+                return new CreditChargeConfirmResult(
+                        payment.getBalanceAfter(),
+                        payment.getOrderId(),
+                        payment.getPaymentKey(),
+                        payment.getAmount()
+                );
+            }
 
-        TossPaymentConfirmResponse response =
-                tossPaymentClient.confirmOrRetrieve(
-                        command.paymentKey(),
-                        command.orderId(),
-                        command.amount()
+            if (payment.isFailed()) {
+                throw new BusinessException(
+                        ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED
+                );
+            }
+
+            TossPaymentConfirmResponse response =
+                    tossPaymentClient.confirmOrRetrieve(
+                            command.paymentKey(),
+                            command.orderId(),
+                            command.amount()
+                    );
+
+            validateTossResponse(command, response);
+
+            try {
+                CreditChargeConfirmResult result =
+                        creditChargeTransactionService.complete(
+                                command,
+                                response
+                        );
+
+                paymentMetrics.recordCreditChargeProcessingSuccess(sample);
+
+                return result;
+            } catch (RuntimeException e) {
+                paymentMetrics.recordTossCreditChargeInconsistency(
+                        "INTERNAL_CREDIT_REFLECTION_FAILED"
                 );
 
-        validateTossResponse(command, response);
+                throw e;
+            }
+        } catch (RuntimeException e) {
+            paymentMetrics.recordCreditChargeProcessingFailure(sample);
 
-        return creditChargeTransactionService.complete(command, response);
+            throw e;
+        }
     }
 
     private void validateTossResponse(ConfirmCreditChargeCommand command, TossPaymentConfirmResponse response) {

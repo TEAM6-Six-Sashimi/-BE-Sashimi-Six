@@ -2,9 +2,11 @@ package com.sashimi.course.application.service;
 
 import com.sashimi.course.application.port.CategoryPort;
 import com.sashimi.course.application.port.CourseReviewPort;
+import com.sashimi.course.application.port.EnrollmentQueryPort;
 import com.sashimi.course.application.port.InstructorPort;
 import com.sashimi.course.application.port.NcsInfoQueryPort;
 import com.sashimi.course.application.port.NcsInfoView;
+import com.sashimi.course.application.query.CourseViewerType;
 import com.sashimi.course.application.query.PublicCourseDetailView;
 import com.sashimi.course.application.query.PublicCourseView;
 import com.sashimi.course.application.usecase.PublicCourseQueryUseCase;
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -29,8 +32,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PublicCourseQueryService implements PublicCourseQueryUseCase {
 
-    /** 미리보기 영상 presigned URL 만료 (분) */
-    private static final int PREVIEW_VIDEO_URL_EXPIRY_MINUTES = 120;
+    /** 영상 시청 presigned URL 만료 (분) */
+    private static final int VIDEO_URL_EXPIRY_MINUTES = 120;
+    /** 자료 다운로드 presigned URL 만료 (분) */
+    private static final int ATTACHMENT_URL_EXPIRY_MINUTES = 120;
 
     private final CourseRepository courseRepository;
     private final CategoryPort categoryPort;
@@ -38,6 +43,7 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
     private final NcsInfoQueryPort ncsInfoQueryPort;
     private final FileStoragePort fileStoragePort;
     private final CourseReviewPort courseReviewPort;
+    private final EnrollmentQueryPort enrollmentQueryPort;
 
     @Override
     public List<PublicCourseView> getAllApprovedCourses() {
@@ -62,12 +68,34 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
     }
 
     @Override
-    public PublicCourseDetailView getCourseDetail(Long courseId) {
+    public PublicCourseDetailView getCourseDetail(Long courseId, Long userId, boolean isAdmin) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
-        if (course.getStatus() != CourseStatus.APPROVED) {
+
+        boolean isOwner = userId != null && course.getInstructorId().equals(userId);
+
+        // 관리자·본인 강의가 아닌 경우 수강 여부 확인 (만료 시 미수강 처리)
+        EnrollmentQueryPort.EnrollmentProgress progress = null;
+        if (userId != null && !isAdmin && !isOwner) {
+            progress = enrollmentQueryPort.findActiveEnrollment(userId, courseId).orElse(null);
+        }
+        boolean isEnrolled = progress != null;
+
+        // 관리자·본인 강사는 모든 상태 조회 가능
+        boolean canSeeAnyStatus = isAdmin || isOwner;
+        // 수강생은 폐강(CLOSED)된 강의도 수강 기간 동안 조회 가능 (APPROVED + CLOSED)
+        boolean enrolledVisible = isEnrolled
+                && (course.getStatus() == CourseStatus.APPROVED || course.getStatus() == CourseStatus.CLOSED);
+        // 그 외(비로그인·미수강)는 APPROVED만
+        boolean publicVisible = course.getStatus() == CourseStatus.APPROVED;
+        if (!canSeeAnyStatus && !enrolledVisible && !publicVisible) {
             throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
         }
+
+        CourseViewerType viewerType = resolveViewerType(isAdmin, isOwner, isEnrolled);
+        // 전체 영상·자료 접근 가능 여부
+        boolean fullAccess = isAdmin || isOwner || isEnrolled;
+
         InstructorPort.InstructorInfo instructorInfo = instructorPort.getInstructorInfo(course.getInstructorId());
         String mainCategoryName = categoryPort.getMainCategoryNameById(course.getCategoryId());
         String categoryName = categoryPort.getCategoryNameById(course.getCategoryId());
@@ -76,14 +104,23 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
         NcsInfoView ncs = ncsInfoId == null ? null : ncsInfoQueryPort.findViewByRepresentativeId(ncsInfoId).orElse(null);
 
         List<PublicCourseDetailView.SessionView> sessions = course.getSessions().stream()
-                .map(s -> new PublicCourseDetailView.SessionView(
-                        s.getId(),
-                        s.getTitle(),
-                        s.isPreview() ? resolveVideoUrl(s.getVideoUrl()) : null,
-                        s.getDurationSeconds(),
-                        s.getSessionOrder(),
-                        s.isPreview()
-                ))
+                .map(s -> {
+                    boolean canWatch = fullAccess || s.isPreview();
+                    String videoUrl = canWatch ? resolveVideoUrl(s.getVideoUrl()) : null;
+                    return new PublicCourseDetailView.SessionView(
+                            s.getId(),
+                            s.getSessionUid(),
+                            s.getTitle(),
+                            videoUrl,
+                            s.getDurationSeconds(),
+                            s.getSessionOrder(),
+                            s.isPreview(),
+                            fullAccess ? s.getAttachmentName() : null,
+                            fullAccess ? resolveAttachmentUrl(s.getAttachmentUrl()) : null,
+                            fullAccess ? s.getAttachmentType() : null,
+                            fullAccess ? s.getAttachmentSize() : null
+                    );
+                })
                 .toList();
 
         List<PublicCourseDetailView.ReviewView> reviews = courseReviewPort.findActiveReviewsByCourseId(courseId)
@@ -93,7 +130,13 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                 ))
                 .toList();
 
+        CourseStatus status = course.getStatus();
+        String rejectReason = course.getRejectReason();
+        BigDecimal progressRate = isEnrolled ? progress.progressRate() : null;
+        Boolean completed = isEnrolled ? progress.completed() : null;
+
         return new PublicCourseDetailView(
+                viewerType,
                 course.getId(), course.getTitle(), course.getDescription(),
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getTotalDuration(), course.getRatingAvg(), course.getReviewCount(),
@@ -102,15 +145,30 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                         instructorInfo.name(), instructorInfo.profileImagePath(),
                         instructorInfo.bio(), instructorInfo.mainCareers(), instructorInfo.portfolioUrl()
                 ),
-                mainCategoryName, categoryName, ncs, course.getApprovedAt(), sessions, reviews
+                mainCategoryName, categoryName, ncs, course.getApprovedAt(),
+                status, rejectReason, progressRate, completed, sessions, reviews
         );
+    }
+
+    private CourseViewerType resolveViewerType(boolean isAdmin, boolean isOwner, boolean isEnrolled) {
+        if (isAdmin) return CourseViewerType.ADMIN;
+        if (isOwner) return CourseViewerType.OWNER;
+        if (isEnrolled) return CourseViewerType.ENROLLED;
+        return CourseViewerType.PUBLIC;
     }
 
     private String resolveVideoUrl(String key) {
         if (key == null || key.isBlank() || key.startsWith("http")) {
             return key;
         }
-        return fileStoragePort.generateVideoUrl(key, PREVIEW_VIDEO_URL_EXPIRY_MINUTES);
+        return fileStoragePort.generateVideoUrl(key, VIDEO_URL_EXPIRY_MINUTES);
+    }
+
+    private String resolveAttachmentUrl(String key) {
+        if (key == null || key.isBlank() || key.startsWith("http")) {
+            return key;
+        }
+        return fileStoragePort.generateAttachmentUrl(key, ATTACHMENT_URL_EXPIRY_MINUTES);
     }
 
     private Set<Long> resolvePopularIds(List<Course> courses) {

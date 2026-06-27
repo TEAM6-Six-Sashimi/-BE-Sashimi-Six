@@ -1,5 +1,8 @@
 package com.sashimi.payment.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+
 import java.time.LocalDateTime;
 
 public class Payment {
@@ -12,8 +15,17 @@ public class Payment {
     private final Long orderId;
     private final Long userId;
 
-    private Payment(Long id, Long amount, PaymentStatus status, LocalDateTime paidAt,
-                    LocalDateTime createdAt, Long orderId, Long userId) {
+    private Payment(
+            Long id,
+            Long amount,
+            PaymentStatus status,
+            LocalDateTime paidAt,
+            LocalDateTime createdAt,
+            Long orderId,
+            Long userId
+    ) {
+        validate(amount, status, paidAt, createdAt, orderId, userId);
+
         this.id = id;
         this.amount = amount;
         this.status = status;
@@ -23,12 +35,29 @@ public class Payment {
         this.userId = userId;
     }
 
-    public static Payment paid(Long amount, Long orderId, Long userId) {
+    public static Payment paid(
+            Long amount,
+            Long orderId,
+            Long userId
+    ) {
         LocalDateTime now = LocalDateTime.now();
-        return new Payment(null, amount, PaymentStatus.PAID, now, now, orderId, userId);
+
+        return new Payment(
+                null,
+                amount,
+                PaymentStatus.PAID,
+                now,
+                now,
+                orderId,
+                userId
+        );
     }
 
-    public static Payment ready(Long amount, Long orderId, Long userId) {
+    public static Payment ready(
+            Long amount,
+            Long orderId,
+            Long userId
+    ) {
         return new Payment(
                 null,
                 amount,
@@ -41,6 +70,12 @@ public class Payment {
     }
 
     public Payment markPaid() {
+        if (status != PaymentStatus.READY) {
+            throw new BusinessException(
+                    ErrorCode.PAYMENT_INVALID_STATE_TRANSITION
+            );
+        }
+
         return new Payment(
                 id,
                 amount,
@@ -53,6 +88,12 @@ public class Payment {
     }
 
     public Payment markFailed() {
+        if (status != PaymentStatus.READY) {
+            throw new BusinessException(
+                    ErrorCode.PAYMENT_INVALID_STATE_TRANSITION
+            );
+        }
+
         return new Payment(
                 id,
                 amount,
@@ -65,6 +106,13 @@ public class Payment {
     }
 
     public Payment markCancelled() {
+        if (status != PaymentStatus.READY
+                && status != PaymentStatus.PAID) {
+            throw new BusinessException(
+                    ErrorCode.PAYMENT_INVALID_STATE_TRANSITION
+            );
+        }
+
         return new Payment(
                 id,
                 amount,
@@ -76,9 +124,56 @@ public class Payment {
         );
     }
 
-    public static Payment restore(Long id, Long amount, PaymentStatus status, LocalDateTime paidAt,
-                                  LocalDateTime createdAt, Long orderId, Long userId) {
-        return new Payment(id, amount, status, paidAt, createdAt, orderId, userId);
+    public static Payment restore(
+            Long id,
+            Long amount,
+            PaymentStatus status,
+            LocalDateTime paidAt,
+            LocalDateTime createdAt,
+            Long orderId,
+            Long userId
+    ) {
+        return new Payment(
+                id,
+                amount,
+                status,
+                paidAt,
+                createdAt,
+                orderId,
+                userId
+        );
+    }
+
+    private void validate(
+            Long amount,
+            PaymentStatus status,
+            LocalDateTime paidAt,
+            LocalDateTime createdAt,
+            Long orderId,
+            Long userId
+    ) {
+        if (amount == null || amount <= 0) {
+            throw new BusinessException(
+                    ErrorCode.PAYMENT_INVALID_AMOUNT
+            );
+        }
+
+        if (status == null
+                || createdAt == null
+                || orderId == null
+                || orderId <= 0
+                || userId == null
+                || userId <= 0) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
+        }
+
+        if (status == PaymentStatus.PAID && paidAt == null) {
+            throw new BusinessException(
+                    ErrorCode.PAYMENT_INVALID_STATUS
+            );
+        }
     }
 
     public Long getId() { return id; }

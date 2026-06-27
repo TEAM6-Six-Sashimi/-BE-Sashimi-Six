@@ -15,7 +15,6 @@ import com.sashimi.resume.presentation.api.response.ReviewResumeResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import com.sashimi.global.exception.ErrorResponse;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,8 +24,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "Resume", description = "이력서 작성, 조회, 수정, 삭제 및 AI 평가 API")
 @RestController
@@ -88,6 +85,8 @@ public class ResumeController {
             @ApiResponse(responseCode = "400", description = "잘못된 요청 또는 입력값 오류",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "이미 작성된 이력서가 있음",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
@@ -117,18 +116,22 @@ public class ResumeController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "이력서 조회 성공",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ResumeResponse.class)))),
+                    content = @Content(schema = @Schema(implementation = ResumeResponse.class))),
             @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "이력서를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-    public List<ResumeResponse> getMyResumes(
+    public ResumeResponse getMyResume(
             @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        return resumeQueryUseCase.getMyResumes(principal.getId()).stream()
-                .map(ResumeResponse::from)
-                .toList();
+        Resume resume = resumeQueryUseCase.getMyResume(
+                principal.getId()
+        );
+
+        return ResumeResponse.from(resume);
     }
 
     @Operation(

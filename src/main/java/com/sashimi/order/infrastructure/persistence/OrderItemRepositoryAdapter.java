@@ -1,6 +1,7 @@
 package com.sashimi.order.infrastructure.persistence;
 
 import com.sashimi.order.domain.model.OrderItem;
+import com.sashimi.order.domain.model.OrderItemType;
 import com.sashimi.order.domain.repository.OrderItemRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,12 +18,30 @@ public class OrderItemRepositoryAdapter implements OrderItemRepository {
 
     @Override
     public OrderItem save(OrderItem orderItem) {
-        return repository.save(OrderItemJpaEntity.from(orderItem)).toDomain();
+        return repository.save(
+                OrderItemJpaEntity.from(orderItem)
+        ).toDomain();
     }
 
     @Override
     public List<OrderItem> findAllByOrderId(Long orderId) {
         return repository.findAllByOrderId(orderId)
+                .stream()
+                .map(OrderItemJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<OrderItem> findAllCourseItemsByOrderIdIn(List<Long> orderIds) {
+        if (orderIds == null || orderIds.isEmpty()) {
+            return List.of();
+        }
+
+        return repository
+                .findAllByOrderIdInAndItemType(
+                        orderIds,
+                        OrderItemType.COURSE
+                )
                 .stream()
                 .map(OrderItemJpaEntity::toDomain)
                 .toList();

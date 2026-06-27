@@ -7,18 +7,20 @@ import com.sashimi.credit.application.usecase.CreditQueryUseCase;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.order.application.policy.CoursePurchasePolicy;
-import com.sashimi.order.domain.repository.OrderItemRepository;
-import com.sashimi.payment.application.usecase.PaymentQueryUseCase;
 import com.sashimi.order.domain.model.Order;
-import com.sashimi.payment.domain.model.Payment;
-import com.sashimi.order.domain.repository.OrderRepository;
-import com.sashimi.payment.domain.repository.PaymentRepository;
 import com.sashimi.order.domain.model.OrderItem;
-import com.sashimi.order.domain.model.OrderItemType;
+import com.sashimi.order.domain.repository.OrderItemRepository;
+import com.sashimi.order.domain.repository.OrderRepository;
+import com.sashimi.payment.application.usecase.PaymentQueryUseCase;
+import com.sashimi.payment.domain.model.Payment;
+import com.sashimi.payment.domain.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -31,7 +33,14 @@ public class PaymentQueryService implements PaymentQueryUseCase {
     private final CreditQueryUseCase creditQueryUseCase;
     private final OrderItemRepository orderItemRepository;
 
-    public PaymentQueryService(PaymentRepository paymentRepository, OrderRepository orderRepository, CartItemRepository cartItemRepository, CoursePurchasePolicy coursePurchasePolicy, CreditQueryUseCase creditQueryUseCase, OrderItemRepository orderItemRepository) {
+    public PaymentQueryService(
+            PaymentRepository paymentRepository,
+            OrderRepository orderRepository,
+            CartItemRepository cartItemRepository,
+            CoursePurchasePolicy coursePurchasePolicy,
+            CreditQueryUseCase creditQueryUseCase,
+            OrderItemRepository orderItemRepository
+    ) {
         this.paymentRepository = paymentRepository;
         this.orderRepository = orderRepository;
         this.cartItemRepository = cartItemRepository;
@@ -42,27 +51,65 @@ public class PaymentQueryService implements PaymentQueryUseCase {
 
     @Override
     public PaymentHistory getPaymentHistory(Long userId) {
-        List<PaymentHistoryItem> items =
-                paymentRepository.findAllByUserId(userId)
+        List<Payment> payments = paymentRepository.findAllByUserId(userId);
+
+        if (payments.isEmpty()) {
+            return new PaymentHistory(List.of());
+        }
+
+        List<Long> orderIds = payments.stream()
+                .map(Payment::getOrderId)
+                .distinct()
+                .toList();
+
+        Map<Long, Order> orderMap =
+                orderRepository.findAllByIdIn(orderIds)
                         .stream()
-                        .map(this::toHistoryItem)
-                        .filter(item -> !item.courses().isEmpty())
-                        .toList();
+                        .collect(Collectors.toMap(
+                                Order::getId,
+                                Function.identity()
+                        ));
+
+        Map<Long, List<OrderItem>> orderItemMap =
+                orderItemRepository
+                        .findAllCourseItemsByOrderIdIn(orderIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(
+                                OrderItem::getOrderId
+                        ));
+
+        List<PaymentHistoryItem> items = payments.stream()
+                .map(payment -> toHistoryItem(
+                        payment,
+                        orderMap,
+                        orderItemMap
+                ))
+                .filter(item -> !item.courses().isEmpty())
+                .toList();
 
         return new PaymentHistory(items);
     }
 
+    private PaymentHistoryItem toHistoryItem(
+            Payment payment,
+            Map<Long, Order> orderMap,
+            Map<Long, List<OrderItem>> orderItemMap
+    ) {
+        Order order = orderMap.get(payment.getOrderId());
 
-    private PaymentHistoryItem toHistoryItem(Payment payment) {
-        Order order = orderRepository.findById(payment.getOrderId())
-                .orElseThrow(() ->
-                        new BusinessException(ErrorCode.PAYMENT_ORDER_NOT_FOUND)
-                );
+        if (order == null) {
+            throw new BusinessException(
+                    ErrorCode.PAYMENT_ORDER_NOT_FOUND
+            );
+        }
 
         List<PaymentHistoryCourse> courses =
-                orderItemRepository.findAllByOrderId(order.getId())
+                orderItemMap
+                        .getOrDefault(
+                                order.getId(),
+                                List.of()
+                        )
                         .stream()
-                        .filter(item -> item.getItemType() == OrderItemType.COURSE)
                         .map(this::toHistoryCourse)
                         .toList();
 
@@ -79,7 +126,9 @@ public class PaymentQueryService implements PaymentQueryUseCase {
         );
     }
 
-    private PaymentHistoryCourse toHistoryCourse(OrderItem item) {
+    private PaymentHistoryCourse toHistoryCourse(
+            OrderItem item
+    ) {
         return new PaymentHistoryCourse(
                 item.getCourseId(),
                 item.getCourseTitle(),
@@ -88,30 +137,52 @@ public class PaymentQueryService implements PaymentQueryUseCase {
     }
 
     @Override
-    public PaymentPreview getCoursePreview(Long userId, Long courseId) {
-        CourseInfo course = coursePurchasePolicy.validatePurchasable(userId, courseId);
-        return createPreview("COURSE", List.of(toPreviewCourse(course)), userId);
+    public PaymentPreview getCoursePreview(
+            Long userId,
+            Long courseId
+    ) {
+        CourseInfo course =
+                coursePurchasePolicy.validatePurchasable(
+                        userId,
+                        courseId
+                );
+
+        return createPreview(
+                "COURSE",
+                List.of(toPreviewCourse(course)),
+                userId
+        );
     }
 
     @Override
     public PaymentPreview getCartPreview(Long userId) {
-        List<CartItem> items = cartItemRepository.findAllSelectedByUserId(userId);
+        List<CartItem> items =
+                cartItemRepository.findAllSelectedByUserId(userId);
 
         if (items.isEmpty()) {
-            throw new BusinessException(ErrorCode.CART_EMPTY_SELECTION);
+            throw new BusinessException(
+                    ErrorCode.CART_EMPTY_SELECTION
+            );
         }
 
         List<PaymentPreviewCourse> courses = items.stream()
                 .map(item -> coursePurchasePolicy.validatePurchasable(
-                        userId, item.getCourseId()
+                        userId,
+                        item.getCourseId()
                 ))
                 .map(this::toPreviewCourse)
                 .toList();
 
-        return createPreview("CART", courses, userId);
+        return createPreview(
+                "CART",
+                courses,
+                userId
+        );
     }
 
-    private PaymentPreviewCourse toPreviewCourse(CourseInfo course) {
+    private PaymentPreviewCourse toPreviewCourse(
+            CourseInfo course
+    ) {
         return new PaymentPreviewCourse(
                 course.courseId(),
                 course.title(),
@@ -130,7 +201,8 @@ public class PaymentQueryService implements PaymentQueryUseCase {
                 .mapToLong(PaymentPreviewCourse::price)
                 .sum();
 
-        long balance = creditQueryUseCase.getBalance(userId).balance();
+        long balance =
+                creditQueryUseCase.getBalance(userId).balance();
 
         return new PaymentPreview(
                 purchaseType,
