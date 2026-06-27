@@ -91,11 +91,21 @@ public class OpenAiJobPostingRecommendationAnalyzeAdapter
 
             JsonNode root = objectMapper.readTree(jsonText);
 
+            JsonNode summaryNode = root.get("summary");
+            JsonNode fitAnalysisNode = root.get("fitAnalysis");
+
+            if (summaryNode == null || !summaryNode.isObject()
+                    || fitAnalysisNode == null || !fitAnalysisNode.isObject()) {
+                throw new IllegalArgumentException(
+                        "필수 분석 섹션이 누락되었습니다."
+                );
+            }
+
             JobPostingSummary summary =
-                    parseSummary(root.path("summary"));
+                    parseSummary(summaryNode);
 
             JobFitAnalysis fitAnalysis =
-                    parseFitAnalysis(root.path("fitAnalysis"));
+                    parseFitAnalysis(fitAnalysisNode);
 
             List<CertificateRecommendation> certificates =
                     parseCertificates(root.path("certificates"));
@@ -255,7 +265,22 @@ public class OpenAiJobPostingRecommendationAnalyzeAdapter
             return null;
         }
 
-        return node.asLong();
+        if (node.isNumber()) {
+            return node.longValue();
+        }
+
+        if (node.isTextual()) {
+            String value = node.asText().trim();
+
+            if (value.isEmpty()
+                    || !value.matches("\\d+")) {
+                return null;
+            }
+
+            return Long.parseLong(value);
+        }
+
+        return null;
     }
 
     private List<String> parseStringArray(
