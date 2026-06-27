@@ -65,7 +65,7 @@ openai:
 toss:
   payments:
     base-url: https://api.tosspayments.com
-    secret-key: ${TOSS_PAYMENTS_SECRET_KEY:}
+    secret-key: ${TOSS_PAYMENTS_SECRET_KEY}
     connect-timeout: 3s
     read-timeout: 5s
 

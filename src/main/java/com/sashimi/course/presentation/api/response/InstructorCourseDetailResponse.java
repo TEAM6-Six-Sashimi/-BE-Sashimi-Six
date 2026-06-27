@@ -19,12 +19,21 @@ public record InstructorCourseDetailResponse(
     public record SessionResponse(
             String title,
             String videoUrl,
-            boolean preview
+            int durationSeconds,
+            boolean preview,
+            String attachmentName,
+            String attachmentUrl,
+            String attachmentType,
+            Long attachmentSize
     ) {}
 
     public static InstructorCourseDetailResponse from(Course course) {
         List<SessionResponse> sessions = course.getSessions().stream()
-                .map(s -> new SessionResponse(s.getTitle(), s.getVideoUrl(), s.isPreview()))
+                .map(s -> new SessionResponse(
+                        s.getTitle(), s.getVideoUrl(), s.getDurationSeconds(), s.isPreview(),
+                        s.getAttachmentName(), s.getAttachmentUrl(),
+                        s.getAttachmentType(), s.getAttachmentSize()
+                ))
                 .toList();
         return new InstructorCourseDetailResponse(
                 course.getCategoryId(), course.getTitle(), course.getDescription(),
