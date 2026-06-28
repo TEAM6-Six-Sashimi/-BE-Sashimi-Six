@@ -13,5 +13,7 @@ public record PublicCourseView(
         BigDecimal ratingAvg,
         int studentCount,
         LocalDateTime approvedAt,
-        String label
+        String label,
+        Long categoryId,
+        String categoryName
 ) {}
