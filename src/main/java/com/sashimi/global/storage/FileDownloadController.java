@@ -34,6 +34,26 @@ public class FileDownloadController {
                 .body(bytes);
     }
 
+    /**
+     * 공개 이미지(썸네일·강사 프로필) 전용 프록시. 비로그인도 접근 가능(SecurityConfig permitAll).
+     * 비공개 서류 노출을 막기 위해 images/ 폴더 key만 허용하고, 인라인으로 표시한다.
+     */
+    @GetMapping("/images")
+    public ResponseEntity<byte[]> image(@RequestParam String key) {
+        if (key.contains("..") || !key.startsWith("images/")) {
+            throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        }
+        byte[] bytes = fileStoragePort.downloadPrivate(key);
+
+        String filename = key.substring(key.lastIndexOf('/') + 1);
+        MediaType contentType = resolveContentType(filename);
+
+        return ResponseEntity.ok()
+                .contentType(contentType)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .body(bytes);
+    }
+
     private MediaType resolveContentType(String filename) {
         String lower = filename.toLowerCase();
         if (lower.endsWith(".pdf"))  return MediaType.APPLICATION_PDF;

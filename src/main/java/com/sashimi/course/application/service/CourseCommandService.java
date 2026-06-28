@@ -108,7 +108,7 @@ public class CourseCommandService implements CourseCommandUseCase {
         Course course = courseRepository.findById(command.courseId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
 
-        courseRepository.save(course.reject(command.rejectReason()));
+        courseRepository.save(course.reject(command.category(), command.detail()));
     }
 
     @Override

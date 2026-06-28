@@ -9,6 +9,7 @@ import com.sashimi.course.application.port.NcsInfoView;
 import com.sashimi.course.application.query.CourseViewerType;
 import com.sashimi.course.application.query.PublicCourseDetailView;
 import com.sashimi.course.application.query.PublicCourseView;
+import com.sashimi.course.application.query.RejectReasonView;
 import com.sashimi.course.application.usecase.PublicCourseQueryUseCase;
 import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.model.CourseStatus;
@@ -67,6 +68,38 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
         List<Course> courses = courseRepository.findByStatusAndCategoryId(CourseStatus.APPROVED, categoryId);
         Set<Long> popularIds = resolvePopularIds(courses);
         return courses.stream().map(c -> toView(c, popularIds)).toList();
+    }
+
+    @Override
+    public List<PublicCourseView> getCoursesByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<Course> courses = courseRepository.findByStatusAndIdIn(CourseStatus.APPROVED, ids);
+        Set<Long> popularIds = resolvePopularIds(courses);
+        Map<Long, Course> byId = courses.stream().collect(Collectors.toMap(Course::getId, c -> c));
+        // 요청한 id 순서(추천 랭킹)를 유지하고, 없는 id는 건너뜀
+        return ids.stream()
+                .distinct()
+                .map(byId::get)
+                .filter(java.util.Objects::nonNull)
+                .map(c -> toView(c, popularIds))
+                .toList();
+    }
+
+    @Override
+    public RejectReasonView getRejectReason(Long courseId, Long userId, boolean isAdmin) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        // 본인 강의 강사 또는 관리자만 조회 가능
+        boolean isOwner = userId != null && course.getInstructorId().equals(userId);
+        if (!isAdmin && !isOwner) {
+            throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
+        }
+        return new RejectReasonView(
+                course.getId(), course.getTitle(), course.getUpdatedAt(),
+                course.getRejectReasonCategory(), course.getRejectDetail()
+        );
     }
 
     @Override

@@ -53,7 +53,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
         if (course.getStatus() == com.sashimi.course.domain.model.CourseStatus.APPROVED) {
             entity.approve(course.getApprovedAt(), course.getUpdatedAt());
         } else if (course.getStatus() == com.sashimi.course.domain.model.CourseStatus.REJECTED) {
-            entity.reject(course.getRejectReason(), course.getUpdatedAt());
+            entity.reject(course.getRejectReason(), course.getRejectReasonCategory(),
+                    course.getRejectDetail(), course.getUpdatedAt());
         }
 
         entity.markArchived(course.isArchived());
@@ -108,6 +109,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findByStatusAndIdIn(CourseStatus status, List<Long> ids) {
+        return springDataCourseRepository.findByStatusAndIdIn(status, ids)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<Course> findByStatusAndApprovedAtBefore(CourseStatus status, LocalDateTime cutoff) {
         return springDataCourseRepository.findByStatusAndApprovedAtBefore(status, cutoff)
                 .stream().map(this::toDomain).toList();
@@ -135,7 +142,8 @@ public class CourseRepositoryAdapter implements CourseRepository {
         return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(),
                 entity.getTitle(), entity.getDescription(), entity.getPrice(), entity.getDifficulty(),
                 entity.getThumbnail(), entity.getTotalDuration(), entity.getStatus(),
-                entity.getRejectReason(), entity.getRatingAvg(), entity.getReviewCount(),
+                entity.getRejectReason(), entity.getRejectReasonCategory(), entity.getRejectDetail(),
+                entity.getRatingAvg(), entity.getReviewCount(),
                 entity.getStudentCount(), entity.getCreatedAt(), entity.getUpdatedAt(),
                 entity.getApprovedAt(), entity.isArchived(), sessions);
     }
