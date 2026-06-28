@@ -1,0 +1,67 @@
+name: Deploy Monitoring Stack
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'monitoring/**'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-monitoring
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_APP_DIR: /home/ubuntu/Sashimi-Six
+      DOCKER_NETWORK: sashimi-net
+
+    steps:
+      - name: Configure SSH key
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          test -n "$EC2_HOST"
+          test -n "$EC2_USER"
+          test -n "$EC2_SSH_KEY"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/sashimi-ec2.pem
+          chmod 600 ~/.ssh/sashimi-ec2.pem
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy monitoring stack
+        env:
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+        run: |
+          ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$EC2_HOST" \
+            "APP_DIR='$EC2_APP_DIR' DOCKER_NETWORK='$DOCKER_NETWORK' GRAFANA_PASSWORD='$GRAFANA_ADMIN_PASSWORD' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          cd "$APP_DIR"
+          git fetch origin develop
+          git checkout -B develop origin/develop
+
+          # sashimi-net 없으면 생성
+          sudo docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1 \
+            || sudo docker network create "$DOCKER_NETWORK"
+
+          # 앱 로그 공유 볼륨 없으면 생성
+          sudo docker volume inspect sashimi-logs >/dev/null 2>&1 \
+            || sudo docker volume create sashimi-logs
+
+          # Grafana 비밀번호 환경파일 기록
+          printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_PASSWORD" \
+            > monitoring/.env
+
+          sudo docker compose -f monitoring/docker-compose.yml pull --quiet
+          sudo docker compose -f monitoring/docker-compose.yml up -d --force-recreate --remove-orphans
+
+          echo "Monitoring stack deployed."
+          REMOTE
