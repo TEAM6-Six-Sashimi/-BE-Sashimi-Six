@@ -1,6 +1,7 @@
 package com.sashimi.course.application.port;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -10,5 +11,11 @@ import java.util.Optional;
 public interface EnrollmentQueryPort {
     Optional<EnrollmentProgress> findActiveEnrollment(Long userId, Long courseId);
 
+    /** 사용자의 강의 내 세션별 진행 정보 목록 (이어보기·세션별 진행률 표시용) */
+    List<SessionProgress> findSessionProgresses(Long userId, Long courseId);
+
     record EnrollmentProgress(BigDecimal progressRate, boolean completed) {}
+
+    record SessionProgress(Long sessionId, int lastPositionSeconds,
+                           BigDecimal progressRate, boolean completed) {}
 }

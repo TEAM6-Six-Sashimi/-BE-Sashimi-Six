@@ -24,8 +24,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @Transactional(readOnly = true)
@@ -103,10 +105,17 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
         Long ncsInfoId = categoryPort.getNcsInfoIdByCategoryId(course.getCategoryId());
         NcsInfoView ncs = ncsInfoId == null ? null : ncsInfoQueryPort.findViewByRepresentativeId(ncsInfoId).orElse(null);
 
+        // 수강생만 세션별 진행 정보(이어보기·세션 진행률) 조회
+        Map<Long, EnrollmentQueryPort.SessionProgress> sessionProgressMap = isEnrolled
+                ? enrollmentQueryPort.findSessionProgresses(userId, courseId).stream()
+                        .collect(Collectors.toMap(EnrollmentQueryPort.SessionProgress::sessionId, p -> p))
+                : Map.of();
+
         List<PublicCourseDetailView.SessionView> sessions = course.getSessions().stream()
                 .map(s -> {
                     boolean canWatch = fullAccess || s.isPreview();
                     String videoUrl = canWatch ? resolveVideoUrl(s.getVideoUrl()) : null;
+                    EnrollmentQueryPort.SessionProgress sp = sessionProgressMap.get(s.getId());
                     return new PublicCourseDetailView.SessionView(
                             s.getId(),
                             s.getSessionUid(),
@@ -118,7 +127,10 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                             fullAccess ? s.getAttachmentName() : null,
                             fullAccess ? resolveAttachmentUrl(s.getAttachmentUrl()) : null,
                             fullAccess ? s.getAttachmentType() : null,
-                            fullAccess ? s.getAttachmentSize() : null
+                            fullAccess ? s.getAttachmentSize() : null,
+                            isEnrolled ? (sp != null ? sp.lastPositionSeconds() : 0) : null,
+                            isEnrolled ? (sp != null ? sp.progressRate() : BigDecimal.ZERO) : null,
+                            isEnrolled ? (sp != null && sp.completed()) : null
                     );
                 })
                 .toList();
@@ -128,6 +140,15 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                 .map(r -> new PublicCourseDetailView.ReviewView(
                         r.reviewId(), r.rating(), r.content(), r.writerLoginId(), r.createdAt()
                 ))
+                .toList();
+
+        // 별점 분포 집계 (5~1, 0개여도 항상 포함)
+        Map<Integer, Long> ratingCounts = reviews.stream()
+                .collect(Collectors.groupingBy(PublicCourseDetailView.ReviewView::rating, Collectors.counting()));
+        List<PublicCourseDetailView.RatingDistributionView> ratingDistribution = IntStream.rangeClosed(1, 5)
+                .map(i -> 6 - i)
+                .mapToObj(star -> new PublicCourseDetailView.RatingDistributionView(
+                        star, ratingCounts.getOrDefault(star, 0L).intValue()))
                 .toList();
 
         CourseStatus status = course.getStatus();
@@ -146,7 +167,7 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                         instructorInfo.bio(), instructorInfo.mainCareers(), instructorInfo.portfolioUrl()
                 ),
                 mainCategoryName, categoryName, ncs, course.getApprovedAt(),
-                status, rejectReason, progressRate, completed, sessions, reviews
+                status, rejectReason, progressRate, completed, sessions, reviews, ratingDistribution
         );
     }
 

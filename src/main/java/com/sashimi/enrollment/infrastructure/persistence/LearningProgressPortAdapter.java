@@ -26,6 +26,23 @@ public class LearningProgressPortAdapter implements LearningProgressPort {
     }
 
     @Override
+    public List<SessionProgressInfo> findSessionProgresses(Long userId, Long courseId) {
+        return jdbcTemplate.query("""
+                SELECT session_id, last_position_seconds, progress_rate, is_completed
+                FROM learning_progress
+                WHERE user_id = ? AND course_id = ?
+                """,
+                (rs, rowNum) -> new SessionProgressInfo(
+                        rs.getLong("session_id"),
+                        rs.getInt("last_position_seconds"),
+                        rs.getBigDecimal("progress_rate"),
+                        rs.getBoolean("is_completed")
+                ),
+                userId, courseId
+        );
+    }
+
+    @Override
     public void upsertSessionProgress(Long userId, Long courseId, Long sessionId,
                                       int lastPositionSeconds, int watchedSeconds,
                                       BigDecimal progressRate, boolean completed) {

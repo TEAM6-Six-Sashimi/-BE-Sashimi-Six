@@ -30,7 +30,8 @@ public record PublicCourseDetailView(
         BigDecimal progressRate,
         Boolean completed,
         List<SessionView> sessions,
-        List<ReviewView> reviews
+        List<ReviewView> reviews,
+        List<RatingDistributionView> ratingDistribution
 ) {
     public record InstructorView(
             String name,
@@ -51,7 +52,10 @@ public record PublicCourseDetailView(
             String attachmentName,
             String attachmentUrl,
             String attachmentType,
-            Long attachmentSize
+            Long attachmentSize,
+            Integer lastPositionSeconds,
+            BigDecimal sessionProgressRate,
+            Boolean sessionCompleted
     ) {}
 
     public record ReviewView(
@@ -61,4 +65,6 @@ public record PublicCourseDetailView(
             String writerLoginId,
             LocalDateTime createdAt
     ) {}
+
+    public record RatingDistributionView(int star, int count) {}
 }

@@ -2,10 +2,12 @@ package com.sashimi.enrollment.infrastructure.persistence;
 
 import com.sashimi.course.application.port.EnrollmentQueryPort;
 import com.sashimi.enrollment.application.port.EnrollmentPort;
+import com.sashimi.enrollment.application.port.LearningProgressPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -16,12 +18,21 @@ public class EnrollmentQueryPortAdapter implements EnrollmentQueryPort {
     private static final int ACCESS_PERIOD_YEARS = 2;
 
     private final EnrollmentPort enrollmentPort;
+    private final LearningProgressPort learningProgressPort;
 
     @Override
     public Optional<EnrollmentProgress> findActiveEnrollment(Long userId, Long courseId) {
         return enrollmentPort.getEnrollmentByCourse(userId, courseId)
                 .filter(summary -> !isAccessExpired(summary.enrolledAt()))
                 .map(summary -> new EnrollmentProgress(summary.progressRate(), summary.completed()));
+    }
+
+    @Override
+    public List<SessionProgress> findSessionProgresses(Long userId, Long courseId) {
+        return learningProgressPort.findSessionProgresses(userId, courseId).stream()
+                .map(p -> new SessionProgress(
+                        p.sessionId(), p.lastPositionSeconds(), p.progressRate(), p.completed()))
+                .toList();
     }
 
     private boolean isAccessExpired(LocalDateTime enrolledAt) {
