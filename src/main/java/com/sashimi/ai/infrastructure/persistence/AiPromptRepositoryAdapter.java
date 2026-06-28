@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-@Profile("gemini")
+@Profile("openai")
 public class AiPromptRepositoryAdapter implements AiPromptRepository {
 
     private final SpringDataAiPromptRepository repository;
