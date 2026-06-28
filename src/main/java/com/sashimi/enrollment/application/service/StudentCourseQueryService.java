@@ -49,7 +49,10 @@ public class StudentCourseQueryService implements StudentCourseQueryUseCase {
                             courseInfo.thumbnail(),
                             courseInfo.instructorName(),
                             summary.progressRate(),
-                            summary.completed()
+                            summary.completed(),
+                            courseInfo.categoryId(),
+                            courseInfo.categoryName(),
+                            courseInfo.mainCategoryName()
                     );
                 })
                 .toList();

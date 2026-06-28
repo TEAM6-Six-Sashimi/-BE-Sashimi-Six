@@ -1,5 +1,6 @@
 package com.sashimi.enrollment.infrastructure.persistence;
 
+import com.sashimi.category.domain.model.Category;
 import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.repository.CourseRepository;
@@ -35,10 +36,15 @@ public class CoursePortAdapter implements CoursePort {
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
         User instructor = userRepository.findById(course.getInstructorId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        Category category = categoryRepository.findById(course.getCategoryId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
         return new EnrolledCourseInfo(
                 course.getTitle(),
                 course.getThumbnail(),
-                instructor.getName()
+                instructor.getName(),
+                category.getId(),
+                category.getSubCategory(),
+                category.getName()
         );
     }
 

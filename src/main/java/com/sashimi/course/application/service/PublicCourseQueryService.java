@@ -245,6 +245,7 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
 
     private PublicCourseView toView(Course course, Set<Long> popularIds) {
         String instructorName = instructorPort.getInstructorName(course.getInstructorId());
+        String categoryName = categoryPort.getCategoryNameById(course.getCategoryId());
         return new PublicCourseView(
                 course.getId(),
                 instructorName,
@@ -255,7 +256,9 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                 course.getRatingAvg(),
                 course.getStudentCount(),
                 course.getApprovedAt(),
-                resolveLabel(course, popularIds)
+                resolveLabel(course, popularIds),
+                course.getCategoryId(),
+                categoryName
         );
     }
 }
