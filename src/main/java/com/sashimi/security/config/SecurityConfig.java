@@ -76,6 +76,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/courses/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/files/images").permitAll()
                         .requestMatchers(HttpMethod.GET, "/files/download").authenticated()
 
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")

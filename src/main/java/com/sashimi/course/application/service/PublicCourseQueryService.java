@@ -9,6 +9,7 @@ import com.sashimi.course.application.port.NcsInfoView;
 import com.sashimi.course.application.query.CourseViewerType;
 import com.sashimi.course.application.query.PublicCourseDetailView;
 import com.sashimi.course.application.query.PublicCourseView;
+import com.sashimi.course.application.query.RejectReasonView;
 import com.sashimi.course.application.usecase.PublicCourseQueryUseCase;
 import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.model.CourseStatus;
@@ -84,6 +85,21 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
                 .filter(java.util.Objects::nonNull)
                 .map(c -> toView(c, popularIds))
                 .toList();
+    }
+
+    @Override
+    public RejectReasonView getRejectReason(Long courseId, Long userId, boolean isAdmin) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+        // 본인 강의 강사 또는 관리자만 조회 가능
+        boolean isOwner = userId != null && course.getInstructorId().equals(userId);
+        if (!isAdmin && !isOwner) {
+            throw new BusinessException(ErrorCode.COURSE_FORBIDDEN);
+        }
+        return new RejectReasonView(
+                course.getId(), course.getTitle(), course.getUpdatedAt(),
+                course.getRejectReasonCategory(), course.getRejectDetail()
+        );
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.sashimi.course.presentation.api;
 import com.sashimi.course.application.usecase.PublicCourseQueryUseCase;
 import com.sashimi.course.presentation.api.response.PublicCourseDetailResponse;
 import com.sashimi.course.presentation.api.response.PublicCourseResponse;
+import com.sashimi.course.presentation.api.response.RejectReasonDetailResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
@@ -56,6 +57,19 @@ public class PublicCourseController {
                 .anyMatch("ROLE_ADMIN"::equals);
         return ResponseEntity.ok(PublicCourseDetailResponse.from(
                 publicCourseQueryUseCase.getCourseDetail(courseId, userId, isAdmin)
+        ));
+    }
+
+    @GetMapping("/{courseId}/reject-reason")
+    public ResponseEntity<RejectReasonDetailResponse> getRejectReason(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable Long courseId) {
+        Long userId = principal == null ? null : principal.getId();
+        boolean isAdmin = principal != null && principal.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        return ResponseEntity.ok(RejectReasonDetailResponse.from(
+                publicCourseQueryUseCase.getRejectReason(courseId, userId, isAdmin)
         ));
     }
 }

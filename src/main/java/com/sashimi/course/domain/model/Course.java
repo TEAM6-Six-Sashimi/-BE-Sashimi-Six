@@ -20,6 +20,8 @@ public class Course {
     private final int totalDuration;
     private final CourseStatus status;
     private final String rejectReason;
+    private final RejectReasonCategory rejectReasonCategory;
+    private final String rejectDetail;
     private final BigDecimal ratingAvg;
     private final int reviewCount;
     private final int studentCount;
@@ -31,7 +33,8 @@ public class Course {
 
     private Course(Long id, Long instructorId, Long categoryId, String title, String description,
                    Long price, CourseDifficulty difficulty, String thumbnail, int totalDuration,
-                   CourseStatus status, String rejectReason, BigDecimal ratingAvg,
+                   CourseStatus status, String rejectReason, RejectReasonCategory rejectReasonCategory,
+                   String rejectDetail, BigDecimal ratingAvg,
                    int reviewCount, int studentCount, LocalDateTime createdAt,
                    LocalDateTime updatedAt, LocalDateTime approvedAt, boolean archived,
                    List<CourseSession> sessions) {
@@ -53,6 +56,8 @@ public class Course {
         this.totalDuration = totalDuration;
         this.status = status;
         this.rejectReason = rejectReason;
+        this.rejectReasonCategory = rejectReasonCategory;
+        this.rejectDetail = rejectDetail;
         this.ratingAvg = ratingAvg;
         this.reviewCount = reviewCount;
         this.studentCount = studentCount;
@@ -69,19 +74,22 @@ public class Course {
         validateWritableStatus(initialStatus);
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
         return new Course(null, instructorId, categoryId, title, description, price,
-                difficulty, thumbnail, totalDuration, initialStatus, null,
+                difficulty, thumbnail, totalDuration, initialStatus, null, null, null,
                 BigDecimal.ZERO, 0, 0, LocalDateTime.now(), null, null, false, sessions);
     }
 
     public static Course restore(Long id, Long instructorId, Long categoryId,
                                  String title, String description, Long price,
                                  CourseDifficulty difficulty, String thumbnail, int totalDuration,
-                                 CourseStatus status, String rejectReason, BigDecimal ratingAvg,
+                                 CourseStatus status, String rejectReason,
+                                 RejectReasonCategory rejectReasonCategory, String rejectDetail,
+                                 BigDecimal ratingAvg,
                                  int reviewCount, int studentCount, LocalDateTime createdAt,
                                  LocalDateTime updatedAt, LocalDateTime approvedAt, boolean archived,
                                  List<CourseSession> sessions) {
         return new Course(id, instructorId, categoryId, title, description, price,
-                difficulty, thumbnail, totalDuration, status, rejectReason, ratingAvg,
+                difficulty, thumbnail, totalDuration, status, rejectReason, rejectReasonCategory,
+                rejectDetail, ratingAvg,
                 reviewCount, studentCount, createdAt, updatedAt, approvedAt, archived, sessions);
     }
 
@@ -92,7 +100,7 @@ public class Course {
         validateWritableStatus(targetStatus);
         int totalDuration = sessions == null ? 0 : sessions.stream().mapToInt(CourseSession::getDurationSeconds).sum();
         return new Course(this.id, this.instructorId, categoryId, title, description,
-                price, difficulty, thumbnail, totalDuration, targetStatus, null,
+                price, difficulty, thumbnail, totalDuration, targetStatus, null, null, null,
                 this.ratingAvg, this.reviewCount, this.studentCount, this.createdAt,
                 LocalDateTime.now(), this.approvedAt, this.archived, sessions);
     }
@@ -100,16 +108,22 @@ public class Course {
     public Course approve() {
         if (this.status != CourseStatus.PENDING) throw new BusinessException(ErrorCode.COURSE_NOT_PENDING);
         return new Course(id, instructorId, categoryId, title, description, price,
-                difficulty, thumbnail, totalDuration, CourseStatus.APPROVED, null,
+                difficulty, thumbnail, totalDuration, CourseStatus.APPROVED, null, null, null,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 LocalDateTime.now(), this.archived, sessions);
     }
 
-    public Course reject(String reason) {
+    public Course reject(RejectReasonCategory category, String detail) {
         if (this.status != CourseStatus.PENDING) throw new BusinessException(ErrorCode.COURSE_NOT_PENDING);
+        if (category == null) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        String normalizedDetail = (detail == null || detail.isBlank()) ? null : detail.strip();
+        // 합쳐진 reject_reason은 기존 응답 호환용으로 유지
+        String reason = normalizedDetail == null
+                ? category.getLabel()
+                : category.getLabel() + ": " + normalizedDetail;
         return new Course(id, instructorId, categoryId, title, description, price,
-                difficulty, thumbnail, totalDuration, CourseStatus.REJECTED, reason,
-                ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
+                difficulty, thumbnail, totalDuration, CourseStatus.REJECTED, reason, category,
+                normalizedDetail, ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 null, this.archived, sessions);
     }
 
@@ -118,6 +132,7 @@ public class Course {
         if (this.status != CourseStatus.APPROVED) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, CourseStatus.CLOSED, rejectReason,
+                rejectReasonCategory, rejectDetail,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 approvedAt, this.archived, sessions);
     }
@@ -127,6 +142,7 @@ public class Course {
         if (this.status != CourseStatus.CLOSED) throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         return new Course(id, instructorId, categoryId, title, description, price,
                 difficulty, thumbnail, totalDuration, status, rejectReason,
+                rejectReasonCategory, rejectDetail,
                 ratingAvg, reviewCount, studentCount, createdAt, LocalDateTime.now(),
                 approvedAt, true, sessions);
     }
@@ -156,6 +172,8 @@ public class Course {
     public int getTotalDuration() { return totalDuration; }
     public CourseStatus getStatus() { return status; }
     public String getRejectReason() { return rejectReason; }
+    public RejectReasonCategory getRejectReasonCategory() { return rejectReasonCategory; }
+    public String getRejectDetail() { return rejectDetail; }
     public BigDecimal getRatingAvg() { return ratingAvg; }
     public int getReviewCount() { return reviewCount; }
     public int getStudentCount() { return studentCount; }

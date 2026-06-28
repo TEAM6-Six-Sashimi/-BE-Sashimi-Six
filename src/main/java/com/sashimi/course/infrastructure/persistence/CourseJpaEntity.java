@@ -2,6 +2,7 @@ package com.sashimi.course.infrastructure.persistence;
 
 import com.sashimi.course.domain.model.CourseDifficulty;
 import com.sashimi.course.domain.model.CourseStatus;
+import com.sashimi.course.domain.model.RejectReasonCategory;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -43,6 +44,13 @@ public class CourseJpaEntity {
 
     @Column(name = "reject_reason", columnDefinition = "TEXT")
     private String rejectReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reject_reason_category", length = 50)
+    private RejectReasonCategory rejectReasonCategory;
+
+    @Column(name = "reject_detail", length = 500)
+    private String rejectDetail;
 
     @Column(name = "rating_avg", nullable = false, precision = 3, scale = 2)
     private BigDecimal ratingAvg;
@@ -113,19 +121,25 @@ public class CourseJpaEntity {
         this.totalDuration = totalDuration;
         this.status = status;
         this.rejectReason = null;
+        this.rejectReasonCategory = null;
+        this.rejectDetail = null;
         this.updatedAt = updatedAt;
     }
 
     public void approve(LocalDateTime approvedAt, LocalDateTime updatedAt) {
         this.status = CourseStatus.APPROVED;
         this.rejectReason = null;
+        this.rejectReasonCategory = null;
+        this.rejectDetail = null;
         this.approvedAt = approvedAt;
         this.updatedAt = updatedAt;
     }
 
-    public void reject(String reason, LocalDateTime updatedAt) {
+    public void reject(String reason, RejectReasonCategory category, String detail, LocalDateTime updatedAt) {
         this.status = CourseStatus.REJECTED;
         this.rejectReason = reason;
+        this.rejectReasonCategory = category;
+        this.rejectDetail = detail;
         this.updatedAt = updatedAt;
     }
 
@@ -153,6 +167,8 @@ public class CourseJpaEntity {
     public int getTotalDuration() { return totalDuration; }
     public CourseStatus getStatus() { return status; }
     public String getRejectReason() { return rejectReason; }
+    public RejectReasonCategory getRejectReasonCategory() { return rejectReasonCategory; }
+    public String getRejectDetail() { return rejectDetail; }
     public BigDecimal getRatingAvg() { return ratingAvg; }
     public int getReviewCount() { return reviewCount; }
     public int getStudentCount() { return studentCount; }

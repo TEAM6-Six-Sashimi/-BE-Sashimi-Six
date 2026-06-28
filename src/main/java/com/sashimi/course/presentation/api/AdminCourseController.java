@@ -11,9 +11,12 @@ import com.sashimi.course.presentation.api.response.AdminCourseListResponse;
 import com.sashimi.course.presentation.api.response.AdminCoursePendingResponse;
 import com.sashimi.course.presentation.api.response.AdminCourseRejectedResponse;
 import com.sashimi.course.presentation.api.response.CourseResponse;
+import com.sashimi.course.presentation.api.response.RejectReasonResponse;
+import com.sashimi.course.domain.model.RejectReasonCategory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -94,10 +97,18 @@ public class AdminCourseController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/reject-reasons")
+    public ResponseEntity<List<RejectReasonResponse>> getRejectReasons() {
+        List<RejectReasonResponse> reasons = Arrays.stream(RejectReasonCategory.values())
+                .map(RejectReasonResponse::from)
+                .toList();
+        return ResponseEntity.ok(reasons);
+    }
+
     @PatchMapping("/{courseId}/reject")
     public ResponseEntity<Void> rejectCourse(@PathVariable Long courseId,
                                               @RequestBody RejectCourseRequest request) {
-        courseCommandUseCase.rejectCourse(new RejectCourseCommand(courseId, request.rejectReason()));
+        courseCommandUseCase.rejectCourse(new RejectCourseCommand(courseId, request.category(), request.detail()));
         return ResponseEntity.noContent().build();
     }
 }
