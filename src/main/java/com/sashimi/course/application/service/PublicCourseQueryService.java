@@ -70,6 +70,23 @@ public class PublicCourseQueryService implements PublicCourseQueryUseCase {
     }
 
     @Override
+    public List<PublicCourseView> getCoursesByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<Course> courses = courseRepository.findByStatusAndIdIn(CourseStatus.APPROVED, ids);
+        Set<Long> popularIds = resolvePopularIds(courses);
+        Map<Long, Course> byId = courses.stream().collect(Collectors.toMap(Course::getId, c -> c));
+        // 요청한 id 순서(추천 랭킹)를 유지하고, 없는 id는 건너뜀
+        return ids.stream()
+                .distinct()
+                .map(byId::get)
+                .filter(java.util.Objects::nonNull)
+                .map(c -> toView(c, popularIds))
+                .toList();
+    }
+
+    @Override
     public PublicCourseDetailView getCourseDetail(Long courseId, Long userId, boolean isAdmin) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));

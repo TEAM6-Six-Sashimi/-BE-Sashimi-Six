@@ -23,12 +23,16 @@ public class PublicCourseController {
 
     @GetMapping
     public ResponseEntity<List<PublicCourseResponse>> getCourses(
+            @RequestParam(required = false) List<Long> ids,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String categoryName
     ) {
         List<PublicCourseResponse> response;
 
-        if (categoryId != null) {
+        if (ids != null && !ids.isEmpty()) {
+            response = publicCourseQueryUseCase.getCoursesByIds(ids)
+                    .stream().map(PublicCourseResponse::from).toList();
+        } else if (categoryId != null) {
             response = publicCourseQueryUseCase.getCoursesBySubCategory(categoryId)
                     .stream().map(PublicCourseResponse::from).toList();
         } else if (categoryName != null) {

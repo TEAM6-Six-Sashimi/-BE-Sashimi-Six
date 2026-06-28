@@ -108,6 +108,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findByStatusAndIdIn(CourseStatus status, List<Long> ids) {
+        return springDataCourseRepository.findByStatusAndIdIn(status, ids)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<Course> findByStatusAndApprovedAtBefore(CourseStatus status, LocalDateTime cutoff) {
         return springDataCourseRepository.findByStatusAndApprovedAtBefore(status, cutoff)
                 .stream().map(this::toDomain).toList();
