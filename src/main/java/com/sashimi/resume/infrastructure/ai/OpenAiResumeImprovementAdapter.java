@@ -1,8 +1,8 @@
 package com.sashimi.resume.infrastructure.ai;
 
 import com.sashimi.ai.domain.model.AiPrompt;
-import com.sashimi.ai.infrastructure.gemini.GeminiResponseCleaner;
-import com.sashimi.ai.infrastructure.gemini.GeminiTextClient;
+import com.sashimi.ai.infrastructure.openai.AiResponseCleaner;
+import com.sashimi.ai.infrastructure.openai.OpenAiTextClient;
 import com.sashimi.ai.infrastructure.prompt.ResumeImprovementPromptBuilder;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -21,25 +21,22 @@ import java.util.Locale;
 import java.util.Map;
 
 @Component
-@Profile("gemini")
-public class GeminiResumeImprovementAdapter
+@Profile("openai")
+public class OpenAiResumeImprovementAdapter
         implements ResumeImprovementAiPort {
 
     private final ObjectMapper objectMapper;
+    private final ResumeImprovementPromptBuilder promptBuilder;
+    private final OpenAiTextClient openAiTextClient;
 
-    private final ResumeImprovementPromptBuilder
-            promptBuilder;
-
-    private final GeminiTextClient geminiTextClient;
-
-    public GeminiResumeImprovementAdapter(
+    public OpenAiResumeImprovementAdapter(
             ObjectMapper objectMapper,
             ResumeImprovementPromptBuilder promptBuilder,
-            GeminiTextClient geminiTextClient
+            OpenAiTextClient openAiTextClient
     ) {
         this.objectMapper = objectMapper;
         this.promptBuilder = promptBuilder;
-        this.geminiTextClient = geminiTextClient;
+        this.openAiTextClient = openAiTextClient;
     }
 
     @Override
@@ -53,7 +50,7 @@ public class GeminiResumeImprovementAdapter
         );
 
         String generatedText =
-                geminiTextClient.generate(input);
+                openAiTextClient.generate(input);
 
         return parseResult(
                 generatedText,
@@ -67,13 +64,13 @@ public class GeminiResumeImprovementAdapter
     ) {
         try {
             String jsonText =
-                    GeminiResponseCleaner
-                            .removeMarkdownFence(
-                                    generatedText
-                            );
+                    AiResponseCleaner.removeMarkdownFence(
+                            generatedText
+                    );
 
-            JsonNode root =
-                    objectMapper.readTree(jsonText);
+            JsonNode root = objectMapper.readTree(
+                    jsonText
+            );
 
             JsonNode improvementsNode =
                     root.get("improvements");
@@ -93,16 +90,14 @@ public class GeminiResumeImprovementAdapter
 
             return requestedSections.stream()
                     .map(section ->
-                            SectionFeedbackResult
-                                    .improvement(
-                                            section,
-                                            messages.get(
-                                                    section.type()
-                                            )
+                            SectionFeedbackResult.improvement(
+                                    section,
+                                    messages.get(
+                                            section.type()
                                     )
+                            )
                     )
                     .toList();
-
         } catch (Exception exception) {
             throw new BusinessException(
                     ErrorCode.AI_RESPONSE_PARSE_FAILED

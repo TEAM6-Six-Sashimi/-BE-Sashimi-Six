@@ -54,7 +54,7 @@ public class JobPostingRecommendationAsyncService {
         this.courseRecommendationMatcher = courseRecommendationMatcher;
     }
 
-    @Async
+    @Async("aiAnalysisExecutor")
     @Transactional
     public void analyze(Long recommendationId, Long userId) {
         log.info("🗃️ 채용공고 추천 비동기 분석 시작: userId={}, recommendationId={}", userId, recommendationId);

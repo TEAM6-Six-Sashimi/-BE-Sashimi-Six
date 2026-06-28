@@ -1,8 +1,8 @@
-package com.sashimi.ai.infrastructure.gemini;
+package com.sashimi.ai.infrastructure.openai;
 
-public final class GeminiResponseCleaner {
+public final class AiResponseCleaner {
 
-    private GeminiResponseCleaner() {
+    private AiResponseCleaner() {
     }
 
     public static String removeMarkdownFence(String text) {

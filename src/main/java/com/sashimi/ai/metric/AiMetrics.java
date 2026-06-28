@@ -16,6 +16,8 @@ public class AiMetrics {
     public static final String REASON_SUBSCRIPTION_REQUIRED = "SUBSCRIPTION_REQUIRED";
     public static final String REASON_AI_CONSENT_REQUIRED = "AI_CONSENT_REQUIRED";
 
+    public static final String PROVIDER_OPENAI = "OPENAI";
+
     private final MeterRegistry meterRegistry;
 
     public AiMetrics(MeterRegistry meterRegistry) {
@@ -69,18 +71,27 @@ public class AiMetrics {
                 .record(durationMillis, TimeUnit.MILLISECONDS);
     }
 
-    public void incrementGeminiCallSuccess(String feature) {
-        Counter.builder("ai.gemini.call.success")
-                .description("Gemini API 호출 성공 수")
+    public void incrementProviderCallSuccess(
+            String feature,
+            String provider
+    ) {
+        Counter.builder("ai.provider.call.success")
+                .description("AI provider API 호출 성공 수")
                 .tag("feature", feature)
+                .tag("provider", provider)
                 .register(meterRegistry)
                 .increment();
     }
 
-    public void incrementGeminiCallFailed(String feature, String reason) {
-        Counter.builder("ai.gemini.call.failed")
-                .description("Gemini API 호출 실패 시")
+    public void incrementProviderCallFailed(
+            String feature,
+            String provider,
+            String reason
+    ) {
+        Counter.builder("ai.provider.call.failed")
+                .description("AI provider API 호출 실패 수")
                 .tag("feature", feature)
+                .tag("provider", provider)
                 .tag("reason", reason)
                 .register(meterRegistry)
                 .increment();

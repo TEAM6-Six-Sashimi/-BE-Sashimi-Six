@@ -1,9 +1,9 @@
-package com.sashimi.ai.infrastructure.gemini;
+package com.sashimi.ai.infrastructure.openai;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties(GeminiProperties.class)
-public class GeminiConfig {
+@EnableConfigurationProperties(OpenAiProperties.class)
+public class OpenAiConfig {
 }

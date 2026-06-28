@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Profile("local & !gemini")
+@Profile("local & !openai")
 public class StubCareerContinuityAiAdapter
         implements CareerContinuityAiPort {
 
