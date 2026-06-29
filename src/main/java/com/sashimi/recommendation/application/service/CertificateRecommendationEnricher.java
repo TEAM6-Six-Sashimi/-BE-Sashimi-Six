@@ -28,6 +28,10 @@ public class CertificateRecommendationEnricher {
     public List<CertificateRecommendation> enrich(
             List<CertificateRecommendation> certificates
     ) {
+        if (certificates == null || certificates.isEmpty()) {
+            return List.of();
+        }
+
         return certificates.stream()
                 .map(this::enrichOne)
                 .toList();
@@ -36,9 +40,20 @@ public class CertificateRecommendationEnricher {
     private CertificateRecommendation enrichOne(
             CertificateRecommendation certificate
     ) {
+        if (certificate.name() == null || certificate.name().isBlank()) {
+            return certificate;
+        }
+
+        String lookupName = certificate.name().trim();
+
         Optional<QualificationCodeJpaEntity> qualificationCode =
                 qualificationCodeRepository.findFirstByQualificationNameOrderByJmCdAsc(
-                        certificate.name()
+                        lookupName
+                ).or(() ->
+                        qualificationCodeRepository
+                                .findFirstByQualificationNameContainingOrderByQualificationNameAsc(
+                                        lookupName
+                                )
                 );
 
         if (qualificationCode.isEmpty()) {

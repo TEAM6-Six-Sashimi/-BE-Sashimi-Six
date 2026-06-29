@@ -1,5 +1,6 @@
 package com.sashimi.recommendation.presentation.api;
 
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.ErrorResponse;
 import com.sashimi.recommendation.application.command.CreateJobPostingRecommendationCommand;
 import com.sashimi.recommendation.application.usecase.JobPostingRecommendationCommandUseCase;
@@ -8,6 +9,8 @@ import com.sashimi.recommendation.domain.model.JobPostingRecommendation;
 import com.sashimi.recommendation.presentation.api.request.CreateJobPostingRecommendationRequest;
 import com.sashimi.recommendation.presentation.api.response.JobPostingRecommendationResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,13 +29,18 @@ public class JobPostingRecommendationController {
 
     private final JobPostingRecommendationCommandUseCase commandUseCase;
     private final JobPostingRecommendationQueryUseCase queryUseCase;
+    private final Counter resultViewedCounter;
 
     public JobPostingRecommendationController(
             JobPostingRecommendationCommandUseCase commandUseCase,
-            JobPostingRecommendationQueryUseCase queryUseCase
+            JobPostingRecommendationQueryUseCase queryUseCase,
+            MeterRegistry meterRegistry
     ) {
         this.commandUseCase = commandUseCase;
         this.queryUseCase = queryUseCase;
+        this.resultViewedCounter = Counter.builder("ai.recommendation.result.viewed")
+                .description("채용공고 AI 추천 결과 조회 수")
+                .register(meterRegistry);
     }
 
     @Operation(
@@ -94,6 +102,7 @@ public class JobPostingRecommendationController {
                 recommendationId
         );
 
+        resultViewedCounter.increment();
         return JobPostingRecommendationResponse.from(recommendation);
     }
 }
