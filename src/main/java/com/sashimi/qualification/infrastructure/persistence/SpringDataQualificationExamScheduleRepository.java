@@ -29,4 +29,10 @@ public interface SpringDataQualificationExamScheduleRepository
             String qualificationName,
             LocalDate today
     );
+
+    Optional<QualificationExamScheduleJpaEntity>
+    findFirstByJmCdAndDocExamStartDateGreaterThanEqualOrderByDocExamStartDateAsc(
+            String jmCd,
+            LocalDate today
+    );
 }
