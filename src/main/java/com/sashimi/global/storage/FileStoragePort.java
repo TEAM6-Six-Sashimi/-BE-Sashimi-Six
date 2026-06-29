@@ -22,4 +22,7 @@ public interface FileStoragePort {
 
     /** 강의 자료 다운로드용 presigned URL (sashimi-attachments) */
     String generateAttachmentUrl(String s3Key, int expiryMinutes);
+
+    /** sashimi-docs 버킷에서 객체 삭제 (업로드 실패 시 보상 트랜잭션용) */
+    void deleteFromDocs(String s3Key);
 }
