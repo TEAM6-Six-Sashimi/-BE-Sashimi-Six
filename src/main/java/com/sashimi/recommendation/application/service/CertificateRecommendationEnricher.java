@@ -56,22 +56,21 @@ public class CertificateRecommendationEnricher {
                 .orElseGet(() -> withCodeOnly(certificate, code));
     }
 
-    private CertificateRecommendation withCodeAndSchedule(
-            CertificateRecommendation certificate,
-            QualificationCodeJpaEntity code,
-            QualificationExamScheduleJpaEntity schedule
-    ) {
-        return new CertificateRecommendation(
-                code.getId(),
-                certificate.name(),
-                certificate.reason(),
-                certificate.relatedSkills(),
-                certificate.difficulty(),
-                schedule.getDocExamStartDate(),
-                schedule.getDocRegStartDate(),
-                schedule.getDocRegEndDate()
-        );
-    }
+   private CertificateRecommendation withCodeOnly(
+        CertificateRecommendation certificate,
+        QualificationCodeJpaEntity code
+) {
+    return new CertificateRecommendation(
+            code.getId(),
+            certificate.name(),
+            certificate.reason(),
+            certificate.relatedSkills(),
+            certificate.difficulty(),
+            null,
+            null,
+            null
+    );
+}
 
     private CertificateRecommendation withCodeOnly(
             CertificateRecommendation certificate,
