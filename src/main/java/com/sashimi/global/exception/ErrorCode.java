@@ -120,6 +120,7 @@ public enum ErrorCode {
     REVIEW_PROGRESS_REQUIRED(400, "REVIEW_003", "수강 후 리뷰를 작성할 수 있습니다."),
     REVIEW_NOT_FOUND(404, "REVIEW_404", "수강평을 찾을 수 없습니다."),
     REVIEW_FORBIDDEN(403, "REVIEW_004", "본인이 작성한 수강평만 삭제할 수 있습니다."),
+    REVIEW_WRITE_FORBIDDEN(403, "REVIEW_007", "본인 계정으로만 수강평을 작성할 수 있습니다."),
     REVIEW_ALREADY_REPORTED(409, "REVIEW_005", "이미 신고한 리뷰입니다."),
     REVIEW_SELF_REPORT_FORBIDDEN(403, "REVIEW_006", "본인이 작성한 수강평은 신고할 수 없습니다."),
 

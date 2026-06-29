@@ -48,7 +48,7 @@ public class ReviewController {
             @Valid @RequestBody WriteReviewRequest request
     ) {
         if (!principal.getId().equals(userId)) {
-            throw new BusinessException(ErrorCode.REVIEW_FORBIDDEN);
+            throw new BusinessException(ErrorCode.REVIEW_WRITE_FORBIDDEN);
         }
         reviewCommandUseCase.writeReview(
                 new WriteReviewCommand(principal.getId(), courseId, request.rating(), request.content())

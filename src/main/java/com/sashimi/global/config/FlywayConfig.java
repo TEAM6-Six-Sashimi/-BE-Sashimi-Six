@@ -1,6 +1,7 @@
 package com.sashimi.global.config;
 
 import org.flywaydb.core.Flyway;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +12,9 @@ import java.nio.charset.StandardCharsets;
 @Configuration
 @ConditionalOnProperty(name = "spring.flyway.enabled", havingValue = "true", matchIfMissing = true)
 public class FlywayConfig {
+
+    @Value("${flyway.repair-on-migrate:false}")
+    private boolean repairOnMigrate;
 
     @Bean
     public Flyway flyway(DataSource dataSource) {
@@ -28,7 +32,9 @@ public class FlywayConfig {
                 .outOfOrder(true)
                 .encoding(StandardCharsets.UTF_8)
                 .load();
-        flyway.repair();
+        if (repairOnMigrate) {
+            flyway.repair();
+        }
         flyway.migrate();
         return flyway;
     }
