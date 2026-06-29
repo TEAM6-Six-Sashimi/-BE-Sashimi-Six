@@ -7,6 +7,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import java.util.List;
 
 public record InstructorCourseDetailResponse(
+        Long courseId,
         Long categoryId,
         String title,
         String description,
@@ -17,9 +18,12 @@ public record InstructorCourseDetailResponse(
         List<SessionResponse> sessions
 ) {
     public record SessionResponse(
+            Long sessionId,
+            String sessionUid,
             String title,
             String videoUrl,
             int durationSeconds,
+            int sessionOrder,
             boolean preview,
             String attachmentName,
             String attachmentUrl,
@@ -30,13 +34,14 @@ public record InstructorCourseDetailResponse(
     public static InstructorCourseDetailResponse from(Course course) {
         List<SessionResponse> sessions = course.getSessions().stream()
                 .map(s -> new SessionResponse(
-                        s.getTitle(), s.getVideoUrl(), s.getDurationSeconds(), s.isPreview(),
+                        s.getId(), s.getSessionUid(), s.getTitle(), s.getVideoUrl(),
+                        s.getDurationSeconds(), s.getSessionOrder(), s.isPreview(),
                         s.getAttachmentName(), s.getAttachmentUrl(),
                         s.getAttachmentType(), s.getAttachmentSize()
                 ))
                 .toList();
         return new InstructorCourseDetailResponse(
-                course.getCategoryId(), course.getTitle(), course.getDescription(),
+                course.getId(), course.getCategoryId(), course.getTitle(), course.getDescription(),
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getStatus(), sessions
         );
