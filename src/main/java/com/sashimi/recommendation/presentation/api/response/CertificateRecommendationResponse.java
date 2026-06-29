@@ -13,7 +13,8 @@ public record CertificateRecommendationResponse(
         String difficulty,
         LocalDate nextExamDate,
         LocalDate applicationStartDate,
-        LocalDate applicationEndDate
+        LocalDate applicationEndDate,
+        String scheduleStatus
 ) {
     public static CertificateRecommendationResponse from(CertificateRecommendation certificate) {
         return new CertificateRecommendationResponse(
@@ -24,7 +25,16 @@ public record CertificateRecommendationResponse(
                 certificate.difficulty(),
                 certificate.nextExamDate(),
                 certificate.applicationStartDate(),
-                certificate.applicationEndDate()
+                certificate.applicationEndDate(),
+                resolveScheduleStatus(certificate)
         );
+    }
+
+    private static String resolveScheduleStatus(CertificateRecommendation certificate) {
+        if (certificate.nextExamDate() == null) {
+            return "NOT_AVAILABLE";
+        }
+
+        return "AVAILABLE";
     }
 }
