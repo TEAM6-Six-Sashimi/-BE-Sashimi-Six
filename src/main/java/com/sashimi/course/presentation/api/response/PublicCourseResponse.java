@@ -15,7 +15,9 @@ public record PublicCourseResponse(
         BigDecimal ratingAvg,
         int studentCount,
         LocalDateTime approvedAt,
-        String label
+        String label,
+        Long categoryId,
+        String categoryName
 ) {
     public static PublicCourseResponse from(PublicCourseView view) {
         return new PublicCourseResponse(
@@ -28,7 +30,9 @@ public record PublicCourseResponse(
                 view.ratingAvg(),
                 view.studentCount(),
                 view.approvedAt(),
-                view.label()
+                view.label(),
+                view.categoryId(),
+                view.categoryName()
         );
     }
 }

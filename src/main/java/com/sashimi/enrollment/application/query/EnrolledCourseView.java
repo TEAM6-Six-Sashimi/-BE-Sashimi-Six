@@ -8,5 +8,8 @@ public record EnrolledCourseView(
         String thumbnail,
         String instructorName,
         BigDecimal progressRate,
-        boolean completed
+        boolean completed,
+        Long categoryId,
+        String categoryName,
+        String mainCategoryName
 ) {}

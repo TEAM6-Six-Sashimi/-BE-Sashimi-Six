@@ -10,7 +10,10 @@ public record EnrolledCourseResponse(
         String thumbnail,
         String instructorName,
         BigDecimal progressRate,
-        boolean completed
+        boolean completed,
+        Long categoryId,
+        String categoryName,
+        String mainCategoryName
 ) {
     public static EnrolledCourseResponse from(EnrolledCourseView view) {
         return new EnrolledCourseResponse(
@@ -19,7 +22,10 @@ public record EnrolledCourseResponse(
                 view.thumbnail(),
                 view.instructorName(),
                 view.progressRate(),
-                view.completed()
+                view.completed(),
+                view.categoryId(),
+                view.categoryName(),
+                view.mainCategoryName()
         );
     }
 }
