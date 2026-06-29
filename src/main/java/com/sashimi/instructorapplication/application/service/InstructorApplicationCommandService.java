@@ -125,9 +125,12 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
             );
 
             instructorApplicationRepository.save(application);
-            meterRegistry.counter("instructor.application.total", "status", "success").increment();
+            meterRegistry.counter("instructor.application.total", "status", "success", "reason", "NONE").increment();
         } catch (BusinessException e) {
             meterRegistry.counter("instructor.application.total", "status", "failure", "reason", e.getErrorCode().name()).increment();
+            throw e;
+        } catch (Exception e) {
+            meterRegistry.counter("instructor.application.total", "status", "failure", "reason", "SERVER_ERROR").increment();
             throw e;
         } finally {
             sample.stop(Timer.builder("instructor.application.duration")

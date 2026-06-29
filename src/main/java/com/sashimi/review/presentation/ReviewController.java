@@ -1,5 +1,7 @@
 package com.sashimi.review.presentation;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.review.application.command.WriteReviewCommand;
 import com.sashimi.review.application.usecase.ReviewCommandUseCase;
 import com.sashimi.review.presentation.api.request.WriteReviewRequest;
@@ -30,6 +32,9 @@ public class ReviewController {
     ) {
         boolean isAdmin = principal.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        if (!isAdmin && !principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.REVIEW_FORBIDDEN);
+        }
         reviewCommandUseCase.deleteReview(userId, reviewId, isAdmin);
         return ResponseEntity.noContent().build();
     }
@@ -43,7 +48,7 @@ public class ReviewController {
             @Valid @RequestBody WriteReviewRequest request
     ) {
         if (!principal.getId().equals(userId)) {
-            throw new com.sashimi.global.exception.BusinessException(com.sashimi.global.exception.ErrorCode.FORBIDDEN);
+            throw new BusinessException(ErrorCode.REVIEW_WRITE_FORBIDDEN);
         }
         reviewCommandUseCase.writeReview(
                 new WriteReviewCommand(principal.getId(), courseId, request.rating(), request.content())

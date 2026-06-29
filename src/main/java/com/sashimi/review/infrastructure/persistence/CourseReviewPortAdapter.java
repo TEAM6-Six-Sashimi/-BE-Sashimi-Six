@@ -13,6 +13,7 @@ public class CourseReviewPortAdapter implements CourseReviewPort {
 
     private final JdbcTemplate jdbcTemplate;
 
+    // @Cacheable(value = "courseReviews", key = "#courseId")
     @Override
     public List<ReviewInfo> findActiveReviewsByCourseId(Long courseId) {
         return jdbcTemplate.query(
