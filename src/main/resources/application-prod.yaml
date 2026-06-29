@@ -32,8 +32,11 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
 
-gemini:
-  api-key: ${GEMINI_API_KEY}
+openai:
+  api-key: ${OPENAI_API_KEY}
+  model: ${OPENAI_MODEL:gpt-4o-mini}
+  base-url: https://api.openai.com/v1
+  timeout-seconds: 30
 
 clova:
   ocr:
@@ -65,3 +68,12 @@ codef:
   client-id: ${CODEF_CLIENT_ID}
   client-secret: ${CODEF_CLIENT_SECRET}
   public-key: ${CODEF_PUBLIC_KEY}
+
+grafana:
+  url: ${GRAFANA_URL}
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

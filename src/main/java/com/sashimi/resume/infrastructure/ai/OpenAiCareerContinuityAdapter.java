@@ -1,8 +1,8 @@
 package com.sashimi.resume.infrastructure.ai;
 
 import com.sashimi.ai.domain.model.AiPrompt;
-import com.sashimi.ai.infrastructure.gemini.GeminiResponseCleaner;
-import com.sashimi.ai.infrastructure.gemini.GeminiTextClient;
+import com.sashimi.ai.infrastructure.openai.AiResponseCleaner;
+import com.sashimi.ai.infrastructure.openai.OpenAiTextClient;
 import com.sashimi.ai.infrastructure.prompt.CareerContinuityPromptBuilder;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -16,25 +16,23 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
-/** 경력이 2개 이상일 때만 호출 */
 @Component
-@Profile("gemini")
-public class GeminiCareerContinuityAdapter
+@Profile("openai")
+public class OpenAiCareerContinuityAdapter
         implements CareerContinuityAiPort {
 
     private final ObjectMapper objectMapper;
-    private final CareerContinuityPromptBuilder
-            promptBuilder;
-    private final GeminiTextClient geminiTextClient;
+    private final CareerContinuityPromptBuilder promptBuilder;
+    private final OpenAiTextClient openAiTextClient;
 
-    public GeminiCareerContinuityAdapter(
+    public OpenAiCareerContinuityAdapter(
             ObjectMapper objectMapper,
             CareerContinuityPromptBuilder promptBuilder,
-            GeminiTextClient geminiTextClient
+            OpenAiTextClient openAiTextClient
     ) {
         this.objectMapper = objectMapper;
         this.promptBuilder = promptBuilder;
-        this.geminiTextClient = geminiTextClient;
+        this.openAiTextClient = openAiTextClient;
     }
 
     @Override
@@ -48,7 +46,7 @@ public class GeminiCareerContinuityAdapter
         );
 
         String generatedText =
-                geminiTextClient.generate(input);
+                openAiTextClient.generate(input);
 
         return parseResult(generatedText);
     }
@@ -58,13 +56,13 @@ public class GeminiCareerContinuityAdapter
     ) {
         try {
             String jsonText =
-                    GeminiResponseCleaner
-                            .removeMarkdownFence(
-                                    generatedText
-                            );
+                    AiResponseCleaner.removeMarkdownFence(
+                            generatedText
+                    );
 
-            JsonNode root =
-                    objectMapper.readTree(jsonText);
+            JsonNode root = objectMapper.readTree(
+                    jsonText
+            );
 
             JsonNode scoreNode =
                     root.get("continuityScore");
@@ -87,7 +85,6 @@ public class GeminiCareerContinuityAdapter
             }
 
             return new CareerContinuityResult(score);
-
         } catch (Exception exception) {
             throw new BusinessException(
                     ErrorCode.AI_RESPONSE_PARSE_FAILED

@@ -2,6 +2,7 @@ package com.sashimi.review.infrastructure.persistence;
 
 import com.sashimi.course.application.port.CourseReviewPort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ public class CourseReviewPortAdapter implements CourseReviewPort {
 
     private final JdbcTemplate jdbcTemplate;
 
+    // @Cacheable(value = "courseReviews", key = "#courseId")
     @Override
     public List<ReviewInfo> findActiveReviewsByCourseId(Long courseId) {
         return jdbcTemplate.query(

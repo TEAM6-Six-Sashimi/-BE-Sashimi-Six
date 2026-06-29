@@ -1,0 +1,99 @@
+name: Deploy Monitoring Stack
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'monitoring/**'
+      - '.github/workflows/deploy-monitoring.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-monitoring
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_APP_DIR: /home/ubuntu/Sashimi-Six
+      DOCKER_NETWORK: sashimi-net
+
+    steps:
+      - name: Configure SSH key
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          test -n "$EC2_HOST"
+          test -n "$EC2_USER"
+          test -n "$EC2_SSH_KEY"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/sashimi-ec2.pem
+          chmod 600 ~/.ssh/sashimi-ec2.pem
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy monitoring stack
+        env:
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$GRAFANA_ADMIN_PASSWORD" ]; then
+            echo "Missing GitHub secret: GRAFANA_ADMIN_PASSWORD" >&2
+            exit 1
+          fi
+
+          GRAFANA_PASSWORD_B64="$(printf '%s' "$GRAFANA_ADMIN_PASSWORD" | base64 -w 0)"
+
+          ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$EC2_HOST" \
+            "APP_DIR='$EC2_APP_DIR' DOCKER_NETWORK='$DOCKER_NETWORK' GRAFANA_PASSWORD_B64='$GRAFANA_PASSWORD_B64' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          GRAFANA_PASSWORD="$(printf '%s' "$GRAFANA_PASSWORD_B64" | base64 -d)"
+
+          cd "$APP_DIR"
+          git fetch origin develop
+          git checkout -B develop origin/develop
+
+          # sashimi-net 없으면 생성
+          sudo docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1 \
+            || sudo docker network create "$DOCKER_NETWORK"
+
+          # 앱 로그 공유 볼륨 없으면 생성
+          sudo docker volume inspect sashimi-logs >/dev/null 2>&1 \
+            || sudo docker volume create sashimi-logs
+
+          # Grafana 비밀번호 환경파일 기록
+          printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_PASSWORD" \
+            > monitoring/.env
+
+          if sudo docker compose version >/dev/null 2>&1; then
+            compose() { sudo docker compose "$@"; }
+          elif command -v docker-compose >/dev/null 2>&1; then
+            compose() { sudo docker-compose "$@"; }
+          else
+            echo "Docker Compose is not installed. Install docker compose v2 or docker-compose v1." >&2
+            exit 1
+          fi
+
+          echo "Docker Compose version:"
+          compose version
+
+          cd monitoring
+          compose -f docker-compose.yml config >/tmp/sashimi-monitoring-compose.yml
+
+          sudo docker rm -f sashimi-grafana sashimi-prometheus sashimi-loki sashimi-promtail >/dev/null 2>&1 || true
+
+          if sudo ss -ltnp '( sport = :3000 )' 2>/dev/null | grep -q ':3000'; then
+            echo "Port 3000 is already in use before starting Grafana:" >&2
+            sudo ss -ltnp '( sport = :3000 )' >&2 || true
+          fi
+
+          compose -f docker-compose.yml pull
+          compose -f docker-compose.yml up -d --force-recreate --remove-orphans
+
+          echo "Monitoring stack deployed."
+          REMOTE

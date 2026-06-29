@@ -42,16 +42,16 @@ public class ReviewController {
     @Operation(summary = "수강평 작성", description = "수강 중인 강의에 평점과 리뷰를 작성합니다.")
     @PostMapping
     public ResponseEntity<Void> writeReview(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long userId,
             @PathVariable Long courseId,
-            @Valid @RequestBody WriteReviewRequest request,
-            @AuthenticationPrincipal CustomUserPrincipal principal
+            @Valid @RequestBody WriteReviewRequest request
     ) {
         if (!principal.getId().equals(userId)) {
             throw new BusinessException(ErrorCode.REVIEW_FORBIDDEN);
         }
         reviewCommandUseCase.writeReview(
-                new WriteReviewCommand(userId, courseId, request.rating(), request.content())
+                new WriteReviewCommand(principal.getId(), courseId, request.rating(), request.content())
         );
         return ResponseEntity.noContent().build();
     }

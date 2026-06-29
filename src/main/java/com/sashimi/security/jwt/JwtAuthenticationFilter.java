@@ -7,6 +7,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,8 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
@@ -31,15 +35,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
-                boolean blacklisted = false;
                 try {
-                    blacklisted = tokenBlacklistService.isBlacklisted(accessToken);
+                    if (!tokenBlacklistService.isBlacklisted(accessToken)) {
+                        Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 } catch (Exception e) {
-                    // Redis 연결 실패 시 블랙리스트 체크를 건너뛰고 정상 인증 처리
-                }
-                if (!blacklisted) {
-                    Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    // Redis 장애 시 fail-closed: 블랙리스트 확인 불가능하므로 인증 거부
+                    logger.warn("event=redis_blacklist_unavailable msg=인증 거부 (fail-closed)");
                 }
             }
         } catch (JwtException | IllegalArgumentException | AuthenticationException e) {

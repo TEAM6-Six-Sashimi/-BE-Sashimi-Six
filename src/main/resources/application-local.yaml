@@ -4,7 +4,11 @@ spring:
     username: sashimi
     password: sashimi
     driver-class-name: com.mysql.cj.jdbc.Driver
-
+    hikari:
+      maximum-pool-size: 30
+      connection-timeout: 5000
+  flyway:
+    repair-on-migrate: true
   jpa:
     show-sql: false
 
@@ -32,8 +36,11 @@ spring:
 jwt:
   secret: this-is-sashimi-lms-jwt-secret-key-for-hs256-authentication
 
-gemini:
-  api-key: ${GEMINI_API_KEY:}
+openai:
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-4o-mini}
+  base-url: https://api.openai.com/v1
+  timeout-seconds: 30
 
 clova:
   ocr:
@@ -47,6 +54,9 @@ app:
 file:
   upload-dir: uploads/
   base-url: http://localhost:8080
+
+grafana:
+  url: http://localhost:3000
 
 aws:
   access-key-id: ${AWS_ACCESS_KEY_ID:}

@@ -1,3 +1,8 @@
 package com.sashimi.course.presentation.api.request;
 
-public record RejectCourseRequest(String rejectReason) {}
+import com.sashimi.course.domain.model.RejectReasonCategory;
+
+public record RejectCourseRequest(
+        RejectReasonCategory category,
+        String detail
+) {}

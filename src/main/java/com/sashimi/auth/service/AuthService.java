@@ -170,6 +170,8 @@ public class AuthService {
         user.changePassword(passwordEncoder.encode(request.getNewPassword()));
         User savedUser = userRepository.save(user);
 
+        refreshService.deleteByUser(savedUser);
+
         eventPublisher.publishEvent(
                 new UserPasswordChangedEvent(
                         savedUser.getId(),
@@ -199,7 +201,8 @@ public class AuthService {
                 throw e;
             }
 
-            User user = userRepository.findByLoginId(authentication.getName())
+            CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
+            User user = userRepository.findById(principal.getId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
             user.updateLastLoginAt(LocalDateTime.now());

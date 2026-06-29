@@ -17,6 +17,7 @@ import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,32 +35,38 @@ public class OcrAdapter implements OcrPort {
     private String invokeUrl;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Semaphore semaphore = new Semaphore(5);
 
     @Override
     public OcrResult extractCertificateInfo(byte[] fileBytes, String fileName) {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
-            String requestBody = buildRequestBody(fileBytes, fileName);
+            semaphore.acquire();
+            try {
+                String requestBody = buildRequestBody(fileBytes, fileName);
 
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(invokeUrl))
-                    .header("Content-Type", "application/json")
-                    .header("X-OCR-SECRET", secretKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
-                    .build();
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(invokeUrl))
+                        .header("Content-Type", "application/json")
+                        .header("X-OCR-SECRET", secretKey)
+                        .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                        .build();
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-            if (response.statusCode() != 200) {
-                log.error("Clova OCR 호출 실패: status={}, body={}", response.statusCode(), response.body());
-                meterRegistry.counter("ocr.result.total", "status", "failure").increment();
-                return new OcrResult(null, null, null, false);
+                if (response.statusCode() != 200) {
+                    log.error("Clova OCR 호출 실패: status={}, body={}", response.statusCode(), response.body());
+                    meterRegistry.counter("ocr.result.total", "status", "failure").increment();
+                    return new OcrResult(null, null, null, false);
+                }
+
+                OcrResult result = parseOcrResponse(response.body());
+                meterRegistry.counter("ocr.result.total", "status", result.success() ? "success" : "failure").increment();
+                return result;
+            } finally {
+                semaphore.release();
             }
-
-            OcrResult result = parseOcrResponse(response.body());
-            meterRegistry.counter("ocr.result.total", "status", result.success() ? "success" : "failure").increment();
-            return result;
 
         } catch (Exception e) {
             log.error("Clova OCR 호출 중 예외 발생", e);
@@ -108,7 +115,6 @@ public class OcrAdapter implements OcrPort {
         }
 
         String text = fullText.toString();
-        log.info("OCR 추출 텍스트: {}", text);
 
         String certName = extractCertName(text);
         String issuer = extractIssuer(text);

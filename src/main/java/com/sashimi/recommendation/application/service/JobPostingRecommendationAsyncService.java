@@ -33,6 +33,7 @@ public class JobPostingRecommendationAsyncService {
     private final ResumeRepository resumeRepository;
     private final OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter;
     private final CourseRecommendationMatcher courseRecommendationMatcher;
+    private final CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder;
 
     public JobPostingRecommendationAsyncService(
             JobPostingRecommendationRepository recommendationRepository,
@@ -42,7 +43,8 @@ public class JobPostingRecommendationAsyncService {
             CertificateRecommendationEnricher certificateRecommendationEnricher,
             ResumeRepository resumeRepository,
             OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter,
-            CourseRecommendationMatcher courseRecommendationMatcher
+            CourseRecommendationMatcher courseRecommendationMatcher,
+            CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder
     ) {
         this.recommendationRepository = recommendationRepository;
         this.analyzePort = analyzePort;
@@ -52,9 +54,10 @@ public class JobPostingRecommendationAsyncService {
         this.resumeRepository = resumeRepository;
         this.ownedCertificateRecommendationFilter = ownedCertificateRecommendationFilter;
         this.courseRecommendationMatcher = courseRecommendationMatcher;
+        this.certificateRecommendationFallbackBuilder = certificateRecommendationFallbackBuilder;
     }
 
-    @Async
+    @Async("aiAnalysisExecutor")
     @Transactional
     public void analyze(Long recommendationId, Long userId) {
         log.info("🗃️ 채용공고 추천 비동기 분석 시작: userId={}, recommendationId={}", userId, recommendationId);
@@ -68,16 +71,42 @@ public class JobPostingRecommendationAsyncService {
 
             JobPostingRecommendationAnalyzeResult analyzeResult = analyzePort.analyze(recommendation, prompt);
 
+            // 삭제
+            log.info("AI 분석 결과 certificates size={}, fitAnalysis missingItems={}",
+                    analyzeResult.certificates() == null ? null : analyzeResult.certificates().size(),
+                    analyzeResult.fitAnalysis() == null || analyzeResult.fitAnalysis().certification() == null
+                            ? null
+                            : analyzeResult.fitAnalysis().certification().missingItems());
+
             Optional<Resume> resume = findResumeForCertificateFilter(recommendation);
 
-            var filteredCertificates = ownedCertificateRecommendationFilter.filter(
+            var fallbackCertificates = certificateRecommendationFallbackBuilder.build(
                     analyzeResult.certificates(),
+                    analyzeResult.fitAnalysis()
+            );
+
+            // 삭제
+            log.info("fallback certificates size={}, names={}",
+                    fallbackCertificates.size(),
+                    fallbackCertificates.stream()
+                            .map(certificate -> certificate.name())
+                            .toList());
+
+            var filteredCertificates = ownedCertificateRecommendationFilter.filter(
+                    fallbackCertificates,
                     resume.orElse(null)
             );
 
             var enrichedCertificates = certificateRecommendationEnricher.enrich(
                     filteredCertificates
             );
+
+            // 삭제
+            log.info("enriched certificates size={}, names={}",
+                    enrichedCertificates.size(),
+                    enrichedCertificates.stream()
+                            .map(certificate -> certificate.name())
+                            .toList());
 
             var matchedCourses = courseRecommendationMatcher.match(
                     enrichedCertificates
