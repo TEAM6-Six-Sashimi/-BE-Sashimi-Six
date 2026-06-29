@@ -13,7 +13,7 @@
       "title": "HTTP 요청 수 (req/s)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(rate(http_server_requests_seconds_count{job=\"sashimi\"}[1m])) by (uri, method)",
@@ -33,7 +33,7 @@
       "title": "HTTP 에러율 (4xx/5xx req/s)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(rate(http_server_requests_seconds_count{job=\"sashimi\", outcome=\"CLIENT_ERROR\"}[1m]))",
@@ -63,7 +63,7 @@
       "title": "HTTP P99 응답시간 (ms)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket{job=\"sashimi\"}[5m])) by (le, uri)) * 1000",
@@ -85,7 +85,7 @@
       "title": "JVM 힙 메모리 사용량",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
-      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "sum(jvm_memory_used_bytes{job=\"sashimi\", area=\"heap\"})",
@@ -114,7 +114,7 @@
       "title": "로그 (Loki)",
       "type": "logs",
       "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
-      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "expr": "{app=\"sashimi\"}",
@@ -134,7 +134,7 @@
       "title": "에러 로그만 보기",
       "type": "logs",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 },
-      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
           "expr": "{app=\"sashimi\", level=\"ERROR\"}",
