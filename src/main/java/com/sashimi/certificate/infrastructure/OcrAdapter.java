@@ -108,7 +108,6 @@ public class OcrAdapter implements OcrPort {
         }
 
         String text = fullText.toString();
-        log.info("OCR 추출 텍스트: {}", text);
 
         String certName = extractCertName(text);
         String issuer = extractIssuer(text);
