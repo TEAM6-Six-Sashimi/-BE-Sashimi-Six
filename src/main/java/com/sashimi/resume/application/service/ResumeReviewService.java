@@ -47,11 +47,8 @@ public class ResumeReviewService implements ReviewResumeUseCase {
                         )
                 );
 
-        int certificateCount = 0;
-
         return resumeReviewProcessor.process(
-                resume,
-                certificateCount
+                resume
         );
     }
 }

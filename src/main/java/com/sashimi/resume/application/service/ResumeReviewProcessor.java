@@ -12,36 +12,25 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-// 이력서 평가 전체 흐름 조립
-// 순서: 경력 연속성 평가, 점수 계산, 피드백 생성
 @Component
 public class ResumeReviewProcessor {
 
-    private final CareerContinuityEvaluator
-            careerContinuityEvaluator;
-
-    private final ResumeScoreCalculator
-            resumeScoreCalculator;
-
-    private final ResumeFeedbackGenerator
-            resumeFeedbackGenerator;
+    private final CareerContinuityEvaluator careerContinuityEvaluator;
+    private final ResumeScoreCalculator resumeScoreCalculator;
+    private final ResumeFeedbackGenerator resumeFeedbackGenerator;
 
     public ResumeReviewProcessor(
             CareerContinuityEvaluator careerContinuityEvaluator,
             ResumeScoreCalculator resumeScoreCalculator,
             ResumeFeedbackGenerator resumeFeedbackGenerator
     ) {
-        this.careerContinuityEvaluator =
-                careerContinuityEvaluator;
-        this.resumeScoreCalculator =
-                resumeScoreCalculator;
-        this.resumeFeedbackGenerator =
-                resumeFeedbackGenerator;
+        this.careerContinuityEvaluator = careerContinuityEvaluator;
+        this.resumeScoreCalculator = resumeScoreCalculator;
+        this.resumeFeedbackGenerator = resumeFeedbackGenerator;
     }
 
     public ReviewResumeResult process(
-            Resume resume,
-            int certificateCount
+            Resume resume
     ) {
         if (resume == null) {
             throw new BusinessException(
@@ -49,11 +38,7 @@ public class ResumeReviewProcessor {
             );
         }
 
-        if (certificateCount < 0) {
-            throw new BusinessException(
-                    ErrorCode.RESUME_INVALID_REVIEW_SCORE
-            );
-        }
+        int certificateCount = countCertifications(resume);
 
         CareerContinuityResult continuity =
                 careerContinuityEvaluator.evaluate(
@@ -76,5 +61,15 @@ public class ResumeReviewProcessor {
                 scoreResult,
                 feedbacks
         );
+    }
+
+    private int countCertifications(
+            Resume resume
+    ) {
+        if (resume.certifications() == null) {
+            return 0;
+        }
+
+        return resume.certifications().size();
     }
 }
