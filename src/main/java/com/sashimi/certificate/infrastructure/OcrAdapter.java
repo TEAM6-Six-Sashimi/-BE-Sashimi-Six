@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.Base64;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +42,11 @@ public class OcrAdapter implements OcrPort {
     public OcrResult extractCertificateInfo(byte[] fileBytes, String fileName) {
         Timer.Sample sample = Timer.start(meterRegistry);
         try {
-            semaphore.acquire();
+            if (!semaphore.tryAcquire(30, TimeUnit.SECONDS)) {
+                log.warn("OCR 요청 대기 시간 초과: semaphore 획득 실패");
+                meterRegistry.counter("ocr.result.total", "status", "failure").increment();
+                return new OcrResult(null, null, null, false);
+            }
             try {
                 String requestBody = buildRequestBody(fileBytes, fileName);
 
@@ -68,6 +73,11 @@ public class OcrAdapter implements OcrPort {
                 semaphore.release();
             }
 
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("OCR 요청 중 인터럽트 발생", e);
+            meterRegistry.counter("ocr.result.total", "status", "failure").increment();
+            return new OcrResult(null, null, null, false);
         } catch (Exception e) {
             log.error("Clova OCR 호출 중 예외 발생", e);
             meterRegistry.counter("ocr.result.total", "status", "failure").increment();
