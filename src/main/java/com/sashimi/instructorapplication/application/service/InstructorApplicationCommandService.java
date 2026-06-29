@@ -65,25 +65,17 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 throw new BusinessException(ErrorCode.ALREADY_APPLIED);
             }
 
-            // 자격증 OCR 검증 후 S3 업로드
-            List<InstructorCertification> certifications = new ArrayList<>();
+            // 자격증 OCR 검증 (S3 업로드 전, 메모리에만 보관)
+            record CertCandidate(OcrPort.OcrResult ocr, ApplyInstructorCommand.FileEntry file) {}
+            List<CertCandidate> certCandidates = new ArrayList<>();
             for (ApplyInstructorCommand.FileEntry certFile : command.certificateFiles()) {
                 OcrPort.OcrResult ocrResult = ocrPort.extractCertificateInfo(certFile.fileBytes(), certFile.fileName());
                 if (ocrResult.success()) {
-                    String certFileKey = fileStoragePort.storePrivate(
-                            certFile.fileBytes(),
-                            certFile.fileName(),
-                            "instructor-applications/certificates"
-                    );
-                    certifications.add(InstructorCertification.of(
-                            ocrResult.certificationName(),
-                            ocrResult.issuedBy(),
-                            certFileKey
-                    ));
+                    certCandidates.add(new CertCandidate(ocrResult, certFile));
                 }
             }
 
-            if (certifications.isEmpty()) {
+            if (certCandidates.isEmpty()) {
                 throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
             }
 
@@ -94,10 +86,24 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
             }
 
             // 이력서 docx - 주요 이력 추출
-            List<String> mainCareers = docxPort.extractMainCareers(
-                    command.resumeFile().fileBytes());
+            List<String> mainCareers = docxPort.extractMainCareers(command.resumeFile().fileBytes());
             if (mainCareers.isEmpty()) {
                 throw new BusinessException(ErrorCode.RESUME_PARSE_FAILED);
+            }
+
+            // 모든 검증 통과 후 S3 업로드 한꺼번에 수행
+            List<InstructorCertification> certifications = new ArrayList<>();
+            for (CertCandidate candidate : certCandidates) {
+                String certFileKey = fileStoragePort.storePrivate(
+                        candidate.file().fileBytes(),
+                        candidate.file().fileName(),
+                        "instructor-applications/certificates"
+                );
+                certifications.add(InstructorCertification.of(
+                        candidate.ocr().certificationName(),
+                        candidate.ocr().issuedBy(),
+                        certFileKey
+                ));
             }
 
             String profileImageKey = fileStoragePort.storePrivate(

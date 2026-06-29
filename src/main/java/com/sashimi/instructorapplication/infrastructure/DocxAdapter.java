@@ -38,7 +38,7 @@ public class DocxAdapter implements DocxPort {
                 }
             }
 
-            log.info("주요 이력 추출 결과: {}", careers);
+            log.debug("주요 이력 추출 완료: {} 건", careers.size());
             return careers;
 
         } catch (Exception e) {
