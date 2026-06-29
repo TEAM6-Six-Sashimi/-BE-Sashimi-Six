@@ -12,9 +12,9 @@ import java.nio.charset.StandardCharsets;
 @ConditionalOnProperty(name = "spring.flyway.enabled", havingValue = "true", matchIfMissing = true)
 public class FlywayConfig {
 
-    @Bean(initMethod = "migrate")
+    @Bean
     public Flyway flyway(DataSource dataSource) {
-        return Flyway.configure()
+        Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .locations(
                         "classpath:db/migration/common",
@@ -28,7 +28,8 @@ public class FlywayConfig {
                 .outOfOrder(true)
                 .encoding(StandardCharsets.UTF_8)
                 .load();
-
-
+        flyway.repair();
+        flyway.migrate();
+        return flyway;
     }
 }
