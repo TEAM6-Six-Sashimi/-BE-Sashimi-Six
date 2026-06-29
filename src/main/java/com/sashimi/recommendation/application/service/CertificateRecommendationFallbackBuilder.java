@@ -5,6 +5,7 @@ import com.sashimi.recommendation.domain.model.JobFitAnalysis;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class CertificateRecommendationFallbackBuilder {
@@ -21,8 +22,15 @@ public class CertificateRecommendationFallbackBuilder {
             return List.of();
         }
 
-        return fitAnalysis.certification().missingItems().stream()
-                .filter(item -> item != null && !item.isBlank())
+        var missingItems = fitAnalysis.certification().missingItems();
+        if (missingItems == null || missingItems.isEmpty()) {
+            return List.of();
+        }
+
+        return missingItems.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(item -> !item.isBlank())
                 .distinct()
                 .map(this::toCertificateRecommendation)
                 .toList();
