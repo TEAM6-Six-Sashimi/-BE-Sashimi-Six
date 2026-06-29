@@ -8,6 +8,7 @@ import com.sashimi.course.presentation.api.request.UpdateCourseRequest;
 import com.sashimi.course.presentation.api.response.ApprovedCourseResponse;
 import com.sashimi.course.presentation.api.response.CourseResponse;
 import com.sashimi.course.presentation.api.response.InstructorCourseDetailResponse;
+import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import org.springframework.http.ResponseEntity;
 import java.net.URI;
@@ -23,11 +24,14 @@ public class InstructorCourseController {
 
     private final CourseCommandUseCase courseCommandUseCase;
     private final CourseQueryUseCase courseQueryUseCase;
+    private final FileStoragePort fileStoragePort;
 
     public InstructorCourseController(CourseCommandUseCase courseCommandUseCase,
-                                       CourseQueryUseCase courseQueryUseCase) {
+                                       CourseQueryUseCase courseQueryUseCase,
+                                       FileStoragePort fileStoragePort) {
         this.courseCommandUseCase = courseCommandUseCase;
         this.courseQueryUseCase = courseQueryUseCase;
+        this.fileStoragePort = fileStoragePort;
     }
 
     @GetMapping("/approved")
@@ -58,7 +62,8 @@ public class InstructorCourseController {
     public ResponseEntity<InstructorCourseDetailResponse> getCourseDetail(
             @AuthenticationPrincipal CustomUserPrincipal principal,
             @PathVariable Long courseId) {
-        return ResponseEntity.ok(InstructorCourseDetailResponse.from(courseQueryUseCase.getCourseDetail(courseId, principal.getId())));
+        return ResponseEntity.ok(InstructorCourseDetailResponse.from(
+                courseQueryUseCase.getCourseDetail(courseId, principal.getId()), fileStoragePort));
     }
 
     @PostMapping
