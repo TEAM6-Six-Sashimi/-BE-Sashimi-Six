@@ -10,16 +10,21 @@ public record AdminCourseRejectedResponse(
         String instructorName,
         String categoryName,
         LocalDateTime updatedAt,
-        String rejectReason
+        RejectReasonResponse rejectCategory,
+        String rejectDetail
 ) {
     public static AdminCourseRejectedResponse of(Course course, String categoryName, String instructorName) {
+        RejectReasonResponse rejectCategory = course.getRejectReasonCategory() == null
+                ? null
+                : RejectReasonResponse.from(course.getRejectReasonCategory());
         return new AdminCourseRejectedResponse(
                 course.getId(),
                 course.getTitle(),
                 instructorName,
                 categoryName,
                 course.getUpdatedAt(),
-                course.getRejectReason()
+                rejectCategory,
+                course.getRejectDetail()
         );
     }
 }

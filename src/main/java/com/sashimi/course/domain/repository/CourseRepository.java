@@ -16,6 +16,7 @@ public interface CourseRepository {
     List<Course> findByStatusIn(List<CourseStatus> statuses);
     List<Course> findByStatusAndCategoryId(CourseStatus status, Long categoryId);
     List<Course> findByStatusAndCategoryIdIn(CourseStatus status, List<Long> categoryIds);
+    List<Course> findByStatusAndIdIn(CourseStatus status, List<Long> ids);
     List<Course> findByStatusAndApprovedAtBefore(CourseStatus status, LocalDateTime cutoff);
     List<Course> findByStatusAndArchivedFalse(CourseStatus status);
     void deleteById(Long id);

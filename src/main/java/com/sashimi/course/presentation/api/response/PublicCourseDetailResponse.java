@@ -31,7 +31,8 @@ public record PublicCourseDetailResponse(
         BigDecimal progressRate,
         Boolean completed,
         List<SessionResponse> sessions,
-        List<ReviewResponse> reviews
+        List<ReviewResponse> reviews,
+        List<RatingDistributionResponse> ratingDistribution
 ) {
     public record InstructorResponse(
             String name,
@@ -52,7 +53,10 @@ public record PublicCourseDetailResponse(
             String attachmentName,
             String attachmentUrl,
             String attachmentType,
-            Long attachmentSize
+            Long attachmentSize,
+            Integer lastPositionSeconds,
+            BigDecimal sessionProgressRate,
+            Boolean sessionCompleted
     ) {}
 
     public record NcsInfoResponse(
@@ -69,6 +73,8 @@ public record PublicCourseDetailResponse(
             String writerLoginId,
             LocalDateTime createdAt
     ) {}
+
+    public record RatingDistributionResponse(int star, int count) {}
 
     public static PublicCourseDetailResponse from(PublicCourseDetailView view) {
         InstructorResponse instructor = new InstructorResponse(
@@ -91,7 +97,8 @@ public record PublicCourseDetailResponse(
                         s.sessionId(), s.sessionUid(), s.title(), s.videoUrl(),
                         s.durationSeconds(), s.sessionOrder(), s.preview(),
                         s.attachmentName(), s.attachmentUrl(),
-                        s.attachmentType(), s.attachmentSize()
+                        s.attachmentType(), s.attachmentSize(),
+                        s.lastPositionSeconds(), s.sessionProgressRate(), s.sessionCompleted()
                 ))
                 .toList();
 
@@ -102,6 +109,10 @@ public record PublicCourseDetailResponse(
                 ))
                 .toList();
 
+        List<RatingDistributionResponse> ratingDistribution = view.ratingDistribution().stream()
+                .map(d -> new RatingDistributionResponse(d.star(), d.count()))
+                .toList();
+
         return new PublicCourseDetailResponse(
                 view.viewerType(), view.courseId(), view.title(), view.description(),
                 view.price(), view.difficulty(), view.thumbnail(),
@@ -109,7 +120,7 @@ public record PublicCourseDetailResponse(
                 view.studentCount(), instructor, view.mainCategoryName(),
                 view.categoryName(), ncs, view.approvedAt(),
                 view.status(), view.rejectReason(), view.progressRate(), view.completed(),
-                sessions, reviews
+                sessions, reviews, ratingDistribution
         );
     }
 }

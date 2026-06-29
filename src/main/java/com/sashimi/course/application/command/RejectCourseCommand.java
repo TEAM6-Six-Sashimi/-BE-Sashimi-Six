@@ -1,3 +1,9 @@
 package com.sashimi.course.application.command;
 
-public record RejectCourseCommand(Long courseId, String rejectReason) {}
+import com.sashimi.course.domain.model.RejectReasonCategory;
+
+public record RejectCourseCommand(
+        Long courseId,
+        RejectReasonCategory category,
+        String detail
+) {}
