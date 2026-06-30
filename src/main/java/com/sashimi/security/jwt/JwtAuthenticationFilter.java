@@ -1,6 +1,7 @@
 package com.sashimi.security.jwt;
 
 import com.sashimi.security.blacklist.TokenBlacklistService;
+import com.sashimi.security.session.TokenVersionService;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,6 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
+    private final TokenVersionService tokenVersionService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,13 +38,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
                 try {
-                    if (!tokenBlacklistService.isBlacklisted(accessToken)) {
+                    Long userId = jwtTokenProvider.extractUserId(accessToken);
+                    Long version = jwtTokenProvider.extractVersion(accessToken);
+                    if (!tokenBlacklistService.isBlacklisted(accessToken)
+                            && tokenVersionService.isValidVersion(userId, version)) {
                         Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 } catch (Exception e) {
-                    // Redis 장애 시 fail-closed: 블랙리스트 확인 불가능하므로 인증 거부
-                    logger.warn("event=redis_blacklist_unavailable msg=인증 거부 (fail-closed)");
+                    // Redis 장애 시 fail-closed: 인증 거부
+                    logger.warn("event=redis_unavailable msg=인증 거부 (fail-closed)");
                 }
             }
         } catch (JwtException | IllegalArgumentException | AuthenticationException e) {
