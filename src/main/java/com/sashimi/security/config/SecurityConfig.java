@@ -52,7 +52,8 @@ public class SecurityConfig {
                 "http://3.35.52.52",
                 "http://www.sixsashimi.com",
                 "https://www.sixsashimi.com",
-                "https://sixsashimi.com"
+                "https://sixsashimi.com",
+                "https://www.sixsashimi.com.market-app.org"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
