@@ -4,6 +4,8 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.payment.domain.model.PaymentIdempotency;
 import com.sashimi.payment.domain.repository.PaymentIdempotencyRepository;
+import com.sashimi.payment.application.command.PaymentPurchaseType;
+import com.sashimi.payment.metric.PaymentMetrics;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -18,6 +20,7 @@ public class PaymentIdempotencyTransactionService {
     private static final long PROCESSING_TIMEOUT_MINUTES = 5L;
 
     private final PaymentIdempotencyRepository repository;
+    private final PaymentMetrics paymentMetrics;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public PaymentIdempotency createProcessing(
@@ -38,7 +41,8 @@ public class PaymentIdempotencyTransactionService {
     public ExistingRequestResolution resolveExisting(
             Long userId,
             String key,
-            String fingerprint
+            String fingerprint,
+            PaymentPurchaseType purchaseType
     ) {
         PaymentIdempotency existing =
                 repository
@@ -51,9 +55,20 @@ public class PaymentIdempotencyTransactionService {
                                         .PAYMENT_IDEMPOTENCY_RESULT_INVALID
                         ));
 
-        existing.validateFingerprint(fingerprint);
+        try {
+            existing.validateFingerprint(fingerprint);
+        } catch (BusinessException e) {
+            paymentMetrics.recordPaymentIdempotencyConflict(
+                    purchaseType
+            );
+            throw e;
+        }
 
         if (existing.isCompleted()) {
+            paymentMetrics.recordPaymentIdempotencyReused(
+                    purchaseType
+            );
+
             return ExistingRequestResolution.completed(
                     existing.getResultJson()
             );

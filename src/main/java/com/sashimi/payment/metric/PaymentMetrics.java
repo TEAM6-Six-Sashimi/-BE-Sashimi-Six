@@ -15,6 +15,7 @@ public class PaymentMetrics {
 
     private static final String SUCCESS = "SUCCESS";
     private static final String FAILURE = "FAILURE";
+    private static final String UNKNOWN = "UNKNOWN";
 
     private final MeterRegistry meterRegistry;
 
@@ -32,7 +33,7 @@ public class PaymentMetrics {
     ) {
         recordPaymentProcessing(
                 sample,
-                purchaseType.name(),
+                purchaseTypeLabel(purchaseType),
                 SUCCESS
         );
     }
@@ -41,13 +42,9 @@ public class PaymentMetrics {
             Timer.Sample sample,
             PaymentPurchaseType purchaseType
     ) {
-        String purchaseTypeLabel = purchaseType == null
-                ? "UNKNOWN"
-                : purchaseType.name();
-
         recordPaymentProcessing(
                 sample,
-                purchaseTypeLabel,
+                purchaseTypeLabel(purchaseType),
                 FAILURE
         );
     }
@@ -92,7 +89,7 @@ public class PaymentMetrics {
     ) {
         Counter.builder("payment.preview.requests")
                 .description("Number of payment preview requests")
-                .tag(PURCHASE_TYPE, purchaseType.name())
+                .tag(PURCHASE_TYPE, purchaseTypeLabel(purchaseType))
                 .register(meterRegistry)
                 .increment();
     }
@@ -102,7 +99,37 @@ public class PaymentMetrics {
     ) {
         Counter.builder("payment.completed")
                 .description("Number of completed payments")
-                .tag(PURCHASE_TYPE, purchaseType.name())
+                .tag(PURCHASE_TYPE, purchaseTypeLabel(purchaseType))
+                .register(meterRegistry)
+                .increment();
+    }
+
+    public void recordPaymentIdempotencyReused(
+            PaymentPurchaseType purchaseType
+    ) {
+        Counter.builder("payment.idempotency.reused")
+                .description("Number of duplicated payment requests safely handled by idempotency")
+                .tag(PURCHASE_TYPE, purchaseTypeLabel(purchaseType))
+                .register(meterRegistry)
+                .increment();
+    }
+
+    public void recordPaymentIdempotencyConflict(
+            PaymentPurchaseType purchaseType
+    ) {
+        Counter.builder("payment.idempotency.conflict")
+                .description("Number of payment requests blocked because the same idempotency key was used with different request data")
+                .tag(PURCHASE_TYPE, purchaseTypeLabel(purchaseType))
+                .register(meterRegistry)
+                .increment();
+    }
+
+    public void recordPaymentDuplicateCompleted(
+            PaymentPurchaseType purchaseType
+    ) {
+        Counter.builder("payment.duplicate.completed")
+                .description("Number of detected duplicate payment completion risks")
+                .tag(PURCHASE_TYPE, purchaseTypeLabel(purchaseType))
                 .register(meterRegistry)
                 .increment();
     }
@@ -112,8 +139,18 @@ public class PaymentMetrics {
     ) {
         Counter.builder("toss.credit.charge.inconsistency")
                 .description("Number of inconsistencies between Toss approval and internal credit charge result")
-                .tag(REASON, reason)
+                .tag(REASON, reason == null || reason.isBlank()
+                        ? UNKNOWN
+                        : reason)
                 .register(meterRegistry)
                 .increment();
+    }
+
+    private String purchaseTypeLabel(
+            PaymentPurchaseType purchaseType
+    ) {
+        return purchaseType == null
+                ? UNKNOWN
+                : purchaseType.name();
     }
 }
