@@ -89,6 +89,11 @@ public class LocalFileStorageAdapter implements FileStoragePort {
     }
 
     @Override
+    public void deleteFromDocs(String s3Key) {
+        // 로컬 환경은 docs 버킷이 없어 동작하지 않음 (no-op)
+    }
+
+    @Override
     public byte[] downloadPrivate(String s3Key) {
         try {
             Path basePath = Paths.get(uploadDir).toAbsolutePath().normalize();
