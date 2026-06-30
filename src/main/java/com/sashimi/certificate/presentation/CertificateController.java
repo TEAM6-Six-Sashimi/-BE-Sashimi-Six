@@ -21,6 +21,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -53,8 +54,10 @@ public class CertificateController {
 
         List<RegisterCertificateCommand.FileEntry> fileEntries = new java.util.ArrayList<>();
         for (MultipartFile file : files) {
+            byte[] bytes = file.getBytes();
+            validateMagicBytes(bytes);
             fileEntries.add(new RegisterCertificateCommand.FileEntry(
-                    file.getBytes(),
+                    bytes,
                     file.getOriginalFilename()
             ));
         }
@@ -133,5 +136,20 @@ public class CertificateController {
         }
 
         return ResponseEntity.ok(certificateQueryUseCase.getCertificates(userId));
+    }
+
+    private void validateMagicBytes(byte[] bytes) {
+        if (bytes == null || bytes.length < 4) {
+            throw new BusinessException(ErrorCode.FILE_INVALID_TYPE);
+        }
+        byte[] header = Arrays.copyOf(bytes, 4);
+        // JPEG: FF D8 FF
+        if (header[0] == (byte) 0xFF && header[1] == (byte) 0xD8 && header[2] == (byte) 0xFF) return;
+        // PNG: 89 50 4E 47
+        if (header[0] == (byte) 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47) return;
+        // PDF: %PDF (25 50 44 46)
+        if (header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46) return;
+
+        throw new BusinessException(ErrorCode.FILE_INVALID_TYPE);
     }
 }
