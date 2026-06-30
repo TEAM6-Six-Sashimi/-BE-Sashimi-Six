@@ -65,25 +65,17 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 throw new BusinessException(ErrorCode.ALREADY_APPLIED);
             }
 
-            // 자격증 OCR 검증 후 S3 업로드
-            List<InstructorCertification> certifications = new ArrayList<>();
+            // 자격증 OCR 검증 (S3 업로드 전, 메모리에만 보관)
+            record CertCandidate(OcrPort.OcrResult ocr, ApplyInstructorCommand.FileEntry file) {}
+            List<CertCandidate> certCandidates = new ArrayList<>();
             for (ApplyInstructorCommand.FileEntry certFile : command.certificateFiles()) {
                 OcrPort.OcrResult ocrResult = ocrPort.extractCertificateInfo(certFile.fileBytes(), certFile.fileName());
                 if (ocrResult.success()) {
-                    String certFileKey = fileStoragePort.storePrivate(
-                            certFile.fileBytes(),
-                            certFile.fileName(),
-                            "instructor-applications/certificates"
-                    );
-                    certifications.add(InstructorCertification.of(
-                            ocrResult.certificationName(),
-                            ocrResult.issuedBy(),
-                            certFileKey
-                    ));
+                    certCandidates.add(new CertCandidate(ocrResult, certFile));
                 }
             }
 
-            if (certifications.isEmpty()) {
+            if (certCandidates.isEmpty()) {
                 throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
             }
 
@@ -94,40 +86,72 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
             }
 
             // 이력서 docx - 주요 이력 추출
-            List<String> mainCareers = docxPort.extractMainCareers(
-                    command.resumeFile().fileBytes());
+            List<String> mainCareers = docxPort.extractMainCareers(command.resumeFile().fileBytes());
             if (mainCareers.isEmpty()) {
                 throw new BusinessException(ErrorCode.RESUME_PARSE_FAILED);
             }
 
-            String profileImageKey = fileStoragePort.storePrivate(
-                    command.profileImage().fileBytes(),
-                    command.profileImage().fileName(),
-                    "instructor-applications/profile"
-            );
+            // 모든 검증 통과 후 S3 업로드 한꺼번에 수행 (실패 시 보상 삭제)
+            List<String> uploadedKeys = new ArrayList<>();
+            try {
+                List<InstructorCertification> certifications = new ArrayList<>();
+                for (CertCandidate candidate : certCandidates) {
+                    String certFileKey = fileStoragePort.storePrivate(
+                            candidate.file().fileBytes(),
+                            candidate.file().fileName(),
+                            "instructor-applications/certificates"
+                    );
+                    uploadedKeys.add(certFileKey);
+                    certifications.add(InstructorCertification.of(
+                            candidate.ocr().certificationName(),
+                            candidate.ocr().issuedBy(),
+                            certFileKey
+                    ));
+                }
 
-            String resumeFileKey = fileStoragePort.storePrivate(
-                    command.resumeFile().fileBytes(),
-                    command.resumeFile().fileName(),
-                    "instructor-applications/resume"
-            );
+                String profileImageKey = fileStoragePort.storePrivate(
+                        command.profileImage().fileBytes(),
+                        command.profileImage().fileName(),
+                        "instructor-applications/profile"
+                );
+                uploadedKeys.add(profileImageKey);
 
-            InstructorApplication application = InstructorApplication.create(
-                    command.userId(),
-                    command.bio(),
-                    command.motivationLetter(),
-                    command.categoryId(),
-                    command.portfolioUrl(),
-                    profileImageKey,
-                    resumeFileKey,
-                    mainCareers,
-                    certifications
-            );
+                String resumeFileKey = fileStoragePort.storePrivate(
+                        command.resumeFile().fileBytes(),
+                        command.resumeFile().fileName(),
+                        "instructor-applications/resume"
+                );
+                uploadedKeys.add(resumeFileKey);
 
-            instructorApplicationRepository.save(application);
-            meterRegistry.counter("instructor.application.total", "status", "success").increment();
+                InstructorApplication application = InstructorApplication.create(
+                        command.userId(),
+                        command.bio(),
+                        command.motivationLetter(),
+                        command.categoryId(),
+                        command.portfolioUrl(),
+                        profileImageKey,
+                        resumeFileKey,
+                        mainCareers,
+                        certifications
+                );
+
+                instructorApplicationRepository.save(application);
+            } catch (Exception e) {
+                uploadedKeys.forEach(key -> {
+                    try {
+                        fileStoragePort.deleteFromDocs(key);
+                    } catch (Exception deleteEx) {
+                        log.error("[S3 보상] 파일 삭제 실패 - key: {}", key, deleteEx);
+                    }
+                });
+                throw e;
+            }
+            meterRegistry.counter("instructor.application.total", "status", "success", "reason", "NONE").increment();
         } catch (BusinessException e) {
             meterRegistry.counter("instructor.application.total", "status", "failure", "reason", e.getErrorCode().name()).increment();
+            throw e;
+        } catch (Exception e) {
+            meterRegistry.counter("instructor.application.total", "status", "failure", "reason", "SERVER_ERROR").increment();
             throw e;
         } finally {
             sample.stop(Timer.builder("instructor.application.duration")
