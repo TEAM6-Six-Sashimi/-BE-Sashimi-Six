@@ -67,8 +67,7 @@ public class JobPostingResumeSummaryBuilder {
                                 career.employmentType(),
                                 formatPeriod(career)
                         ))
-                .toList()
-                .toString();
+                .collect(java.util.stream.Collectors.joining("\n"));
     }
 
     private String buildCertifications(List<ResumeCertification> certifications) {
@@ -84,8 +83,7 @@ public class JobPostingResumeSummaryBuilder {
                                 certification.issuer(),
                                 certification.acquiredDate()
                         ))
-                .toList()
-                .toString();
+                .collect(java.util.stream.Collectors.joining("\n"));
     }
 
     private String formatPeriod(ResumeCareer career) {
