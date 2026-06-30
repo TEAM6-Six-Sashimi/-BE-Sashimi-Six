@@ -107,7 +107,7 @@ public class AuthController {
             @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
         String accessToken = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ") && authHeader.length() > 7) {
             accessToken = authHeader.substring(7);
         }
         authService.logout(accessToken, request.getRefreshToken());

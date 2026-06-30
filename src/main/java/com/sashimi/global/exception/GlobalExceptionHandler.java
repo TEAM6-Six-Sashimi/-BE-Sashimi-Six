@@ -43,22 +43,22 @@ public class GlobalExceptionHandler {
     }
 
 
-    // ================== 임시 ==================
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException e,
             HttpServletRequest request
     ) {
-        return createErrorResponse(ErrorCode.INVALID_INPUT_VALUE, e.getMessage(), request);
+        log.warn("IllegalArgumentException: {}", e.getMessage());
+        return createErrorResponse(ErrorCode.INVALID_INPUT_VALUE, request);
     }
 
-    // ================== 임시 ===================
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalStateException(
             IllegalStateException e,
             HttpServletRequest request
     ) {
-        return createErrorResponse(ErrorCode.INVALID_INPUT_VALUE, e.getMessage(), request);
+        log.warn("IllegalStateException: {}", e.getMessage());
+        return createErrorResponse(ErrorCode.INVALID_INPUT_VALUE, request);
     }
 
 
