@@ -17,12 +17,8 @@ import org.springframework.stereotype.Service;
 public class PaymentCommandService
         implements PaymentCommandUseCase {
 
-    private final PaymentIdempotencyTransactionService
-            idempotencyTransactionService;
-
-    private final PaymentCheckoutTransactionService
-            checkoutTransactionService;
-
+    private final PaymentIdempotencyTransactionService idempotencyTransactionService;
+    private final PaymentCheckoutTransactionService checkoutTransactionService;
     private final PaymentResultJsonCodec paymentResultJsonCodec;
 
     @Override
@@ -49,7 +45,8 @@ public class PaymentCommandService
                     idempotencyTransactionService.resolveExisting(
                             command.userId(),
                             command.idempotencyKey(),
-                            fingerprint
+                            fingerprint,
+                            command.purchaseType()
                     );
 
             switch (resolution.status()) {
