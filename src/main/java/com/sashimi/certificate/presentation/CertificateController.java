@@ -140,7 +140,7 @@ public class CertificateController {
 
     private void validateMagicBytes(byte[] bytes) {
         if (bytes == null || bytes.length < 4) {
-            throw new BusinessException(ErrorCode.FILE_INVALID_TYPE);
+            throw new BusinessException(ErrorCode.CERTIFICATE_FILE_INVALID_TYPE);
         }
         byte[] header = Arrays.copyOf(bytes, 4);
         // JPEG: FF D8 FF
@@ -150,6 +150,6 @@ public class CertificateController {
         // PDF: %PDF (25 50 44 46)
         if (header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46) return;
 
-        throw new BusinessException(ErrorCode.FILE_INVALID_TYPE);
+        throw new BusinessException(ErrorCode.CERTIFICATE_FILE_INVALID_TYPE);
     }
 }
