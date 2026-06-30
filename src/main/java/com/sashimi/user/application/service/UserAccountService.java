@@ -4,6 +4,7 @@ import com.sashimi.auth.dto.TokenResponseDto;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.security.jwt.JwtTokenProvider;
+import com.sashimi.security.session.TokenVersionService;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import com.sashimi.token.service.RefreshService;
 import com.sashimi.user.application.command.ChangePasswordCommand;
@@ -36,6 +37,7 @@ public class UserAccountService implements UserCommandUseCase {
     private final PasswordEncoder passwordEncoder;
     private final RefreshService refreshService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenVersionService tokenVersionService;
     private final ApplicationEventPublisher eventPublisher;
 
 
@@ -71,7 +73,8 @@ public class UserAccountService implements UserCommandUseCase {
                 "",
                 principal.getAuthorities()
         );
-        TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
+        long version = tokenVersionService.incrementVersion(savedUser.getId());
+        TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication, savedUser.getId(), version);
         LocalDateTime refreshExpiryDate = LocalDateTime.now()
                 .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
         refreshService.saveOrUpdate(savedUser, tokenResponse.getRefreshToken(), refreshExpiryDate);

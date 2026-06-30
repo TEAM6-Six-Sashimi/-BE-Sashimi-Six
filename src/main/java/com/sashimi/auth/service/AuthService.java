@@ -3,6 +3,7 @@ package com.sashimi.auth.service;
 import com.sashimi.auth.application.policy.SignupEligibility;
 import com.sashimi.auth.application.policy.SignupEligibilityPolicy;
 import com.sashimi.security.blacklist.TokenBlacklistService;
+import com.sashimi.security.session.TokenVersionService;
 import com.sashimi.auth.dto.LoginRequestDto;
 import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
@@ -78,6 +79,7 @@ public class AuthService {
     private final SignupEligibilityPolicy signupEligibilityPolicy;
     private final CategoryRepository categoryRepository;
     private final TokenBlacklistService tokenBlacklistService;
+    private final TokenVersionService tokenVersionService;
 
     public UserResponseDto register(SignupRequestDto request) {
         SignupEligibility eligibility = signupEligibilityPolicy.validate(request);
@@ -208,7 +210,8 @@ public class AuthService {
             user.updateLastLoginAt(LocalDateTime.now());
             userRepository.save(user);
 
-            TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
+            long version = tokenVersionService.incrementVersion(user.getId());
+            TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication, user.getId(), version);
 
             LocalDateTime refreshExpiryDate = LocalDateTime.now()
                     .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
@@ -245,7 +248,12 @@ public class AuthService {
                 principal.getAuthorities()
         );
 
-        TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
+        Long tokenVersion = jwtTokenProvider.extractVersion(refreshTokenValue);
+        if (!tokenVersionService.isValidVersion(user.getId(), tokenVersion)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication, user.getId(), tokenVersion);
 
         LocalDateTime refreshExpiryDate = LocalDateTime.now()
                 .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
