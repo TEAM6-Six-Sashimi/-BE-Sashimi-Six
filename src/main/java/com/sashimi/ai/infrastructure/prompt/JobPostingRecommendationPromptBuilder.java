@@ -39,9 +39,9 @@ public class JobPostingRecommendationPromptBuilder {
             - If the posting contains multiple roles, choose the most central role and summarize only that role.
             - Extract a job posting summary.
             - Analyze fit against the user's resume information if resumeBased is true.
-            - If resumeBased is false, still provide summary, recommended certificates, courses, and fitAnalysis.
-            - If resumeBased is false, every fitAnalysis item status must be UNKNOWN because there is no resume information to compare.
-            - Recommend certificates that the user does not already have when possible.
+            - If resumeBased is false, still provide summary, recommended certificates, and courses.
+            - If resumeBased is false, fitAnalysis may be returned but the backend will ignore it.
+            - Use UNKNOWN only when resumeBased is true but the job posting condition is too unclear to judge.            - Recommend certificates that the user does not already have when possible.
             - Do not generate real course recommendations.
             - Set courses to an empty array.
             - The backend will match recommended certificates with internal LMS courses.
