@@ -17,12 +17,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -76,13 +73,8 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping("/login")
-    public ResponseEntity<TokenResponseDto> login(
-            @RequestBody @Valid LoginRequestDto request,
-            HttpServletResponse response
-    ) {
-        TokenResponseDto tokenResponse = authService.login(request);
-        setAccessTokenCookie(response, tokenResponse);
-        return ResponseEntity.ok(tokenResponse);
+    public ResponseEntity<TokenResponseDto> login(@RequestBody @Valid LoginRequestDto request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 
     @Operation(summary = "재로그인", description = "로그인 상태에서 refresh토큰을 사용하여 재로그인 합니다")
@@ -94,13 +86,8 @@ public class AuthController {
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    public ResponseEntity<TokenResponseDto> reissue(
-            @RequestBody @Valid ReissueRequestDto request,
-            HttpServletResponse response
-    ) {
-        TokenResponseDto tokenResponse = authService.reissue(request.getRefreshToken());
-        setAccessTokenCookie(response, tokenResponse);
-        return ResponseEntity.ok(tokenResponse);
+    public ResponseEntity<TokenResponseDto> reissue(@RequestBody @Valid ReissueRequestDto request) {
+        return ResponseEntity.ok(authService.reissue(request.getRefreshToken()));
     }
 
     @Operation(summary = "로그아웃", description = "로그아웃을 진행하면서 refresh token을 삭제합니다")
@@ -114,15 +101,13 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
             @RequestBody @Valid LogoutRequestDto request,
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            HttpServletResponse response
+            @RequestHeader(value = "Authorization", required = false) String authHeader
     ) {
         String accessToken = null;
         if (authHeader != null && authHeader.startsWith("Bearer ") && authHeader.length() > 7) {
             accessToken = authHeader.substring(7);
         }
         authService.logout(accessToken, request.getRefreshToken());
-        clearAccessTokenCookie(response);
         return ResponseEntity.noContent().build();
     }
 
@@ -161,28 +146,5 @@ public class AuthController {
             @RequestBody @Valid PasswordResetConfirmRequestDto request
     ) {
         return ResponseEntity.ok(authService.resetPassword(request));
-    }
-
-    private void setAccessTokenCookie(HttpServletResponse response, TokenResponseDto tokenResponse) {
-        long maxAge = (tokenResponse.getAccessTokenExpiresIn() - System.currentTimeMillis()) / 1000;
-        ResponseCookie cookie = ResponseCookie.from("accessToken", tokenResponse.getAccessToken())
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("None")
-                .path("/")
-                .maxAge(maxAge)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-    }
-
-    private void clearAccessTokenCookie(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from("accessToken", "")
-                .httpOnly(true)
-                .secure(true)
-                .sameSite("None")
-                .path("/")
-                .maxAge(0)
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 }
