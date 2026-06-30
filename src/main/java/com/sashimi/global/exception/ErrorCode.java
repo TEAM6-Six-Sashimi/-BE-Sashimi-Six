@@ -21,6 +21,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(401, "AUTH_004", "유효하지 않은 refresh token입니다."),
     EXPIRED_REFRESH_TOKEN(401, "AUTH_005", "만료된 refresh token입니다."),
     LOGIN_FAILED(401, "AUTH_006", "아이디 또는 비밀번호가 올바르지 않습니다."),
+    TOO_MANY_REQUESTS(429, "AUTH_007", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
 
     DUPLICATE_LOGIN_ID(409, "USER_001", "이미 사용 중인 아이디입니다."),
     DUPLICATE_EMAIL(409, "USER_002", "이미 사용 중인 이메일입니다."),

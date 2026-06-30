@@ -2,6 +2,7 @@ package com.sashimi.auth.service;
 
 import com.sashimi.auth.application.policy.SignupEligibility;
 import com.sashimi.auth.application.policy.SignupEligibilityPolicy;
+import com.sashimi.global.ratelimit.RateLimiterService;
 import com.sashimi.security.blacklist.TokenBlacklistService;
 import com.sashimi.security.session.TokenVersionService;
 import com.sashimi.auth.dto.LoginRequestDto;
@@ -80,6 +81,7 @@ public class AuthService {
     private final CategoryRepository categoryRepository;
     private final TokenBlacklistService tokenBlacklistService;
     private final TokenVersionService tokenVersionService;
+    private final RateLimiterService rateLimiterService;
 
     public UserResponseDto register(SignupRequestDto request) {
         SignupEligibility eligibility = signupEligibilityPolicy.validate(request);
@@ -123,6 +125,9 @@ public class AuthService {
 
     public PasswordResetRequestResponseDto requestPasswordReset(PasswordResetRequestDto request) {
         String email = normalizeEmail(request.getEmail());
+        if (!rateLimiterService.isAllowed("password-reset:" + email, 3, 3600)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+        }
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -186,6 +191,10 @@ public class AuthService {
     }
 
     public TokenResponseDto login(LoginRequestDto request) {
+        if (!rateLimiterService.isAllowed("login:" + request.getLoginId(), 5, 300)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+        }
+
         Timer.Sample timerSample = authMetrics.startTimer();
 
         try {
@@ -199,7 +208,7 @@ public class AuthService {
                 );
             } catch (AuthenticationException e) {
                 authMetrics.recordLoginFailed(resolveFailureReason(e));
-                log.warn("event=login_failed loginId={} reason={}", request.getLoginId(), resolveFailureReason(e));
+                log.warn("event=login_failed loginId={} reason={}", maskLoginId(request.getLoginId()), resolveFailureReason(e));
                 throw e;
             }
 
@@ -281,6 +290,9 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public LoginIdCheckResponseDto checkLoginId(String loginId) {
+        if (!rateLimiterService.isAllowed("login-id-check:" + loginId, 10, 60)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+        }
         return LoginIdCheckResponseDto.of(loginId, !userRepository.existsByLoginId(loginId));
     }
 
@@ -312,6 +324,11 @@ public class AuthService {
         }
 
         return code.toString();
+    }
+
+    private String maskLoginId(String loginId) {
+        if (loginId == null || loginId.length() <= 2) return "***";
+        return loginId.charAt(0) + "*".repeat(loginId.length() - 2) + loginId.charAt(loginId.length() - 1);
     }
 
     private String normalizeEmail(String email) {
