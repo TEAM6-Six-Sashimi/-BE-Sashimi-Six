@@ -85,7 +85,6 @@ public class JobPostingRecommendationAsyncService {
                     analyzeResult.fitAnalysis()
             );
 
-            // 삭제
             log.info("fallback certificates size={}, names={}",
                     fallbackCertificates.size(),
                     fallbackCertificates.stream()
@@ -101,7 +100,6 @@ public class JobPostingRecommendationAsyncService {
                     filteredCertificates
             );
 
-            // 삭제
             log.info("enriched certificates size={}, names={}",
                     enrichedCertificates.size(),
                     enrichedCertificates.stream()
@@ -114,7 +112,9 @@ public class JobPostingRecommendationAsyncService {
 
             JobPostingRecommendation analyzedRecommendation = recommendation.analyzed(
                     analyzeResult.summary(),
-                    recommendation.resumeBased() ? analyzeResult.fitAnalysis() : null,
+                    recommendation.resumeBased()
+                            ? analyzeResult.fitAnalysis()
+                            : null,
                     matchedCourses,
                     enrichedCertificates
             );

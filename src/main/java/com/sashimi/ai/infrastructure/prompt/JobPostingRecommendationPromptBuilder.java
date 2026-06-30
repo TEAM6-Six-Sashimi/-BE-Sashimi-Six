@@ -39,8 +39,9 @@ public class JobPostingRecommendationPromptBuilder {
             - If the posting contains multiple roles, choose the most central role and summarize only that role.
             - Extract a job posting summary.
             - Analyze fit against the user's resume information if resumeBased is true.
-            - If resumeBased is false, still provide summary, recommended certificates, and courses, but use NOT_SATISFIED or PARTIALLY_SATISFIED conservatively for fitAnalysis.
-            - Recommend certificates that the user does not already have when possible.
+            - If resumeBased is false, still provide summary, recommended certificates, and courses.
+            - If resumeBased is false, fitAnalysis may be returned but the backend will ignore it.
+            - Use UNKNOWN only when resumeBased is true but the job posting condition is too unclear to judge.            - Recommend certificates that the user does not already have when possible.
             - Do not generate real course recommendations.
             - Set courses to an empty array.
             - The backend will match recommended certificates with internal LMS courses.
@@ -48,7 +49,11 @@ public class JobPostingRecommendationPromptBuilder {
 
             Important enum rules:
             - fitAnalysis.*.status must be one of:
-              SATISFIED, PARTIALLY_SATISFIED, NOT_SATISFIED
+              SATISFIED, PARTIALLY_SATISFIED, NOT_SATISFIED, UNKNOWN
+            - Use SATISFIED only when the user's resume clearly satisfies the job posting condition.
+            - Use PARTIALLY_SATISFIED when the user partially satisfies the condition or satisfies only a preferred condition.
+            - Use NOT_SATISFIED when the job posting requires the condition but the user's resume clearly does not satisfy it.
+            - Use UNKNOWN when the condition cannot be verified from the job posting or resume.
             - fitAnalysis.education.category must be EDUCATION
             - fitAnalysis.career.category must be CAREER
             - fitAnalysis.certification.category must be CERTIFICATION
