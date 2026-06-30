@@ -24,8 +24,18 @@ public class JobPostingRecommendationPromptBuilder {
         );
 
         String userPrompt = prompt.prompt()
-                .replace("{resumeBased}", String.valueOf(recommendation.resumeBased()))
-                .replace("{jobPostingContent}", safe(jobPostingInput));
+                .replace(
+                        "{resumeBased}",
+                        String.valueOf(recommendation.resumeBased())
+                )
+                .replace(
+                        "{resumeContent}",
+                        safe(recommendation.resumeContent())
+                )
+                .replace(
+                        "{jobPostingContent}",
+                        safe(jobPostingInput)
+                );
 
         return """
             You are an AI assistant for an LMS job posting recommendation feature.
@@ -41,7 +51,8 @@ public class JobPostingRecommendationPromptBuilder {
             - Analyze fit against the user's resume information if resumeBased is true.
             - If resumeBased is false, still provide summary, recommended certificates, and courses.
             - If resumeBased is false, fitAnalysis may be returned but the backend will ignore it.
-            - Use UNKNOWN only when resumeBased is true but the job posting condition is too unclear to judge.            - Recommend certificates that the user does not already have when possible.
+            - Use UNKNOWN only when resumeBased is true but the job posting condition is too unclear to judge.
+            - Recommend certificates that the user does not already have when possible.
             - Do not generate real course recommendations.
             - Set courses to an empty array.
             - The backend will match recommended certificates with internal LMS courses.
