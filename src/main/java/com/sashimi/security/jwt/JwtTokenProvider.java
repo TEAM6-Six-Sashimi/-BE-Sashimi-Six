@@ -29,6 +29,8 @@ public class JwtTokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
     private static final String ROLE_KEY = "role";
+    private static final String USER_ID_KEY = "uid";
+    private static final String VERSION_KEY = "ver";
 
     private final UserDetailsService userDetailsService;
 
@@ -49,7 +51,7 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public TokenResponseDto generateToken(Authentication authentication) {
+    public TokenResponseDto generateToken(Authentication authentication, Long userId, long version) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(authority -> authority.startsWith("ROLE_"))
@@ -65,6 +67,8 @@ public class JwtTokenProvider {
                 .subject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
                 .claim(ROLE_KEY, role)
+                .claim(USER_ID_KEY, userId)
+                .claim(VERSION_KEY, version)
                 .issuedAt(new Date(now))
                 .expiration(accessTokenExpiresIn)
                 .signWith(key)
@@ -72,6 +76,8 @@ public class JwtTokenProvider {
 
         String refreshToken = Jwts.builder()
                 .subject(authentication.getName())
+                .claim(USER_ID_KEY, userId)
+                .claim(VERSION_KEY, version)
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + refreshTokenValidityInMilliseconds))
                 .signWith(key)
@@ -136,6 +142,18 @@ public class JwtTokenProvider {
         }
 
         return null;
+    }
+
+    public Long extractUserId(String token) {
+        Object uid = parseClaims(token).get(USER_ID_KEY);
+        if (uid == null) return null;
+        return ((Number) uid).longValue();
+    }
+
+    public Long extractVersion(String token) {
+        Object ver = parseClaims(token).get(VERSION_KEY);
+        if (ver == null) return null;
+        return ((Number) ver).longValue();
     }
 
     public long getRemainingExpiry(String token) {

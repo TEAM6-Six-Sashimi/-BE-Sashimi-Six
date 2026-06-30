@@ -1,6 +1,7 @@
 package com.sashimi.review.infrastructure.persistence;
 
 import com.sashimi.review.domain.model.Review;
+import com.sashimi.review.domain.model.ReviewStatus;
 import com.sashimi.review.domain.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -21,7 +22,7 @@ public class ReviewRepositoryAdapter implements ReviewRepository {
 
     @Override
     public boolean existsByUserIdAndCourseId(Long userId, Long courseId) {
-        return springDataReviewRepository.existsByUserIdAndCourseId(userId, courseId);
+        return springDataReviewRepository.existsByUserIdAndCourseIdAndStatus(userId, courseId, ReviewStatus.ACTIVE);
     }
 
     @Override

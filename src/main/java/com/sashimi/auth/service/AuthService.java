@@ -2,7 +2,9 @@ package com.sashimi.auth.service;
 
 import com.sashimi.auth.application.policy.SignupEligibility;
 import com.sashimi.auth.application.policy.SignupEligibilityPolicy;
+import com.sashimi.global.ratelimit.RateLimiterService;
 import com.sashimi.security.blacklist.TokenBlacklistService;
+import com.sashimi.security.session.TokenVersionService;
 import com.sashimi.auth.dto.LoginRequestDto;
 import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
@@ -78,6 +80,8 @@ public class AuthService {
     private final SignupEligibilityPolicy signupEligibilityPolicy;
     private final CategoryRepository categoryRepository;
     private final TokenBlacklistService tokenBlacklistService;
+    private final TokenVersionService tokenVersionService;
+    private final RateLimiterService rateLimiterService;
 
     public UserResponseDto register(SignupRequestDto request) {
         SignupEligibility eligibility = signupEligibilityPolicy.validate(request);
@@ -121,6 +125,9 @@ public class AuthService {
 
     public PasswordResetRequestResponseDto requestPasswordReset(PasswordResetRequestDto request) {
         String email = normalizeEmail(request.getEmail());
+        if (!rateLimiterService.isAllowed("password-reset:" + email, 3, 3600)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+        }
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -170,6 +177,8 @@ public class AuthService {
         user.changePassword(passwordEncoder.encode(request.getNewPassword()));
         User savedUser = userRepository.save(user);
 
+        refreshService.deleteByUser(savedUser);
+
         eventPublisher.publishEvent(
                 new UserPasswordChangedEvent(
                         savedUser.getId(),
@@ -182,6 +191,10 @@ public class AuthService {
     }
 
     public TokenResponseDto login(LoginRequestDto request) {
+        if (!rateLimiterService.isAllowed("login:" + request.getLoginId(), 5, 300)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+        }
+
         Timer.Sample timerSample = authMetrics.startTimer();
 
         try {
@@ -195,17 +208,19 @@ public class AuthService {
                 );
             } catch (AuthenticationException e) {
                 authMetrics.recordLoginFailed(resolveFailureReason(e));
-                log.warn("event=login_failed loginId={} reason={}", request.getLoginId(), resolveFailureReason(e));
+                log.warn("event=login_failed loginId={} reason={}", maskLoginId(request.getLoginId()), resolveFailureReason(e));
                 throw e;
             }
 
-            User user = userRepository.findByLoginId(authentication.getName())
+            CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
+            User user = userRepository.findById(principal.getId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
             user.updateLastLoginAt(LocalDateTime.now());
             userRepository.save(user);
 
-            TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
+            long version = tokenVersionService.incrementVersion(user.getId());
+            TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication, user.getId(), version);
 
             LocalDateTime refreshExpiryDate = LocalDateTime.now()
                     .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
@@ -242,7 +257,12 @@ public class AuthService {
                 principal.getAuthorities()
         );
 
-        TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication);
+        Long tokenVersion = jwtTokenProvider.extractVersion(refreshTokenValue);
+        if (!tokenVersionService.isValidVersion(user.getId(), tokenVersion)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication, user.getId(), tokenVersion);
 
         LocalDateTime refreshExpiryDate = LocalDateTime.now()
                 .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
@@ -270,6 +290,9 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public LoginIdCheckResponseDto checkLoginId(String loginId) {
+        if (!rateLimiterService.isAllowed("login-id-check:" + loginId, 10, 60)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+        }
         return LoginIdCheckResponseDto.of(loginId, !userRepository.existsByLoginId(loginId));
     }
 
@@ -301,6 +324,11 @@ public class AuthService {
         }
 
         return code.toString();
+    }
+
+    private String maskLoginId(String loginId) {
+        if (loginId == null || loginId.length() <= 2) return "***";
+        return loginId.charAt(0) + "*".repeat(loginId.length() - 2) + loginId.charAt(loginId.length() - 1);
     }
 
     private String normalizeEmail(String email) {

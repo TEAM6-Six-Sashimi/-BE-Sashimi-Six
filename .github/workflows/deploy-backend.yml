@@ -90,6 +90,9 @@ jobs:
           sudo docker volume inspect sashimi-logs >/dev/null 2>&1 \
             || sudo docker volume create sashimi-logs
 
+          # 이전 빌드의 dangling 이미지 정리 (실행 중인 이미지는 보존)
+          sudo docker image prune -f
+
           sudo docker build -t "$DOCKER_IMAGE" .
           sudo docker rm -f "$DOCKER_CONTAINER" >/dev/null 2>&1 || true
           sudo docker run -d \
@@ -104,6 +107,8 @@ jobs:
           for attempt in $(seq 1 30); do
             if sudo docker exec "$DOCKER_CONTAINER" wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
               echo "Backend health check passed."
+              # 빌드 캐시 정리 (레이어 캐시는 유지, 미사용 캐시만 제거)
+              sudo docker builder prune -f
               exit 0
             fi
             sleep 5

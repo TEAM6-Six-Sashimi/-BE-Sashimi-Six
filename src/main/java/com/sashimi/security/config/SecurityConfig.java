@@ -51,7 +51,9 @@ public class SecurityConfig {
                 "http://127.0.0.1:3030"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of(
+                "Authorization", "Content-Type", "Accept", "X-Requested-With", "Cache-Control"
+        ));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
 
@@ -65,6 +67,14 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.deny())
+                        .contentTypeOptions(content -> {})
+                        .httpStrictTransportSecurity(hsts -> hsts
+                                .maxAgeInSeconds(31536000)
+                                .includeSubDomains(true)
+                        )
+                )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -77,9 +87,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/files/images").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/files/download").authenticated()
                         .requestMatchers(HttpMethod.GET, "/subscriptions/plans").permitAll()
-
+                        .requestMatchers(HttpMethod.GET, "/files/download").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/members/instructor-applications/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/instructor/**").hasAnyAuthority("ROLE_INSTRUCTOR", "ROLE_ADMIN")

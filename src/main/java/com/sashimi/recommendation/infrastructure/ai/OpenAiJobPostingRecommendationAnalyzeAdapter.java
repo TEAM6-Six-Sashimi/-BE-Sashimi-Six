@@ -192,13 +192,16 @@ public class OpenAiJobPostingRecommendationAnalyzeAdapter
             String value
     ) {
         if (value == null || value.isBlank()) {
-            return FitStatus.NOT_SATISFIED;
+            return FitStatus.UNKNOWN;
         }
 
         try {
-            return FitStatus.valueOf(value);
+            return FitStatus.valueOf(
+                    value.trim()
+                            .toUpperCase(java.util.Locale.ROOT)
+            );
         } catch (IllegalArgumentException exception) {
-            return FitStatus.NOT_SATISFIED;
+            return FitStatus.UNKNOWN;
         }
     }
 
@@ -265,7 +268,7 @@ public class OpenAiJobPostingRecommendationAnalyzeAdapter
             return null;
         }
 
-        if (node.isNumber()) {
+        if (node.isIntegralNumber()) {
             return node.longValue();
         }
 

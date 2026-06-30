@@ -71,3 +71,9 @@ codef:
 
 grafana:
   url: ${GRAFANA_URL}
+
+springdoc:
+  swagger-ui:
+    enabled: false
+  api-docs:
+    enabled: false

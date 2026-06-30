@@ -8,6 +8,10 @@ import java.util.Optional;
 public interface SpringDataQualificationCodeRepository
         extends JpaRepository<QualificationCodeJpaEntity, Long> {
 
+    Optional<QualificationCodeJpaEntity> findFirstByQualificationNameOrderByJmCdAsc(
+            String qualificationName
+    );
+
     Optional<QualificationCodeJpaEntity> findByJmCd(String jmCd);
 
     List<QualificationCodeJpaEntity> findTop20ByQualificationNameContainingOrderByQualificationNameAsc(

@@ -21,6 +21,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(401, "AUTH_004", "유효하지 않은 refresh token입니다."),
     EXPIRED_REFRESH_TOKEN(401, "AUTH_005", "만료된 refresh token입니다."),
     LOGIN_FAILED(401, "AUTH_006", "아이디 또는 비밀번호가 올바르지 않습니다."),
+    TOO_MANY_REQUESTS(429, "AUTH_007", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
 
     DUPLICATE_LOGIN_ID(409, "USER_001", "이미 사용 중인 아이디입니다."),
     DUPLICATE_EMAIL(409, "USER_002", "이미 사용 중인 이메일입니다."),
@@ -120,6 +121,7 @@ public enum ErrorCode {
     REVIEW_PROGRESS_REQUIRED(400, "REVIEW_003", "수강 후 리뷰를 작성할 수 있습니다."),
     REVIEW_NOT_FOUND(404, "REVIEW_404", "수강평을 찾을 수 없습니다."),
     REVIEW_FORBIDDEN(403, "REVIEW_004", "본인이 작성한 수강평만 삭제할 수 있습니다."),
+    REVIEW_WRITE_FORBIDDEN(403, "REVIEW_007", "본인 계정으로만 수강평을 작성할 수 있습니다."),
     REVIEW_ALREADY_REPORTED(409, "REVIEW_005", "이미 신고한 리뷰입니다."),
     REVIEW_SELF_REPORT_FORBIDDEN(403, "REVIEW_006", "본인이 작성한 수강평은 신고할 수 없습니다."),
 
@@ -143,7 +145,8 @@ public enum ErrorCode {
     FILE_EMPTY(400, "FILE_001", "업로드할 파일이 없습니다."),
     FILE_INVALID_TYPE(400, "FILE_002", "지원하지 않는 파일 형식입니다. (jpg, png, gif, webp만 허용)"),
     FILE_UPLOAD_FAILED(500, "FILE_003", "파일 업로드에 실패했습니다."),
-    FILE_NOT_FOUND(404, "FILE_004", "파일을 찾을 수 없습니다.");
+    FILE_NOT_FOUND(404, "FILE_004", "파일을 찾을 수 없습니다."),
+    CERTIFICATE_FILE_INVALID_TYPE(400, "FILE_005", "지원하지 않는 파일 형식입니다. (jpg, png, pdf만 지원)");
 
 
     private final int status;

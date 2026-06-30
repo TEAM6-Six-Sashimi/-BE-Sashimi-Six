@@ -1,0 +1,166 @@
+{
+  "title": "Sashimi Business",
+  "uid": "sashimi-business",
+  "schemaVersion": 38,
+  "version": 1,
+  "timezone": "Asia/Seoul",
+  "tags": ["sashimi", "business", "ai"],
+  "time": { "from": "now-24h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "AI 기능별 사용 횟수 (누적)",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(ai_request_started_total{feature=\"JOB_POSTING_RECOMMENDATION\"}[24h]))",
+          "legendFormat": "채용공고 AI 추천",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(increase(ai_request_started_total{feature=\"RESUME_REVIEW\"}[24h]))",
+          "legendFormat": "이력서 분석",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "displayMode": "gradient"
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "min": 0 }
+      }
+    },
+    {
+      "id": 2,
+      "title": "AI 기능별 사용 추이 (req/m)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(ai_request_started_total{feature=\"JOB_POSTING_RECOMMENDATION\"}[5m]))",
+          "legendFormat": "채용공고 AI 추천",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(ai_request_started_total{feature=\"RESUME_REVIEW\"}[5m]))",
+          "legendFormat": "이력서 분석",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 3,
+      "title": "AI 기능별 성공률 (%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(increase(ai_request_success_total{feature=\"JOB_POSTING_RECOMMENDATION\"}[24h])) / sum(increase(ai_request_started_total{feature=\"JOB_POSTING_RECOMMENDATION\"}[24h])) * 100",
+          "legendFormat": "채용공고 AI 추천",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(increase(ai_request_success_total{feature=\"RESUME_REVIEW\"}[24h])) / sum(increase(ai_request_started_total{feature=\"RESUME_REVIEW\"}[24h])) * 100",
+          "legendFormat": "이력서 분석",
+          "refId": "B"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "minVizHeight": 75,
+        "minVizWidth": 75
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "AI 응답시간 P99 (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(ai_request_duration_seconds_bucket{feature=\"JOB_POSTING_RECOMMENDATION\"}[5m])) by (le)) * 1000",
+          "legendFormat": "채용공고 AI P99",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(ai_request_duration_seconds_bucket{feature=\"RESUME_REVIEW\"}[5m])) by (le)) * 1000",
+          "legendFormat": "이력서 분석 P99",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 5,
+      "title": "추천 결과 조회 수 (채용공고 AI 클릭)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(ai_recommendation_result_viewed_total[5m]))",
+          "legendFormat": "추천 결과 조회",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(ai_request_started_total{feature=\"JOB_POSTING_RECOMMENDATION\"}[5m]))",
+          "legendFormat": "추천 요청",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 6,
+      "title": "AI 기능 차단 횟수 (구독/동의 미완료)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(ai_request_blocked_total{reason=\"SUBSCRIPTION_REQUIRED\"}[5m])) by (feature)",
+          "legendFormat": "구독 필요 - {{feature}}",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(ai_request_blocked_total{reason=\"AI_CONSENT_REQUIRED\"}[5m])) by (feature)",
+          "legendFormat": "AI 동의 필요 - {{feature}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } }
+      }
+    }
+  ]
+}
