@@ -112,7 +112,9 @@ public class JobPostingRecommendationAsyncService {
 
             JobPostingRecommendation analyzedRecommendation = recommendation.analyzed(
                     analyzeResult.summary(),
-                    analyzeResult.fitAnalysis(),
+                    recommendation.resumeBased()
+                            ? analyzeResult.fitAnalysis()
+                            : null,
                     matchedCourses,
                     enrichedCertificates
             );
