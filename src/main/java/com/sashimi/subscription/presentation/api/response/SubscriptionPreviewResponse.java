@@ -25,6 +25,9 @@ public record SubscriptionPreviewResponse(
         @Schema(description = "할인율", example = "0")
         int discountRate,
 
+        @Schema(description = "구독권 플랜 썸네일 URL", example = "/files/images?key=images%2F531e6874-8223-419c-b78c-a17ad449b853.png")
+        String planThumbnail,
+
         @Schema(description = "플랜 제공 기능")
         List<String> features,
 
@@ -56,6 +59,7 @@ public record SubscriptionPreviewResponse(
                 plan.originalPrice(),
                 plan.price(),
                 plan.discountRate(),
+                plan.planThumbnail(),
                 plan.features(),
                 result.creditBalance(),
                 result.balanceAfterPayment(),
