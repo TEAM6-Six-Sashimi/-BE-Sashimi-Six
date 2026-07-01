@@ -9,13 +9,6 @@ import com.sashimi.user.dto.LoginIdCheckResponseDto;
 import com.sashimi.user.dto.ReferralCodeCheckResponseDto;
 import com.sashimi.user.dto.SignupRequestDto;
 import com.sashimi.user.dto.UserResponseDto;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.auth.dto.PasswordResetRequestDto;
 import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
@@ -24,6 +17,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -54,7 +52,6 @@ public class AuthController {
     public ResponseEntity<ReferralCodeCheckResponseDto> checkReferralCode(@RequestParam String referralCode) {
         return ResponseEntity.ok(authService.checkReferralCode(referralCode));
     }
-
 
     @Operation(summary = "회원가입", description = "이메일 인증 완료 후 신규 회원을 가입시킵니다.")
     @ApiResponses({
@@ -113,7 +110,6 @@ public class AuthController {
         authService.logout(accessToken, request.getRefreshToken());
         return ResponseEntity.noContent().build();
     }
-
 
     @Operation(
             summary = "비밀번호 재설정 인증 코드 요청",
