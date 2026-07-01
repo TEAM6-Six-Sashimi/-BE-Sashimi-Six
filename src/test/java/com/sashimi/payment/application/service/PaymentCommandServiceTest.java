@@ -111,7 +111,8 @@ class PaymentCommandServiceTest {
         when(idempotencyTransactionService.resolveExisting(
                 USER_ID,
                 IDEMPOTENCY_KEY,
-                "COURSE:10:-:true"
+                "COURSE:10:-:true",
+                PaymentPurchaseType.COURSE
         )).thenReturn(
                 ExistingRequestResolution.completed(savedResultJson)
         );
@@ -146,7 +147,8 @@ class PaymentCommandServiceTest {
         when(idempotencyTransactionService.resolveExisting(
                 USER_ID,
                 IDEMPOTENCY_KEY,
-                "COURSE:10:-:true"
+                "COURSE:10:-:true",
+                PaymentPurchaseType.COURSE
         )).thenReturn(
                 ExistingRequestResolution.processing()
         );
@@ -184,7 +186,8 @@ class PaymentCommandServiceTest {
         when(idempotencyTransactionService.resolveExisting(
                 USER_ID,
                 IDEMPOTENCY_KEY,
-                "COURSE:10:-:true"
+                "COURSE:10:-:true",
+                PaymentPurchaseType.COURSE
         )).thenReturn(
                 ExistingRequestResolution.failed()
         );

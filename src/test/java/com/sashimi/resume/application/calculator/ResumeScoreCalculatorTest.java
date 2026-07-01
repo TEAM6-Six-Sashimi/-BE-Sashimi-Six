@@ -120,7 +120,7 @@ class ResumeScoreCalculatorTest {
                 )
         )
                 .isInstanceOf(
-                        IllegalArgumentException.class
+                        com.sashimi.global.exception.BusinessException.class
                 );
     }
 
@@ -137,7 +137,7 @@ class ResumeScoreCalculatorTest {
                 )
         )
                 .isInstanceOf(
-                        IllegalArgumentException.class
+                        com.sashimi.global.exception.BusinessException.class
                 );
     }
 
@@ -154,7 +154,7 @@ class ResumeScoreCalculatorTest {
                 )
         )
                 .isInstanceOf(
-                        IllegalArgumentException.class
+                        com.sashimi.global.exception.BusinessException.class
                 );
     }
 
@@ -175,6 +175,7 @@ class ResumeScoreCalculatorTest {
                                 YearMonth.of(2023, 2)
                         )
                 ),
+                List.of(),
                 true
         ).withId(1L);
     }
@@ -184,6 +185,7 @@ class ResumeScoreCalculatorTest {
                 1L,
                 List.of(bachelorEducation()),
                 true,
+                List.of(),
                 List.of(),
                 true
         ).withId(1L);

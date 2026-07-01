@@ -42,7 +42,7 @@ class CertificateScoreCalculatorTest {
                 calculator.calculate(invalidCount)
         )
                 .isInstanceOf(
-                        IllegalArgumentException.class
+                        com.sashimi.global.exception.BusinessException.class
                 );
     }
 }

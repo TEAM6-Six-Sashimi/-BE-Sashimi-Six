@@ -1,5 +1,6 @@
 package com.sashimi.architecture;
 
+import com.sashimi.certificate.infrastructure.CodefTokenManager;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.user.domain.repository.UserRepository;
 import com.sashimi.user.infrastructure.persistence.UserRepositoryAdapter;
@@ -22,6 +23,9 @@ class JpaUserRepositoryContractTest extends UserRepositoryContractTest {
 
     @MockitoBean
     private JobPostingRecommendationAnalyzePort jobPostingRecommendationAnalyzePort;
+
+    @MockitoBean
+    private CodefTokenManager codefTokenManager;
 
     @Autowired
     private UserRepositoryAdapter userRepositoryAdapter;

@@ -42,7 +42,7 @@ class ResumeGradeCalculatorTest {
                 calculator.calculate(invalidScore)
         )
                 .isInstanceOf(
-                        IllegalArgumentException.class
+                        com.sashimi.global.exception.BusinessException.class
                 );
     }
 }

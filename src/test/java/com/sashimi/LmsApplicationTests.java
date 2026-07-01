@@ -1,5 +1,7 @@
 package com.sashimi;
 
+import com.sashimi.certificate.infrastructure.CodefTokenManager;
+import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.verification.application.port.EmailSender;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,12 @@ class LmsApplicationTests {
 
     @MockitoBean
     private JobPostingRecommendationAnalyzePort jobPostingRecommendationAnalyzePort;
+
+    @MockitoBean
+    private CodefTokenManager codefTokenManager;
+
+    @MockitoBean
+    private FileStoragePort fileStoragePort;
 
     @Test
     void contextLoads() {
