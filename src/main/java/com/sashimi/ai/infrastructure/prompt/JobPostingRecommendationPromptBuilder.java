@@ -24,8 +24,18 @@ public class JobPostingRecommendationPromptBuilder {
         );
 
         String userPrompt = prompt.prompt()
-                .replace("{resumeBased}", String.valueOf(recommendation.resumeBased()))
-                .replace("{jobPostingContent}", safe(jobPostingInput));
+                .replace(
+                        "{resumeBased}",
+                        String.valueOf(recommendation.resumeBased())
+                )
+                .replace(
+                        "{resumeContent}",
+                        safe(recommendation.resumeContent())
+                )
+                .replace(
+                        "{jobPostingContent}",
+                        safe(jobPostingInput)
+                );
 
         return """
             You are an AI assistant for an LMS job posting recommendation feature.
@@ -41,7 +51,8 @@ public class JobPostingRecommendationPromptBuilder {
             - Analyze fit against the user's resume information if resumeBased is true.
             - If resumeBased is false, still provide summary, recommended certificates, and courses.
             - If resumeBased is false, fitAnalysis may be returned but the backend will ignore it.
-            - Use UNKNOWN only when resumeBased is true but the job posting condition is too unclear to judge.            - Recommend certificates that the user does not already have when possible.
+            - Use UNKNOWN only when resumeBased is true but the job posting condition is too unclear to judge.
+            - Recommend certificates that the user does not already have when possible.
             - Do not generate real course recommendations.
             - Set courses to an empty array.
             - The backend will match recommended certificates with internal LMS courses.
@@ -53,10 +64,18 @@ public class JobPostingRecommendationPromptBuilder {
             - Use SATISFIED only when the user's resume clearly satisfies the job posting condition.
             - Use PARTIALLY_SATISFIED when the user partially satisfies the condition or satisfies only a preferred condition.
             - Use NOT_SATISFIED when the job posting requires the condition but the user's resume clearly does not satisfy it.
-            - Use UNKNOWN when the condition cannot be verified from the job posting or resume.
+            - Use UNKNOWN when resumeBased is true but the job posting condition is too unclear to judge.
             - fitAnalysis.education.category must be EDUCATION
             - fitAnalysis.career.category must be CAREER
             - fitAnalysis.certification.category must be CERTIFICATION
+            
+            Education judgment rules:
+            - Do not copy enum/code-like values into user-facing fields.
+            - Write requiredCondition, userCondition, and comment in natural Korean.
+            - Treat "졸업 예정" as satisfying graduation requirements.
+            - If the job posting requires "학사 이상", both "학사" and "졸업 예정 학사" satisfy the requirement.
+            - If the job posting does not mention education requirements, set education.status to UNKNOWN.
+            - Do not infer education requirements that are not present in the job posting.
 
             Required JSON format:
             {
