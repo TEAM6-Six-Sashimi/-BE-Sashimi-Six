@@ -77,6 +77,8 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
                     userId
             );
 
+            recalculateStudentCount(courseId);
+
             log.info("수강 등록 완료 - userId={}, courseId={}, orderItemId={}",
                     userId, courseId, orderItemId);
 
@@ -85,6 +87,22 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
                     userId, courseId, orderItemId);
             throw new BusinessException(ErrorCode.ENROLLMENT_ALREADY_EXISTS);
         }
+    }
+
+    /**
+     * courses.student_count 를 실제 enrollments 개수로 재집계한다.
+     * 증감 방식이 아닌 재집계 방식이라 등록/취소와 무관하게 항상 정확하다.
+     */
+    private void recalculateStudentCount(Long courseId) {
+        jdbcTemplate.update("""
+                UPDATE courses
+                SET student_count = (
+                        SELECT COUNT(*)
+                        FROM enrollments
+                        WHERE course_id = ?
+                    )
+                WHERE course_id = ?
+                """, courseId, courseId);
     }
 
     @Override
