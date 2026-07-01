@@ -21,11 +21,32 @@ public class NcsSyncService {
 
     private static final String SUCCESS_CODE = "000";
 
-    private static final Map<String, String> CATEGORY_MAPPING_KEYWORDS = Map.of(
-            "정보처리기사", "응용SW엔지니어링",
-            "SQLD", "DB엔지니어링",
-            "빅데이터분석기사", "빅데이터",
-            "컴퓨터활용능력", "사무행정"
+    private static final Map<String, String> CATEGORY_MAPPING_KEYWORDS = Map.ofEntries(
+            // IT·정보통신
+            Map.entry("정보처리기사", "응용SW엔지니어링"),
+            Map.entry("정보보안기사", "보안엔지니어링"),
+            Map.entry("네트워크관리사", "NW엔지니어링"),
+            Map.entry("빅데이터분석기사", "빅데이터분석"),
+            Map.entry("ADsP", "빅데이터분석"),
+            Map.entry("SQLD", "DB엔지니어링"),
+
+            // 경영·회계
+            Map.entry("전산회계", "회계·감사"),
+
+            // 디자인
+            Map.entry("웹디자인기능사", "디지털디자인"),
+
+            // 건설·안전
+            Map.entry("산업안전기사", "산업안전관리"),
+
+            // 식품·조리
+            Map.entry("조리기능사", "한식조리"),
+
+            // 부동산·금융
+            Map.entry("공인중개사", "부동산중개"),
+
+            // 어학
+            Map.entry("관광통역안내사", "국내여행안내")
     );
 
     private final NcsApiClient ncsApiClient;
