@@ -21,6 +21,7 @@ public class OutboxEmailScheduler {
     private static final int MAX_RETRY = 3;
 
     // Redis Consumer가 즉시 처리; 이 스케줄러는 Redis 유실 시 fallback
+    @Transactional
     @Scheduled(fixedDelay = 30000)
     public void processOutbox() {
         List<EmailOutboxJpaEntity> pending = outboxRepository.findByStatus(OutboxStatus.PENDING);
