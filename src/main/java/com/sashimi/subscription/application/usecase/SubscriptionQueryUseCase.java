@@ -20,6 +20,7 @@ public interface SubscriptionQueryUseCase {
             Long originalPrice,
             Long price,
             int discountRate,
+            String planThumbnail,
             List<String> features
     ) {
     }
