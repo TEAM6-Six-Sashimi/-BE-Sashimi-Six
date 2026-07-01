@@ -118,3 +118,19 @@ jobs:
           sudo docker logs --tail 200 "$DOCKER_CONTAINER" >&2
           exit 1
           REMOTE
+
+      - name: Create Grafana deploy annotation
+        if: success()
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_API_TOKEN: ${{ secrets.GRAFANA_API_TOKEN }}
+        run: |
+          if [ -z "${GRAFANA_URL:-}" ] || [ -z "${GRAFANA_API_TOKEN:-}" ]; then
+            echo "GRAFANA_URL/GRAFANA_API_TOKEN secret이 없어 annotation 등록을 건너뜁니다."
+            exit 0
+          fi
+          curl -sf -X POST "$GRAFANA_URL/api/annotations" \
+            -H "Authorization: Bearer $GRAFANA_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(printf '{"text": "배포: %s (%s)", "tags": ["deploy", "sashimi"]}' "${GITHUB_SHA:0:7}" "$GITHUB_ACTOR")" \
+            || echo "Grafana annotation 등록 실패 (배포 자체는 정상 완료됨)"
