@@ -190,6 +190,7 @@ public class SubscriptionQueryService
                 plan.getOriginalPrice(),
                 plan.getPrice(),
                 plan.getDiscountRate(),
+                plan.getPlanThumbnail(),
                 plan.getFeatures()
         );
     }
