@@ -2,11 +2,23 @@
   "title": "Sashimi Overview",
   "uid": "sashimi-overview",
   "schemaVersion": 38,
-  "version": 1,
+  "version": 2,
   "timezone": "Asia/Seoul",
   "tags": ["sashimi", "spring-boot"],
   "time": { "from": "now-1h", "to": "now" },
   "refresh": "10s",
+  "annotations": {
+    "list": [
+      {
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "iconColor": "blue",
+        "name": "배포",
+        "tags": ["deploy"],
+        "type": "tags"
+      }
+    ]
+  },
   "panels": [
     {
       "id": 1,
@@ -147,6 +159,102 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 7,
+      "title": "타겟 Up/Down (배포 다운타임 감지)",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 34 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "up{job=\"sashimi\"}", "legendFormat": "up", "refId": "A" }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "graphMode": "area",
+        "colorMode": "background",
+        "textMode": "value"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "DB 커넥션 풀 현황 (HikariCP)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 34 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(hikaricp_connections_active{job=\"sashimi\"})", "legendFormat": "활성 커넥션", "refId": "A" },
+        { "expr": "sum(hikaricp_connections_idle{job=\"sashimi\"})", "legendFormat": "유휴 커넥션", "refId": "B" },
+        { "expr": "sum(hikaricp_connections_pending{job=\"sashimi\"})", "legendFormat": "대기 중인 요청", "refId": "C" },
+        { "expr": "sum(hikaricp_connections_max{job=\"sashimi\"})", "legendFormat": "최대 커넥션", "refId": "D" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2 }, "min": 0 }
+      },
+      "overrides": [
+        { "matcher": { "id": "byName", "options": "최대 커넥션" }, "properties": [{ "id": "custom.lineStyle", "value": { "dash": [10, 10], "fill": "dash" } }] }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "DB 커넥션 타임아웃 발생률",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 42 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(rate(hikaricp_connections_timeout_total{job=\"sashimi\"}[5m]))", "legendFormat": "타임아웃/s", "refId": "A" }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 }, "color": { "fixedColor": "red", "mode": "fixed" }, "min": 0 }
+      }
+    },
+    {
+      "id": 10,
+      "title": "엔드포인트별 에러율 Top 5",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 42 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "topk(5, sum(rate(http_server_requests_seconds_count{job=\"sashimi\", outcome=~\"CLIENT_ERROR|SERVER_ERROR\"}[5m])) by (uri, status))",
+          "legendFormat": "{{status}} {{uri}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 }, "min": 0 }
+      }
+    },
+    {
+      "id": 11,
+      "title": "에러 로그 발생 빈도 (분당)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 42 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({app=\"sashimi\", level=\"ERROR\"}[1m]))",
+          "legendFormat": "에러 로그/분",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "lineWidth": 2, "fillOpacity": 20 }, "color": { "fixedColor": "red", "mode": "fixed" }, "min": 0 }
       }
     }
   ],
