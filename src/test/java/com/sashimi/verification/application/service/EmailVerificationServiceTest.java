@@ -5,12 +5,13 @@ import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
 import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
 import com.sashimi.verification.application.policy.EmailVerificationPolicy;
-import com.sashimi.verification.application.port.EmailSender;
 import com.sashimi.verification.domain.model.EmailVerification;
 import com.sashimi.verification.domain.model.VerificationPurpose;
 import com.sashimi.verification.domain.repository.EmailVerificationRepository;
+import com.sashimi.verification.infrastructure.outbox.SpringDataEmailOutboxRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -23,22 +24,25 @@ class EmailVerificationServiceTest {
 
     private EmailVerificationRepository emailVerificationRepository;
     private VerificationCodeGenerator verificationCodeGenerator;
-    private EmailSender emailSender;
+    private SpringDataEmailOutboxRepository outboxRepository;
+    private StringRedisTemplate redisTemplate;
     private EmailVerificationService emailVerificationService;
 
     @BeforeEach
     void setUp() {
         emailVerificationRepository = mock(EmailVerificationRepository.class);
         verificationCodeGenerator = mock(VerificationCodeGenerator.class);
-        emailSender = mock(EmailSender.class);
+        outboxRepository = mock(SpringDataEmailOutboxRepository.class);
+        redisTemplate = mock(StringRedisTemplate.class);
 
         EmailVerificationPolicy emailVerificationPolicy = new EmailVerificationPolicy();
 
         emailVerificationService = new EmailVerificationService(
                 emailVerificationRepository,
                 verificationCodeGenerator,
-                emailSender,
-                emailVerificationPolicy
+                outboxRepository,
+                emailVerificationPolicy,
+                redisTemplate
         );
     }
 
@@ -133,6 +137,6 @@ class EmailVerificationServiceTest {
         // then
         assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.EMAIL_VERIFICATION_RESEND_TOO_SOON);
         verifyNoInteractions(verificationCodeGenerator);
-        verifyNoInteractions(emailSender);
+        verifyNoInteractions(outboxRepository);
     }
 }

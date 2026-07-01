@@ -3,6 +3,8 @@ package com.sashimi.user.application.service;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.security.jwt.JwtTokenProvider;
+import com.sashimi.auth.dto.TokenResponseDto;
+import com.sashimi.security.session.TokenVersionService;
 import com.sashimi.token.service.RefreshService;
 import com.sashimi.user.application.command.ChangePasswordCommand;
 import com.sashimi.user.application.command.WithdrawUserCommand;
@@ -25,6 +27,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 class UserAccountServiceTest {
@@ -33,6 +37,7 @@ class UserAccountServiceTest {
     private PasswordEncoder passwordEncoder;
     private RefreshService refreshService;
     private JwtTokenProvider jwtTokenProvider;
+    private TokenVersionService tokenVersionService;
     private ApplicationEventPublisher eventPublisher;
 
     private UserAccountService userAccountService;
@@ -43,6 +48,7 @@ class UserAccountServiceTest {
         passwordEncoder = mock(PasswordEncoder.class);
         refreshService = mock(RefreshService.class);
         jwtTokenProvider = mock(JwtTokenProvider.class);
+        tokenVersionService = mock(TokenVersionService.class);
         eventPublisher = mock(ApplicationEventPublisher.class);
 
         userAccountService = new UserAccountService(
@@ -50,6 +56,7 @@ class UserAccountServiceTest {
                 passwordEncoder,
                 refreshService,
                 jwtTokenProvider,
+                tokenVersionService,
                 eventPublisher
         );
     }
@@ -64,6 +71,16 @@ class UserAccountServiceTest {
         when(passwordEncoder.matches("newPassword123", "encodedCurrentPassword")).thenReturn(false);
         when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
         when(userRepository.save(user)).thenReturn(user);
+        when(tokenVersionService.incrementVersion(1L)).thenReturn(1L);
+        when(jwtTokenProvider.generateToken(any(), anyLong(), anyLong())).thenReturn(
+                TokenResponseDto.builder()
+                        .grantType("Bearer")
+                        .accessToken("access-token")
+                        .refreshToken("refresh-token")
+                        .accessTokenExpiresIn(9999999L)
+                        .build()
+        );
+        when(jwtTokenProvider.getRefreshTokenValidityInMilliseconds()).thenReturn(1209600000L);
 
         // when
         ChangePasswordResult result = userAccountService.changePassword(
@@ -76,7 +93,8 @@ class UserAccountServiceTest {
 
         // then
         assertThat(result.passwordChanged()).isTrue();
-        assertThat(result.requiresLogin()).isTrue();
+        assertThat(result.requiresLogin()).isFalse();
+        assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(user.getPassword()).isEqualTo("encodedNewPassword");
 
         ArgumentCaptor<UserPasswordChangedEvent> eventCaptor =
@@ -85,7 +103,7 @@ class UserAccountServiceTest {
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue().userId()).isEqualTo(1L);
         assertThat(eventCaptor.getValue().email()).isEqualTo("test@example.com");
-        verify(refreshService, never()).deleteByUser(any());
+        verify(refreshService).deleteByUser(user);
     }
 
     @Test

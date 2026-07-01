@@ -159,6 +159,7 @@ class CareerContinuityEvaluatorTest {
                 List.of(education()),
                 true,
                 List.of(),
+                List.of(),
                 true
         ).withId(1L);
     }
@@ -171,6 +172,7 @@ class CareerContinuityEvaluatorTest {
                 List.of(education()),
                 false,
                 careers,
+                List.of(),
                 true
         ).withId(1L);
     }

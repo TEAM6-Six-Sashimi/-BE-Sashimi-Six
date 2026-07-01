@@ -41,3 +41,11 @@ toss:
   payments:
     base-url: https://api.tosspayments.com
     secret-key: test_sk_dummy
+
+grafana:
+  url: http://localhost:3000
+
+codef:
+  client-id: test-client-id
+  client-secret: test-client-secret
+  public-key: test-public-key
