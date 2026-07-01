@@ -22,7 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Job Posting Recommendation", description = "채용공고 기반 AI 추천 API")
+@Tag(name = "채용공고 AI 추천", description = "채용공고 기반 AI 추천 API")
 @RestController
 @RequestMapping("/recommendations/job-posting")
 public class JobPostingRecommendationController {
