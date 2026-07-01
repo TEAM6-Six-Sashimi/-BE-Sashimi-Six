@@ -25,7 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Resume", description = "이력서 작성, 조회, 수정, 삭제 및 AI 평가 API")
+@Tag(name = "이력서 관리", description = "이력서 작성, 조회, 수정, 삭제 및 AI 평가 API")
 @RestController
 @RequestMapping("/resumes")
 public class ResumeController {

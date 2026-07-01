@@ -9,10 +9,10 @@ public record CreateJobPostingRecommendationRequest(
         @Schema(description = "비교할 이력서 ID. 없으면 이력서 기반 적합도 분석을 생략합니다.", example = "1")
         Long resumeId,
 
-        @Schema(description = "입력 타입", example = "TEXT")
+        @Schema(description = "입력 방식", example = "TEXT")
         RecommendationInputType inputType,
 
-        @Schema(description = "채용공고 URL. inputType이 URL인 경우 사용", example = "https://example.com/jobs/frontend")
+        @Schema(description = "채용공고 주소(URL). 입력 타입이 URL인 경우 사용", example = "https://example.com/jobs/frontend")
         String sourceUrl,
 
         @Schema(description = "채용공고 원문 텍스트. inputType이 TEXT인 경우 사용",
