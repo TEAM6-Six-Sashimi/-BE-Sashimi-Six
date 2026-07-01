@@ -21,6 +21,7 @@ public class OutboxEmailConsumer {
     private final EmailSender emailSender;
     private final OutboxMetrics outboxMetrics;
 
+    @Transactional
     @Scheduled(fixedDelay = 500)
     public void consume() {
         String idStr = redisTemplate.opsForList().rightPop(QUEUE_KEY);
