@@ -11,6 +11,7 @@ public enum SubscriptionPlan {
             10_000L,
             10_000L,
             0,
+            "/files/images?key=images%2F531e6874-8223-419c-b78c-a17ad449b853.png",
             List.of(
                     "AI 채용 공고 분석",
                     "AI 이력서 작성 및 평가",
@@ -24,6 +25,7 @@ public enum SubscriptionPlan {
             120_000L,
             100_000L,
             17,
+            "/files/images?key=images%2Fd1b346c6-476f-4f44-86c1-0c9c8b94fed8.png",
             List.of(
                     "AI 채용 공고 분석",
                     "AI 이력서 작성 및 평가",
@@ -37,6 +39,7 @@ public enum SubscriptionPlan {
     private final Long originalPrice;
     private final Long price;
     private final int discountRate;
+    private final String planThumbnail;
     private final List<String> features;
 
     SubscriptionPlan(
@@ -45,6 +48,7 @@ public enum SubscriptionPlan {
             Long originalPrice,
             Long price,
             int discountRate,
+            String planThumbnail,
             List<String> features
     ) {
         this.planName = planName;
@@ -52,6 +56,7 @@ public enum SubscriptionPlan {
         this.originalPrice = originalPrice;
         this.price = price;
         this.discountRate = discountRate;
+        this.planThumbnail = planThumbnail;
         this.features = List.copyOf(features);
     }
 
@@ -84,4 +89,6 @@ public enum SubscriptionPlan {
     public List<String> getFeatures() {
         return features;
     }
+
+    public String getPlanThumbnail() {return planThumbnail;}
 }
