@@ -3,6 +3,7 @@ package com.sashimi.instructorapplication.application.service;
 import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.storage.FileSignatureValidator;
 import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.instructorapplication.application.command.ApplyInstructorCommand;
 import com.sashimi.instructorapplication.application.event.InstructorApprovedEvent;
@@ -56,6 +57,20 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
             if (command.portfolioUrl() == null || command.portfolioUrl().isBlank()) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT);
             }
+
+            // 파일 형식 검증 (매직바이트) - OCR/Apache POI 파싱 이전에 즉시 차단
+            for (ApplyInstructorCommand.FileEntry certFile : command.certificateFiles()) {
+                if (!FileSignatureValidator.isJpegPngOrPdf(certFile.fileBytes())) {
+                    throw new BusinessException(ErrorCode.CERTIFICATE_FILE_INVALID_TYPE);
+                }
+            }
+            if (!FileSignatureValidator.isJpegPngOrPdf(command.profileImage().fileBytes())) {
+                throw new BusinessException(ErrorCode.CERTIFICATE_FILE_INVALID_TYPE);
+            }
+            if (!FileSignatureValidator.isDocx(command.resumeFile().fileBytes())) {
+                throw new BusinessException(ErrorCode.RESUME_INVALID_FORMAT);
+            }
+
             if (!categoryRepository.findById(command.categoryId()).map(c -> true).orElse(false)) {
                 throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
             }
@@ -79,12 +94,6 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
 
             if (certCandidates.isEmpty()) {
                 throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
-            }
-
-            // 이력서 파일 형식 검증
-            String resumeFileName = command.resumeFile().fileName();
-            if (resumeFileName == null || !resumeFileName.toLowerCase().endsWith(".docx")) {
-                throw new BusinessException(ErrorCode.RESUME_INVALID_FORMAT);
             }
 
             // 이력서 docx - 주요 이력 추출

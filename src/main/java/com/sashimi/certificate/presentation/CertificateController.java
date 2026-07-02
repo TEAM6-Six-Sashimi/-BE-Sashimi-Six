@@ -9,6 +9,7 @@ import com.sashimi.certificate.presentation.api.request.VerifyCertificateRequest
 import com.sashimi.certificate.presentation.api.response.CertificateResponse;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.storage.FileSignatureValidator;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,7 +22,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -139,17 +139,8 @@ public class CertificateController {
     }
 
     private void validateMagicBytes(byte[] bytes) {
-        if (bytes == null || bytes.length < 4) {
+        if (!FileSignatureValidator.isJpegPngOrPdf(bytes)) {
             throw new BusinessException(ErrorCode.CERTIFICATE_FILE_INVALID_TYPE);
         }
-        byte[] header = Arrays.copyOf(bytes, 4);
-        // JPEG: FF D8 FF
-        if (header[0] == (byte) 0xFF && header[1] == (byte) 0xD8 && header[2] == (byte) 0xFF) return;
-        // PNG: 89 50 4E 47
-        if (header[0] == (byte) 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47) return;
-        // PDF: %PDF (25 50 44 46)
-        if (header[0] == 0x25 && header[1] == 0x50 && header[2] == 0x44 && header[3] == 0x46) return;
-
-        throw new BusinessException(ErrorCode.CERTIFICATE_FILE_INVALID_TYPE);
     }
 }
