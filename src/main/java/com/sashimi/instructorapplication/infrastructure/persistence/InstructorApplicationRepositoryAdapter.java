@@ -54,4 +54,9 @@ public class InstructorApplicationRepositoryAdapter implements InstructorApplica
     public boolean existsByUserIdAndApprovalStatus(Long userId, ApprovalStatus status) {
         return springDataRepository.existsByUserIdAndApprovalStatus(userId, status);
     }
+
+    @Override
+    public Optional<Long> findUserIdByFileKey(String fileKey) {
+        return springDataRepository.findUserIdByFileKey(fileKey);
+    }
 }

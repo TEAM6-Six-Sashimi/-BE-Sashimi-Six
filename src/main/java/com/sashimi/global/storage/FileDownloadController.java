@@ -2,10 +2,13 @@ package com.sashimi.global.storage;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.instructorapplication.domain.repository.InstructorApplicationRepository;
+import com.sashimi.security.principal.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,11 +20,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class FileDownloadController {
 
     private final FileStoragePort fileStoragePort;
+    private final InstructorApplicationRepository instructorApplicationRepository;
 
     @GetMapping("/download")
-    public ResponseEntity<byte[]> download(@RequestParam String key) {
+    public ResponseEntity<byte[]> download(@RequestParam String key,
+                                            @AuthenticationPrincipal CustomUserPrincipal principal) {
         if (key.contains("..")) {
             throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        }
+        if (!hasFileAccess(principal, key)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
         byte[] bytes = fileStoragePort.downloadPrivate(key);
 
@@ -52,6 +60,17 @@ public class FileDownloadController {
                 .contentType(contentType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                 .body(bytes);
+    }
+
+    private boolean hasFileAccess(CustomUserPrincipal principal, String key) {
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        if (isAdmin) {
+            return true;
+        }
+        return instructorApplicationRepository.findUserIdByFileKey(key)
+                .map(ownerId -> ownerId.equals(principal.getId()))
+                .orElse(false);
     }
 
     private MediaType resolveContentType(String filename) {
