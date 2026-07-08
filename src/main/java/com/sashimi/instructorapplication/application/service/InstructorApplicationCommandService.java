@@ -22,6 +22,7 @@ import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,6 +81,12 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                     .existsByUserIdAndApprovalStatus(command.userId(), ApprovalStatus.PENDING);
             if (alreadyApplied) {
                 throw new BusinessException(ErrorCode.ALREADY_APPLIED);
+            }
+
+            boolean alreadyInstructor = instructorApplicationRepository
+                    .existsByUserIdAndApprovalStatus(command.userId(), ApprovalStatus.APPROVED);
+            if (alreadyInstructor) {
+                throw new BusinessException(ErrorCode.ALREADY_INSTRUCTOR);
             }
 
             // 자격증 OCR 검증 (S3 업로드 전, 메모리에만 보관)
@@ -155,6 +162,9 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                         log.error("[S3 보상] 파일 삭제 실패 - key: {}", key, deleteEx);
                     }
                 });
+                if (e instanceof DataIntegrityViolationException) {
+                    throw new BusinessException(ErrorCode.ALREADY_APPLIED);
+                }
                 throw e;
             }
             meterRegistry.counter("instructor.application.total", "status", "success", "reason", "NONE").increment();
