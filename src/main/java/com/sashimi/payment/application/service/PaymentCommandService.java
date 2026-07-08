@@ -96,15 +96,11 @@ public class PaymentCommandService
     }
 
     private String createFingerprint(
-            PaymentCheckoutCommand command
-    ) {
+            PaymentCheckoutCommand command) {
         return command.purchaseType()
-                + ":"
-                + valueOf(command.courseId())
-                + ":"
-                + valueOf(command.planCode())
-                + ":"
-                + valueOf(command.agreed());
+                + ":" + valueOf(command.courseId())
+                + ":" + valueOf(command.planCode())
+                + ":" + valueOf(command.agreed());
     }
 
     private String valueOf(Object value) {

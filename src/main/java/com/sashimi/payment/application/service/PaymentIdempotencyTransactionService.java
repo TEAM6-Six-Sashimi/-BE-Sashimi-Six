@@ -65,31 +65,14 @@ public class PaymentIdempotencyTransactionService {
         }
 
         if (existing.isCompleted()) {
-            paymentMetrics.recordPaymentIdempotencyReused(
-                    purchaseType
-            );
-
-            return ExistingRequestResolution.completed(
-                    existing.getResultJson()
-            );
-        }
-
+            paymentMetrics.recordPaymentIdempotencyReused(purchaseType);
+            return ExistingRequestResolution.completed(existing.getResultJson());}
         if (existing.isFailed()) {
-            return ExistingRequestResolution.failed();
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-
-        if (existing.isProcessingExpired(
-                now,
-                PROCESSING_TIMEOUT_MINUTES
-        )) {
-            existing.fail();
-            repository.save(existing);
-
-            return ExistingRequestResolution.failed();
-        }
-
+            return ExistingRequestResolution.failed();}
+            LocalDateTime now = LocalDateTime.now();
+        if (existing.isProcessingExpired(now, PROCESSING_TIMEOUT_MINUTES))
+           {existing.fail();repository.save(existing);
+            return ExistingRequestResolution.failed();}
         return ExistingRequestResolution.processing();
     }
 

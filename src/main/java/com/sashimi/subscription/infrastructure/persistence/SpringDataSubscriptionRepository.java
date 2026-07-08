@@ -1,6 +1,5 @@
 package com.sashimi.subscription.infrastructure.persistence;
 
-import com.sashimi.subscription.domain.model.SubscriptionStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,21 +14,45 @@ import java.util.Optional;
 public interface SpringDataSubscriptionRepository
         extends JpaRepository<SubscriptionJpaEntity, Long> {
 
-    List<SubscriptionJpaEntity>
-    findByUserIdAndStatusAndExpiredAtAfterOrderByStartedAtDesc(
-            Long userId,
-            SubscriptionStatus status,
-            LocalDateTime now,
+    @Query("""
+        select s
+        from SubscriptionJpaEntity s
+        where s.userId = :userId
+          and (
+                (
+                    s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE
+                    and s.expiredAt > :now
+                )
+                or
+                (
+                    s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.PAST_DUE
+                    and s.gracePeriodUntil is not null
+                    and s.gracePeriodUntil > :now
+                )
+          )
+        order by s.startedAt desc
+        """)
+    List<SubscriptionJpaEntity> findUsableByUserId(
+            @Param("userId") Long userId,
+            @Param("now") LocalDateTime now,
             Pageable pageable
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
-            select s
-            from SubscriptionJpaEntity s
-            where s.userId = :userId
-              and s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE
-            """)
+    select s
+    from SubscriptionJpaEntity s
+    where s.userId = :userId
+      and (
+            s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE
+            or
+            (
+                s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.PAST_DUE
+                and s.gracePeriodUntil is not null
+                and s.gracePeriodUntil > CURRENT_TIMESTAMP
+            )
+      )
+    """)
     Optional<SubscriptionJpaEntity> findActiveByUserIdForUpdate(
             @Param("userId") Long userId
     );
@@ -45,13 +68,16 @@ public interface SpringDataSubscriptionRepository
     );
 
     @Query("""
-            select s.id
-            from SubscriptionJpaEntity s
-            where s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE
-              and s.autoRenew = true
-              and s.nextBillingAt is not null
-              and s.nextBillingAt <= :now
-            """)
+        select s.id
+        from SubscriptionJpaEntity s
+        where s.status in (
+            com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE,
+            com.sashimi.subscription.domain.model.SubscriptionStatus.PAST_DUE
+        )
+          and s.autoRenew = true
+          and s.nextBillingAt is not null
+          and s.nextBillingAt <= :now
+        """)
     List<Long> findRenewalDueIds(
             @Param("now") LocalDateTime now
     );

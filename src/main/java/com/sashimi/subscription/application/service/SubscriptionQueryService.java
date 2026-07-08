@@ -1,6 +1,7 @@
 package com.sashimi.subscription.application.service;
 
 import com.sashimi.credit.application.usecase.CreditQueryUseCase;
+import com.sashimi.subscription.domain.model.SubscriptionStatus;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.subscription.application.usecase.SubscriptionQueryUseCase;
@@ -96,8 +97,12 @@ public class SubscriptionQueryService
                                 subscription.getStartedAt(),
                                 subscription.getExpiredAt(),
                                 subscription.getNextBillingAt(),
+                                subscription.getGracePeriodUntil(),
+                                subscription.getLastRenewalFailedAt(),
+                                subscription.getRenewalRetryCount(),
                                 subscription.isAutoRenew(),
-                                subscription.isAutoRenew()
+                                subscription.getStatus() == SubscriptionStatus.ACTIVE
+                                        && subscription.isAutoRenew()
                         )
                 )
                 .orElseGet(() ->
@@ -110,6 +115,9 @@ public class SubscriptionQueryService
                                 null,
                                 null,
                                 null,
+                                null,
+                                null,
+                                0,
                                 false,
                                 false
                         )
