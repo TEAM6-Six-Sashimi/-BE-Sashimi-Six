@@ -19,4 +19,6 @@ public interface InstructorApplicationRepository {
     List<InstructorApplication> findAllByStatus(ApprovalStatus status);
 
     boolean existsByUserIdAndApprovalStatus(Long userId, ApprovalStatus status);
+
+    Optional<Long> findUserIdByFileKey(String fileKey);
 }
