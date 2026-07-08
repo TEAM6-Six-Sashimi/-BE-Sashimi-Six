@@ -31,11 +31,22 @@ public record MySubscriptionResponse(
         @Schema(description = "다음 자동 결제 예정일", nullable = true)
         LocalDateTime nextBillingAt,
 
+        @Schema(description = "구독 결제 유예 종료일", nullable = true)
+        LocalDateTime gracePeriodUntil,
+
+        @Schema(description = "마지막 자동 갱신 실패 시각", nullable = true)
+        LocalDateTime lastRenewalFailedAt,
+
+        @Schema(description = "자동 갱신 재시도 횟수")
+        int renewalRetryCount,
+
         @Schema(description = "자동 갱신 여부")
         boolean autoRenew,
 
         @Schema(description = "해지 신청 가능 여부")
         boolean cancellable
+
+
 ) {
     public static MySubscriptionResponse from(
             SubscriptionQueryUseCase.MySubscriptionResult result
@@ -49,6 +60,9 @@ public record MySubscriptionResponse(
                 result.startedAt(),
                 result.expiresAt(),
                 result.nextBillingAt(),
+                result.gracePeriodUntil(),
+                result.lastRenewalFailedAt(),
+                result.renewalRetryCount(),
                 result.autoRenew(),
                 result.cancellable()
         );

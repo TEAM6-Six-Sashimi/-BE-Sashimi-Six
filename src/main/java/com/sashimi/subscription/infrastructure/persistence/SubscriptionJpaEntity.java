@@ -42,6 +42,15 @@ public class SubscriptionJpaEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @Column(name = "grace_period_until")
+    private LocalDateTime gracePeriodUntil;
+
+    @Column(name = "last_renewal_failed_at")
+    private LocalDateTime lastRenewalFailedAt;
+
+    @Column(name = "renewal_retry_count", nullable = false)
+    private int renewalRetryCount;
+
     protected SubscriptionJpaEntity() {
     }
 
@@ -60,6 +69,9 @@ public class SubscriptionJpaEntity {
         entity.nextBillingAt = subscription.getNextBillingAt();
         entity.autoRenew = subscription.isAutoRenew();
         entity.userId = subscription.getUserId();
+        entity.gracePeriodUntil = subscription.getGracePeriodUntil();
+        entity.lastRenewalFailedAt = subscription.getLastRenewalFailedAt();
+        entity.renewalRetryCount = subscription.getRenewalRetryCount();
 
         return entity;
     }
@@ -74,7 +86,10 @@ public class SubscriptionJpaEntity {
                 expiredAt,
                 nextBillingAt,
                 autoRenew,
-                userId
+                userId,
+                gracePeriodUntil,
+                lastRenewalFailedAt,
+                renewalRetryCount
         );
     }
 }

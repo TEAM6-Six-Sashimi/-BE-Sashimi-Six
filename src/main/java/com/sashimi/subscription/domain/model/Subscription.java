@@ -14,8 +14,12 @@ public class Subscription {
     private final LocalDateTime startedAt;
     private final LocalDateTime expiredAt;
     private final LocalDateTime nextBillingAt;
+    private final LocalDateTime gracePeriodUntil;
+    private final LocalDateTime lastRenewalFailedAt;
+    private final int renewalRetryCount;
     private final boolean autoRenew;
     private final Long userId;
+    private static final long GRACE_PERIOD_DAYS = 7;
 
     private Subscription(
             Long id,
@@ -26,7 +30,10 @@ public class Subscription {
             LocalDateTime expiredAt,
             LocalDateTime nextBillingAt,
             boolean autoRenew,
-            Long userId
+            Long userId,
+            LocalDateTime gracePeriodUntil,
+            LocalDateTime lastRenewalFailedAt,
+            int renewalRetryCount
     ) {
         this.id = id;
         this.plan = plan;
@@ -37,6 +44,9 @@ public class Subscription {
         this.nextBillingAt = nextBillingAt;
         this.autoRenew = autoRenew;
         this.userId = userId;
+        this.gracePeriodUntil = gracePeriodUntil;
+        this.lastRenewalFailedAt = lastRenewalFailedAt;
+        this.renewalRetryCount = renewalRetryCount;
     }
 
     public static Subscription start(
@@ -56,7 +66,10 @@ public class Subscription {
                 expiredAt,
                 expiredAt,
                 true,
-                userId
+                userId,
+                null,
+                null,
+                0
         );
     }
 
@@ -69,7 +82,10 @@ public class Subscription {
             LocalDateTime expiredAt,
             LocalDateTime nextBillingAt,
             boolean autoRenew,
-            Long userId
+            Long userId,
+            LocalDateTime gracePeriodUntil,
+            LocalDateTime lastRenewalFailedAt,
+            int renewalRetryCount
     ) {
         return new Subscription(
                 id,
@@ -80,7 +96,10 @@ public class Subscription {
                 expiredAt,
                 nextBillingAt,
                 autoRenew,
-                userId
+                userId,
+                gracePeriodUntil,
+                lastRenewalFailedAt,
+                renewalRetryCount
         );
     }
 
@@ -106,19 +125,21 @@ public class Subscription {
                 expiredAt,
                 null,
                 false,
-                userId
+                userId,
+                gracePeriodUntil,
+                lastRenewalFailedAt,
+                renewalRetryCount
         );
     }
 
-    public Subscription renew(LocalDateTime renewedAt) {
-        if (status != SubscriptionStatus.ACTIVE || !autoRenew) {
-            throw new BusinessException(
-                    ErrorCode.SUBSCRIPTION_RENEWAL_FAILED
-            );
+    public Subscription renew(LocalDateTime renewalBaseAt) {
+        if ((status != SubscriptionStatus.ACTIVE && status != SubscriptionStatus.PAST_DUE)
+                || !autoRenew
+                || renewalBaseAt == null) {
+            throw new BusinessException(ErrorCode.SUBSCRIPTION_RENEWAL_FAILED);
         }
 
-        LocalDateTime newExpiredAt =
-                plan.calculateExpiration(renewedAt);
+        LocalDateTime newExpiredAt = plan.calculateExpiration(renewalBaseAt);
 
         return new Subscription(
                 id,
@@ -129,7 +150,37 @@ public class Subscription {
                 newExpiredAt,
                 newExpiredAt,
                 true,
-                userId
+                userId,
+                null,
+                null,
+                0
+        );
+    }
+
+    public Subscription markPastDue(LocalDateTime failedAt) {
+        if ((status != SubscriptionStatus.ACTIVE && status != SubscriptionStatus.PAST_DUE)
+                || !autoRenew
+                || nextBillingAt == null) {
+            throw new BusinessException(ErrorCode.SUBSCRIPTION_RENEWAL_FAILED);
+        }
+
+        LocalDateTime graceUntil = gracePeriodUntil != null
+                ? gracePeriodUntil
+                : nextBillingAt.plusDays(GRACE_PERIOD_DAYS);
+
+        return new Subscription(
+                id,
+                plan,
+                SubscriptionStatus.PAST_DUE,
+                price,
+                startedAt,
+                expiredAt,
+                nextBillingAt,
+                true,
+                userId,
+                graceUntil,
+                failedAt,
+                renewalRetryCount + 1
         );
     }
 
@@ -143,15 +194,24 @@ public class Subscription {
                 expiredAt,
                 null,
                 false,
-                userId
+                userId,
+                null,
+                lastRenewalFailedAt,
+                renewalRetryCount
         );
     }
 
     public boolean isRenewalDue(LocalDateTime now) {
-        return status == SubscriptionStatus.ACTIVE
+        return (status == SubscriptionStatus.ACTIVE || status == SubscriptionStatus.PAST_DUE)
                 && autoRenew
                 && nextBillingAt != null
                 && !nextBillingAt.isAfter(now);
+    }
+
+    public boolean isGracePeriodExpired(LocalDateTime now) {
+        return status == SubscriptionStatus.PAST_DUE
+                && gracePeriodUntil != null
+                && !gracePeriodUntil.isAfter(now);
     }
 
     public boolean isExpirationDue(LocalDateTime now) {
@@ -162,9 +222,15 @@ public class Subscription {
     }
 
     public boolean isActive(LocalDateTime now) {
-        return status == SubscriptionStatus.ACTIVE
-                && expiredAt != null
-                && expiredAt.isAfter(now);
+        if (status == SubscriptionStatus.ACTIVE) {
+            return expiredAt != null && expiredAt.isAfter(now);
+        }
+
+        if (status == SubscriptionStatus.PAST_DUE) {
+            return gracePeriodUntil != null && gracePeriodUntil.isAfter(now);
+        }
+
+        return false;
     }
 
     public Long getId() { return id; }
@@ -176,4 +242,9 @@ public class Subscription {
     public LocalDateTime getNextBillingAt() { return nextBillingAt; }
     public boolean isAutoRenew() { return autoRenew; }
     public Long getUserId() { return userId; }
+    public LocalDateTime getGracePeriodUntil() {return gracePeriodUntil;}
+
+    public LocalDateTime getLastRenewalFailedAt() {return lastRenewalFailedAt;}
+
+    public int getRenewalRetryCount() {return renewalRetryCount;}
 }

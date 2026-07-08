@@ -64,6 +64,14 @@ public class SubscriptionRenewalProcessor {
             return RenewalResult.SKIPPED;
         }
 
+        if (subscription.isGracePeriodExpired(now)) {
+            subscriptionRepository.save(
+                    subscription.expire()
+            );
+
+            return RenewalResult.EXPIRED_GRACE_PERIOD_ENDED;
+        }
+
         Credit credit =
                 creditRepository.findByUserIdForUpdate(
                         subscription.getUserId()
@@ -72,11 +80,13 @@ public class SubscriptionRenewalProcessor {
         if (credit == null
                 || credit.getBalance() < subscription.getPrice()) {
             subscriptionRepository.save(
-                    subscription.expire()
+                    subscription.markPastDue(now)
             );
 
-            return RenewalResult.EXPIRED_INSUFFICIENT_CREDIT;
+            return RenewalResult.PAST_DUE_INSUFFICIENT_CREDIT;
         }
+
+        LocalDateTime renewalBaseAt = subscription.getNextBillingAt();
 
         credit.use(subscription.getPrice());
         creditRepository.save(credit);
@@ -109,9 +119,7 @@ public class SubscriptionRenewalProcessor {
         );
 
         subscriptionRepository.save(
-                subscription.renew(
-                        subscription.getNextBillingAt()
-                )
+                subscription.renew(renewalBaseAt)
         );
 
         return RenewalResult.RENEWED;
@@ -153,7 +161,8 @@ public class SubscriptionRenewalProcessor {
 
     public enum RenewalResult {
         RENEWED,
-        EXPIRED_INSUFFICIENT_CREDIT,
+        PAST_DUE_INSUFFICIENT_CREDIT,
+        EXPIRED_GRACE_PERIOD_ENDED,
         SKIPPED
     }
 }

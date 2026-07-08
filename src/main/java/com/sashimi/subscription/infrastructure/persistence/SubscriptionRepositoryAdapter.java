@@ -1,7 +1,6 @@
 package com.sashimi.subscription.infrastructure.persistence;
 
 import com.sashimi.subscription.domain.model.Subscription;
-import com.sashimi.subscription.domain.model.SubscriptionStatus;
 import com.sashimi.subscription.domain.repository.SubscriptionRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
@@ -30,11 +29,10 @@ public class SubscriptionRepositoryAdapter implements SubscriptionRepository {
     }
 
     @Override
-    public Optional<Subscription> findActiveByUserId(Long userId, LocalDateTime now){
+    public Optional<Subscription> findActiveByUserId(Long userId, LocalDateTime now) {
         return repository
-                .findByUserIdAndStatusAndExpiredAtAfterOrderByStartedAtDesc(
+                .findUsableByUserId(
                         userId,
-                        SubscriptionStatus.ACTIVE,
                         now,
                         PageRequest.of(0, 1)
                 )

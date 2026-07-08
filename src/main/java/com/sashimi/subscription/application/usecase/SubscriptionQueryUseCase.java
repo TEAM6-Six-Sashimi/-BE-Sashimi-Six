@@ -44,6 +44,9 @@ public interface SubscriptionQueryUseCase {
             LocalDateTime startedAt,
             LocalDateTime expiresAt,
             LocalDateTime nextBillingAt,
+            LocalDateTime gracePeriodUntil,
+            LocalDateTime lastRenewalFailedAt,
+            int renewalRetryCount,
             boolean autoRenew,
             boolean cancellable
     ) {

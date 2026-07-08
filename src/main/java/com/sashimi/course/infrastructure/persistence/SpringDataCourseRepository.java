@@ -3,6 +3,12 @@ package com.sashimi.course.infrastructure.persistence;
 import com.sashimi.course.domain.model.CourseStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.sashimi.course.application.port.InstructorCourseSales;
+import com.sashimi.order.domain.model.OrderItemType;
+import com.sashimi.payment.domain.model.PaymentStatus;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,4 +22,29 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
     List<CourseJpaEntity> findByStatusAndIdIn(CourseStatus status, List<Long> ids);
     List<CourseJpaEntity> findByStatusAndApprovedAtBefore(CourseStatus status, LocalDateTime approvedAt);
     List<CourseJpaEntity> findByStatusAndArchivedFalse(CourseStatus status);
+
+    @Query("""
+            select new com.sashimi.course.application.port.InstructorCourseSales(
+                c.id,
+                c.title,
+                sum(oi.finalPrice)
+            )
+            from OrderItemJpaEntity oi
+            join PaymentJpaEntity p on p.orderId = oi.orderId
+            join CourseJpaEntity c on c.id = oi.itemId
+            where c.instructorId = :instructorId
+              and oi.itemType = :itemType
+              and p.status = :paymentStatus
+              and p.paidAt >= :startAt
+              and p.paidAt < :endAt
+            group by c.id, c.title
+            order by sum(oi.finalPrice) desc, c.id asc
+            """)
+    List<InstructorCourseSales> findMonthlyCourseSalesByInstructor(
+            @Param("instructorId") Long instructorId,
+            @Param("itemType") OrderItemType itemType,
+            @Param("paymentStatus") PaymentStatus paymentStatus,
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endAt") LocalDateTime endAt
+    );
 }
