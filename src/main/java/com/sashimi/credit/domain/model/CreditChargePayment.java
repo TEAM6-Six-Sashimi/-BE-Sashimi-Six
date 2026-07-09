@@ -18,6 +18,8 @@ public class CreditChargePayment {
     private String failureReason;
     private LocalDateTime requestedAt;
     private LocalDateTime approvedAt;
+    private Integer retryCount;
+    private LocalDateTime lastRetriedAt;
 
     private CreditChargePayment(
             Long id,
@@ -31,7 +33,9 @@ public class CreditChargePayment {
             String failureReason,
             LocalDateTime requestedAt,
             LocalDateTime approvedAt,
-            boolean allowLegacyDoneWithoutBalanceAfter
+            boolean allowLegacyDoneWithoutBalanceAfter,
+            Integer retryCount,
+            LocalDateTime lastRetriedAt
     ) {
         if (userId == null
                 || orderId == null
@@ -64,6 +68,8 @@ public class CreditChargePayment {
                 ? LocalDateTime.now()
                 : requestedAt;
         this.approvedAt = approvedAt;
+        this.retryCount = retryCount == null ? 0 : retryCount;
+        this.lastRetriedAt = lastRetriedAt;
     }
 
     public static CreditChargePayment ready(
@@ -83,7 +89,9 @@ public class CreditChargePayment {
                 null,
                 LocalDateTime.now(),
                 null,
-                false
+                false,
+                0,
+                null
         );
     }
 
@@ -98,7 +106,9 @@ public class CreditChargePayment {
             CreditChargePaymentStatus status,
             String failureReason,
             LocalDateTime requestedAt,
-            LocalDateTime approvedAt
+            LocalDateTime approvedAt,
+            Integer retryCount,
+            LocalDateTime lastRetriedAt
     ) {
         return new CreditChargePayment(
                 id,
@@ -112,7 +122,9 @@ public class CreditChargePayment {
                 failureReason,
                 requestedAt,
                 approvedAt,
-                true
+                true,
+                retryCount,
+                lastRetriedAt
         );
     }
 
@@ -147,10 +159,9 @@ public class CreditChargePayment {
             LocalDateTime approvedAt,
             Long balanceAfter
     ) {
-        if (status != CreditChargePaymentStatus.READY) {
-            throw new BusinessException(
-                    ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED
-            );
+        if (status != CreditChargePaymentStatus.READY
+                && status != CreditChargePaymentStatus.NEED_RETRY) {
+            throw new BusinessException(ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED);
         }
 
         validateDoneState(
@@ -178,6 +189,70 @@ public class CreditChargePayment {
 
         this.status = CreditChargePaymentStatus.FAILED;
         this.failureReason = failureReason;
+    }
+
+    public void markNeedRetry(
+            String paymentKey,
+            String paymentMethod,
+            LocalDateTime approvedAt,
+            String failureReason
+    ) {
+        if (status == CreditChargePaymentStatus.DONE) {
+            throw new BusinessException(ErrorCode.CREDIT_CHARGE_PAYMENT_ALREADY_PROCESSED);
+        }
+
+        if (paymentKey == null || paymentKey.isBlank()) {
+            throw new BusinessException(ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT);
+        }
+
+        this.paymentKey = paymentKey;
+        this.paymentMethod = paymentMethod;
+        this.approvedAt = approvedAt == null ? LocalDateTime.now() : approvedAt;
+        this.status = CreditChargePaymentStatus.NEED_RETRY;
+        this.failureReason = limitFailureReason(failureReason);
+    }
+
+    public void markRetryFailed(
+            String failureReason,
+            LocalDateTime lastRetriedAt,
+            int maxRetryCount
+    ) {
+        int nextRetryCount = retryCount + 1;
+
+        this.retryCount = nextRetryCount;
+        this.failureReason = limitFailureReason(failureReason);
+        this.lastRetriedAt = lastRetriedAt == null
+                ? LocalDateTime.now()
+                : lastRetriedAt;
+        this.status = nextRetryCount >= maxRetryCount
+                ? CreditChargePaymentStatus.MANUAL_REVIEW
+                : CreditChargePaymentStatus.NEED_RETRY;
+    }
+
+    public boolean isNeedRetry() {
+        return status == CreditChargePaymentStatus.NEED_RETRY;
+    }
+
+    public boolean isManualReview() {
+        return status == CreditChargePaymentStatus.MANUAL_REVIEW;
+    }
+
+    public Integer getRetryCount() {
+        return retryCount;
+    }
+
+    public LocalDateTime getLastRetriedAt() {
+        return lastRetriedAt;
+    }
+
+    private String limitFailureReason(String failureReason) {
+        if (failureReason == null) {
+            return null;
+        }
+
+        return failureReason.length() > 500
+                ? failureReason.substring(0, 500)
+                : failureReason;
     }
 
     private void validateDoneState(
