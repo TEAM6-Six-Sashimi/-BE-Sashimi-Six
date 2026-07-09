@@ -3,6 +3,9 @@ package com.sashimi.course.application.service;
 import com.sashimi.course.application.port.InstructorCourseSales;
 import com.sashimi.course.application.port.InstructorSalesQueryPort;
 import com.sashimi.course.application.usecase.InstructorDashboardQueryUseCase;
+import com.sashimi.course.domain.model.Course;
+import com.sashimi.course.domain.model.CourseStatus;
+import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +26,12 @@ public class InstructorDashboardQueryService implements InstructorDashboardQuery
     private static final int PLATFORM_FEE_RATE = 30;
     private static final ZoneId SERVICE_ZONE = ZoneId.of("Asia/Seoul");
 
+    /** 수강생이 존재할 수 있는 강의 상태 (승인 + 비공개) */
+    private static final List<CourseStatus> STUDENT_VISIBLE_STATUSES =
+            List.of(CourseStatus.APPROVED, CourseStatus.CLOSED);
+
     private final InstructorSalesQueryPort instructorSalesQueryPort;
+    private final CourseRepository courseRepository;
 
     @Override
     public InstructorSalesDashboard getMonthlySales(
@@ -57,6 +65,29 @@ public class InstructorDashboardQueryService implements InstructorDashboardQuery
                 settlementAmount,
                 PLATFORM_FEE_RATE,
                 courses
+        );
+    }
+
+    @Override
+    public InstructorStudentDashboard getStudentCounts(Long instructorId) {
+        List<CourseStudentItem> courses = courseRepository
+                .findByInstructorIdAndStatusIn(instructorId, STUDENT_VISIBLE_STATUSES)
+                .stream()
+                .map(this::toCourseStudentItem)
+                .toList();
+
+        int totalStudentCount = courses.stream()
+                .mapToInt(CourseStudentItem::studentCount)
+                .sum();
+
+        return new InstructorStudentDashboard(totalStudentCount, courses);
+    }
+
+    private CourseStudentItem toCourseStudentItem(Course course) {
+        return new CourseStudentItem(
+                course.getId(),
+                course.getTitle(),
+                course.getStudentCount()
         );
     }
 

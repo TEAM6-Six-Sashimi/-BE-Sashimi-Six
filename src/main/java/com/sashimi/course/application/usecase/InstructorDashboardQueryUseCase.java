@@ -10,6 +10,21 @@ public interface InstructorDashboardQueryUseCase {
             Integer month
     );
 
+    InstructorStudentDashboard getStudentCounts(Long instructorId);
+
+    record InstructorStudentDashboard(
+            int totalStudentCount,
+            List<CourseStudentItem> courses
+    ) {
+    }
+
+    record CourseStudentItem(
+            Long courseId,
+            String title,
+            int studentCount
+    ) {
+    }
+
     record InstructorSalesDashboard(
             int year,
             int month,
