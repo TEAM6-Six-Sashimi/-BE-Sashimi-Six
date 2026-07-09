@@ -1,5 +1,6 @@
 package com.sashimi.course.application.service;
 
+import com.sashimi.course.application.port.CourseEnrollmentPort;
 import com.sashimi.course.application.port.InstructorCourseSales;
 import com.sashimi.course.application.port.InstructorSalesQueryPort;
 import com.sashimi.course.application.usecase.InstructorDashboardQueryUseCase;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -32,6 +34,7 @@ public class InstructorDashboardQueryService implements InstructorDashboardQuery
 
     private final InstructorSalesQueryPort instructorSalesQueryPort;
     private final CourseRepository courseRepository;
+    private final CourseEnrollmentPort courseEnrollmentPort;
 
     @Override
     public InstructorSalesDashboard getMonthlySales(
@@ -88,6 +91,35 @@ public class InstructorDashboardQueryService implements InstructorDashboardQuery
                 course.getId(),
                 course.getTitle(),
                 course.getStudentCount()
+        );
+    }
+
+    @Override
+    public InstructorCompletionDashboard getCompletionRates(Long instructorId) {
+        List<Course> courses = courseRepository
+                .findByInstructorIdAndStatusIn(instructorId, STUDENT_VISIBLE_STATUSES);
+
+        List<Long> courseIds = courses.stream().map(Course::getId).toList();
+        Map<Long, Integer> completedCounts = courseEnrollmentPort.countCompletedByCourseIds(courseIds);
+
+        List<CourseCompletionItem> items = courses.stream()
+                .map(course -> toCourseCompletionItem(course, completedCounts))
+                .toList();
+
+        return new InstructorCompletionDashboard(items);
+    }
+
+    private CourseCompletionItem toCourseCompletionItem(Course course, Map<Long, Integer> completedCounts) {
+        int total = course.getStudentCount();
+        int completed = completedCounts.getOrDefault(course.getId(), 0);
+        int completionRate = total == 0 ? 0 : Math.round(completed * 100f / total);
+
+        return new CourseCompletionItem(
+                course.getId(),
+                course.getTitle(),
+                total,
+                completed,
+                completionRate
         );
     }
 

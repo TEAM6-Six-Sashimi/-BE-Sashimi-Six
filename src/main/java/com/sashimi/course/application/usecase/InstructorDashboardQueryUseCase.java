@@ -25,6 +25,22 @@ public interface InstructorDashboardQueryUseCase {
     ) {
     }
 
+    InstructorCompletionDashboard getCompletionRates(Long instructorId);
+
+    record InstructorCompletionDashboard(
+            List<CourseCompletionItem> courses
+    ) {
+    }
+
+    record CourseCompletionItem(
+            Long courseId,
+            String title,
+            int totalStudentCount,
+            int completedStudentCount,
+            int completionRate
+    ) {
+    }
+
     record InstructorSalesDashboard(
             int year,
             int month,

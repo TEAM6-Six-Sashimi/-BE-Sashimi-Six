@@ -11,6 +11,7 @@ import com.sashimi.course.presentation.api.response.CourseResponse;
 import com.sashimi.course.presentation.api.response.InstructorCourseDetailResponse;
 import com.sashimi.course.presentation.api.response.InstructorSalesDashboardResponse;
 import com.sashimi.course.presentation.api.response.InstructorStudentDashboardResponse;
+import com.sashimi.course.presentation.api.response.InstructorCompletionDashboardResponse;
 import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -152,6 +153,21 @@ public class InstructorCourseController {
         return ResponseEntity.ok(
                 InstructorStudentDashboardResponse.from(
                         instructorDashboardQueryUseCase.getStudentCounts(principal.getId())
+                )
+        );
+    }
+
+    @Operation(
+            summary = "강사 강좌별 완강률 대시보드 조회",
+            description = "로그인한 강사의 승인·비공개 강의별 전체 수강생 수, 완강생 수, 완강률(%)을 조회합니다."
+    )
+    @GetMapping("/dashboard/completion-rate")
+    public ResponseEntity<InstructorCompletionDashboardResponse> getCompletionDashboard(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        return ResponseEntity.ok(
+                InstructorCompletionDashboardResponse.from(
+                        instructorDashboardQueryUseCase.getCompletionRates(principal.getId())
                 )
         );
     }
