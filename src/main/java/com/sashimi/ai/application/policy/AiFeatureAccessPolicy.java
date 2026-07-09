@@ -6,7 +6,7 @@ import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.subscription.application.policy.ActiveSubscriptionPolicy;
 import com.sashimi.user.domain.repository.UserRepository;
 import org.springframework.stereotype.Component;
-
+//asdfasdfasdfasdfasdfasdfasdfdsf
 @Component
 public class AiFeatureAccessPolicy {
 
