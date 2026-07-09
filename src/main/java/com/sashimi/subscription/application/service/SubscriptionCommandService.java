@@ -25,9 +25,10 @@ public class SubscriptionCommandService
 
     @Override
     public CancelResult cancel(Long userId) {
+        LocalDateTime now = LocalDateTime.now();
         Subscription subscription =
                 subscriptionRepository
-                        .findActiveByUserIdForUpdate(userId)
+                        .findActiveByUserIdForUpdate(userId, now)
                         .orElseThrow(() ->
                                 new BusinessException(
                                         ErrorCode.SUBSCRIPTION_NOT_FOUND

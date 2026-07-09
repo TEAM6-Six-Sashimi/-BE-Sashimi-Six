@@ -44,17 +44,21 @@ public interface SpringDataSubscriptionRepository
     from SubscriptionJpaEntity s
     where s.userId = :userId
       and (
-            s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE
+            (
+                s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE
+                and s.expiredAt > :now
+            )
             or
             (
                 s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.PAST_DUE
                 and s.gracePeriodUntil is not null
-                and s.gracePeriodUntil > CURRENT_TIMESTAMP
+                and s.gracePeriodUntil > :now
             )
       )
     """)
     Optional<SubscriptionJpaEntity> findActiveByUserIdForUpdate(
-            @Param("userId") Long userId
+            @Param("userId") Long userId,
+            @Param("now") LocalDateTime now
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
