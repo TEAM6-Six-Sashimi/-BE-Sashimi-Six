@@ -39,7 +39,7 @@ jobs:
     env:
       EC2_HOST: ${{ secrets.EC2_HOST }}
       EC2_USER: ${{ secrets.EC2_USER }}
-      EC2_APP_DIR: /home/ubuntu/Sashimi-Six
+      EC2_APP_DIR: /home/ubuntu/-BE-Sashimi-Six
       EC2_ENV_FILE: /home/ubuntu/sashimi.env
       DOCKER_NETWORK: sashimi-net
       DOCKER_IMAGE: sashimi-six:latest
