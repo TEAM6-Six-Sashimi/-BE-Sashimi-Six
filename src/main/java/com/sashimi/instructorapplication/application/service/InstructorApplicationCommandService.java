@@ -144,47 +144,53 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
             }
 
             // 모든 검증 통과 후 S3 업로드 3종(자격증 N개+프로필+이력서) 병렬 수행 (실패 시 보상 삭제)
-            List<CompletableFuture<String>> certUploadFutures = certCandidates.stream()
-                    .map(candidate -> CompletableFuture.supplyAsync(() ->
+            // 작업 "제출" 자체(supplyAsync 호출)도 try 안에서 해야 함 - executor 포화로 제출이
+            // RejectedExecutionException을 던지는 경우, 그 전에 이미 제출된 업로드도 보상 대상이라서
+            List<CompletableFuture<String>> allUploadFutures = new ArrayList<>();
+            List<CompletableFuture<String>> certUploadFutures = new ArrayList<>();
+            List<String> certFileKeys;
+            String profileImageKey;
+            String resumeFileKey;
+            try {
+                for (CertCandidate candidate : certCandidates) {
+                    CompletableFuture<String> future = CompletableFuture.supplyAsync(() ->
                             fileStoragePort.storePrivate(
                                     candidate.file().fileBytes(),
                                     candidate.file().fileName(),
                                     "instructor-applications/certificates"
-                            ), instructorApplicationExecutor))
-                    .toList();
+                            ), instructorApplicationExecutor);
+                    certUploadFutures.add(future);
+                    allUploadFutures.add(future);
+                }
 
-            CompletableFuture<String> profileUploadFuture = CompletableFuture.supplyAsync(() ->
-                    fileStoragePort.storePrivate(
-                            command.profileImage().fileBytes(),
-                            command.profileImage().fileName(),
-                            "instructor-applications/profile"
-                    ), instructorApplicationExecutor);
+                CompletableFuture<String> profileUploadFuture = CompletableFuture.supplyAsync(() ->
+                        fileStoragePort.storePrivate(
+                                command.profileImage().fileBytes(),
+                                command.profileImage().fileName(),
+                                "instructor-applications/profile"
+                        ), instructorApplicationExecutor);
+                allUploadFutures.add(profileUploadFuture);
 
-            CompletableFuture<String> resumeUploadFuture = CompletableFuture.supplyAsync(() ->
-                    fileStoragePort.storePrivate(
-                            command.resumeFile().fileBytes(),
-                            command.resumeFile().fileName(),
-                            "instructor-applications/resume"
-                    ), instructorApplicationExecutor);
+                CompletableFuture<String> resumeUploadFuture = CompletableFuture.supplyAsync(() ->
+                        fileStoragePort.storePrivate(
+                                command.resumeFile().fileBytes(),
+                                command.resumeFile().fileName(),
+                                "instructor-applications/resume"
+                        ), instructorApplicationExecutor);
+                allUploadFutures.add(resumeUploadFuture);
 
-            List<CompletableFuture<String>> allUploadFutures = new ArrayList<>(certUploadFutures);
-            allUploadFutures.add(profileUploadFuture);
-            allUploadFutures.add(resumeUploadFuture);
-
-            try {
                 CompletableFuture.allOf(allUploadFutures.toArray(new CompletableFuture[0])).join();
-            } catch (CompletionException e) {
+
+                certFileKeys = certUploadFutures.stream().map(CompletableFuture::join).toList();
+                profileImageKey = profileUploadFuture.join();
+                resumeFileKey = resumeUploadFuture.join();
+            } catch (RuntimeException e) {
                 compensateSucceeded(allUploadFutures);
-                Throwable cause = e.getCause();
-                if (cause instanceof RuntimeException re) {
+                if (e instanceof CompletionException && e.getCause() instanceof RuntimeException re) {
                     throw re;
                 }
                 throw e;
             }
-
-            List<String> certFileKeys = certUploadFutures.stream().map(CompletableFuture::join).toList();
-            String profileImageKey = profileUploadFuture.join();
-            String resumeFileKey = resumeUploadFuture.join();
 
             List<InstructorCertification> certifications = new ArrayList<>();
             for (int i = 0; i < certCandidates.size(); i++) {
