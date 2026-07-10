@@ -24,6 +24,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
+    public static final String CONCURRENT_SESSION_ATTRIBUTE = "concurrentSessionDetected";
+
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
     private final TokenVersionService tokenVersionService;
@@ -40,8 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     Long userId = jwtTokenProvider.extractUserId(accessToken);
                     Long version = jwtTokenProvider.extractVersion(accessToken);
-                    if (!tokenBlacklistService.isBlacklisted(accessToken)
-                            && tokenVersionService.isValidVersion(userId, version)) {
+                    if (tokenBlacklistService.isBlacklisted(accessToken)) {
+                        // 명시적으로 로그아웃된 토큰: 일반 인증 실패로 처리
+                    } else if (!tokenVersionService.isValidVersion(userId, version)) {
+                        // 다른 기기에서 로그인하여 버전이 갱신됨: 동시 접속으로 구분
+                        request.setAttribute(CONCURRENT_SESSION_ATTRIBUTE, Boolean.TRUE);
+                    } else {
                         Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }

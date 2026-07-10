@@ -5,6 +5,7 @@ package com.sashimi.security.handler;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.global.exception.ErrorResponse;
 import com.sashimi.global.trace.TraceIdFilter;
+import com.sashimi.security.jwt.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,11 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException {
-        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+        boolean concurrentSession = Boolean.TRUE.equals(
+                request.getAttribute(JwtAuthenticationFilter.CONCURRENT_SESSION_ATTRIBUTE));
+        ErrorCode errorCode = concurrentSession
+                ? ErrorCode.CONCURRENT_SESSION_DETECTED
+                : ErrorCode.UNAUTHORIZED;
 
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),
