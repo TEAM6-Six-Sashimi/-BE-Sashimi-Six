@@ -22,6 +22,7 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
@@ -52,14 +53,14 @@ public class S3FileStorageAdapter implements FileStoragePort {
 
         String key = "images/" + UUID.randomUUID() + getExtension(file.getOriginalFilename());
 
-        try {
+        try (InputStream inputStream = file.getInputStream()) {
             s3Client.putObject(
                     PutObjectRequest.builder()
                             .bucket(properties.getS3().getBucketImages())
                             .key(key)
                             .contentType(file.getContentType())
                             .build(),
-                    RequestBody.fromBytes(file.getBytes())
+                    RequestBody.fromInputStream(inputStream, file.getSize())
             );
         } catch (Exception e) {
             log.error("[S3] 이미지 업로드 실패 - key: {}, cause: {}", key, e.getMessage(), e);
@@ -107,14 +108,14 @@ public class S3FileStorageAdapter implements FileStoragePort {
 
         String key = folder + "/" + UUID.randomUUID() + getExtension(file.getOriginalFilename());
 
-        try {
+        try (InputStream inputStream = file.getInputStream()) {
             s3Client.putObject(
                     PutObjectRequest.builder()
                             .bucket(bucket)
                             .key(key)
                             .contentType(file.getContentType())
                             .build(),
-                    RequestBody.fromBytes(file.getBytes())
+                    RequestBody.fromInputStream(inputStream, file.getSize())
             );
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
