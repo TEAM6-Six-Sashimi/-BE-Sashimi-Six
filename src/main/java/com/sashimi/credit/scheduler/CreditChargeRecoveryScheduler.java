@@ -38,18 +38,28 @@ public class CreditChargeRecoveryScheduler {
             try {
                 transactionService.retryNeedRetryCharge(target.getId());
             } catch (RuntimeException e) {
-                transactionService.markRetryFailed(
-                        target.getId(),
-                        e.getClass().getSimpleName()
-                );
+    try {
+        transactionService.markRetryFailed(
+                target.getId(),
+                e.getClass().getSimpleName()
+        );
+    } catch (RuntimeException markException) {
+        log.error(
+                "크레딧 충전 재처리 실패 상태 변경 실패 - paymentId={}, orderId={}, reason={}",
+                target.getId(),
+                target.getOrderId(),
+                markException.getClass().getSimpleName(),
+                markException
+        );
+    }
 
-                log.error(
-                        "크레딧 충전 재처리 스케줄러 오류 - paymentId={}, orderId={}",
-                        target.getId(),
-                        target.getOrderId(),
-                        e
-                );
-            }
+    log.error(
+            "크레딧 충전 재처리 스케줄러 오류 - paymentId={}, orderId={}",
+            target.getId(),
+            target.getOrderId(),
+            e
+    );
+}
         }
     }
 }
