@@ -15,6 +15,10 @@ public interface CreditChargePaymentRepository {
 
     PageResult findCompletedByUserId(Long userId, int page, int size);
 
+    List<CreditChargePayment> findNeedRetryTargets(int maxRetryCount, int limit);
+
+    Optional<CreditChargePayment> findByIdForUpdate(Long id);
+
     record PageResult(List<CreditChargePayment> content, long totalElements, int totalPages, int page, int size) {
     }
 }

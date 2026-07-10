@@ -42,8 +42,8 @@ public class SubscriptionRepositoryAdapter implements SubscriptionRepository {
     }
 
     @Override
-    public Optional<Subscription> findActiveByUserIdForUpdate(Long userId) {
-        return repository.findActiveByUserIdForUpdate(userId)
+    public Optional<Subscription> findActiveByUserIdForUpdate(Long userId, LocalDateTime now) {
+        return repository.findActiveByUserIdForUpdate(userId, now)
                 .map(SubscriptionJpaEntity::toDomain);
     }
 

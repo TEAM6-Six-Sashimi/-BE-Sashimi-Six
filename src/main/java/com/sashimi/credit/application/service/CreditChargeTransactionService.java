@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,7 @@ public class CreditChargeTransactionService {
 
     private final CreditRepository creditRepository;
     private final CreditChargePaymentRepository paymentRepository;
+    private static final int MAX_CREDIT_CHARGE_RETRY_COUNT = 3;
 
     @Transactional
     public CreditChargeConfirmResult complete(
@@ -111,6 +114,114 @@ public class CreditChargeTransactionService {
                 payment.getOrderId(),
                 payment.getPaymentKey(),
                 payment.getAmount()
+        );
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markNeedRetry(
+            ConfirmCreditChargeCommand command,
+            TossPaymentConfirmResponse response,
+            String failureReason
+    ) {
+        CreditChargePayment payment =
+                paymentRepository.findByOrderIdForUpdate(command.orderId())
+                        .orElseThrow(() -> new BusinessException(
+                                ErrorCode.CREDIT_CHARGE_PAYMENT_NOT_FOUND
+                        ));
+
+        if (payment.isDone()) {
+            return;
+        }
+
+        payment.validateOwner(command.userId());
+        payment.validateAmount(command.amount());
+
+        payment.markNeedRetry(
+                response.paymentKey(),
+                response.method(),
+                response.approvedAt() == null
+                        ? LocalDateTime.now()
+                        : response.approvedAt().toLocalDateTime(),
+                failureReason
+        );
+
+        paymentRepository.save(payment);
+
+        log.error(
+                "크레딧 충전 내부 반영 실패로 재처리 대기 등록 - userId={}, orderId={}, amount={}, reason={}",
+                command.userId(),
+                payment.getOrderId(),
+                payment.getAmount(),
+                failureReason
+        );
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void retryNeedRetryCharge(Long paymentId) {
+        CreditChargePayment payment =
+                paymentRepository.findByIdForUpdate(paymentId)
+                        .orElseThrow(() -> new BusinessException(
+                                ErrorCode.CREDIT_CHARGE_PAYMENT_NOT_FOUND
+                        ));
+
+        if (!payment.isNeedRetry()) {
+            return;
+        }
+
+        Credit credit = creditRepository
+                .findByUserIdForUpdate(payment.getUserId())
+                .orElseGet(() -> Credit.create(payment.getUserId(), 0L));
+
+        credit.add(payment.getAmount());
+        Credit savedCredit = creditRepository.save(credit);
+
+        payment.markDone(
+                payment.getPaymentKey(),
+                payment.getPaymentMethod(),
+                payment.getApprovedAt(),
+                savedCredit.getBalance()
+        );
+
+        paymentRepository.save(payment);
+
+        log.info(
+                "크레딧 충전 재처리 성공 - userId={}, orderId={}, amount={}, balance={}",
+                payment.getUserId(),
+                payment.getOrderId(),
+                payment.getAmount(),
+                savedCredit.getBalance()
+        );
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markRetryFailed(
+            Long paymentId,
+            String failureReason
+    ) {
+        CreditChargePayment payment =
+                paymentRepository.findByIdForUpdate(paymentId)
+                        .orElseThrow(() -> new BusinessException(
+                                ErrorCode.CREDIT_CHARGE_PAYMENT_NOT_FOUND
+                        ));
+
+        if (!payment.isNeedRetry()) {
+            return;
+        }
+
+        payment.markRetryFailed(
+                failureReason,
+                LocalDateTime.now(),
+                MAX_CREDIT_CHARGE_RETRY_COUNT
+        );
+
+        paymentRepository.save(payment);
+
+        log.error(
+                "크레딧 충전 재처리 실패 - paymentId={}, orderId={}, retryCount={}, reason={}",
+                payment.getId(),
+                payment.getOrderId(),
+                payment.getRetryCount(),
+                failureReason
         );
     }
 }

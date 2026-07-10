@@ -40,6 +40,13 @@ public class ReviewReportRepositoryAdapter implements ReviewReportRepository {
     }
 
     @Override
+    public List<ReviewReport> findAllByReviewIdAndStatus(Long reviewId, ReviewReportStatus status) {
+        return springDataReviewReportRepository.findAllByReviewIdAndStatus(reviewId, status).stream()
+                .map(ReviewReportJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public Optional<ReviewReport> findById(Long reportId) {
         return springDataReviewReportRepository.findById(reportId)
                 .map(ReviewReportJpaEntity::toDomain);
