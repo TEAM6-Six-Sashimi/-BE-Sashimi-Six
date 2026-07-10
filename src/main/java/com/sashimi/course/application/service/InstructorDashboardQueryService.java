@@ -1,8 +1,12 @@
 package com.sashimi.course.application.service;
 
+import com.sashimi.course.application.port.CourseEnrollmentPort;
 import com.sashimi.course.application.port.InstructorCourseSales;
 import com.sashimi.course.application.port.InstructorSalesQueryPort;
 import com.sashimi.course.application.usecase.InstructorDashboardQueryUseCase;
+import com.sashimi.course.domain.model.Course;
+import com.sashimi.course.domain.model.CourseStatus;
+import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional(readOnly = true)
@@ -23,7 +28,13 @@ public class InstructorDashboardQueryService implements InstructorDashboardQuery
     private static final int PLATFORM_FEE_RATE = 30;
     private static final ZoneId SERVICE_ZONE = ZoneId.of("Asia/Seoul");
 
+    /** 수강생이 존재할 수 있는 강의 상태 (승인 + 비공개) */
+    private static final List<CourseStatus> STUDENT_VISIBLE_STATUSES =
+            List.of(CourseStatus.APPROVED, CourseStatus.CLOSED);
+
     private final InstructorSalesQueryPort instructorSalesQueryPort;
+    private final CourseRepository courseRepository;
+    private final CourseEnrollmentPort courseEnrollmentPort;
 
     @Override
     public InstructorSalesDashboard getMonthlySales(
@@ -57,6 +68,58 @@ public class InstructorDashboardQueryService implements InstructorDashboardQuery
                 settlementAmount,
                 PLATFORM_FEE_RATE,
                 courses
+        );
+    }
+
+    @Override
+    public InstructorStudentDashboard getStudentCounts(Long instructorId) {
+        List<CourseStudentItem> courses = courseRepository
+                .findByInstructorIdAndStatusIn(instructorId, STUDENT_VISIBLE_STATUSES)
+                .stream()
+                .map(this::toCourseStudentItem)
+                .toList();
+
+        int totalStudentCount = courses.stream()
+                .mapToInt(CourseStudentItem::studentCount)
+                .sum();
+
+        return new InstructorStudentDashboard(totalStudentCount, courses);
+    }
+
+    private CourseStudentItem toCourseStudentItem(Course course) {
+        return new CourseStudentItem(
+                course.getId(),
+                course.getTitle(),
+                course.getStudentCount()
+        );
+    }
+
+    @Override
+    public InstructorCompletionDashboard getCompletionRates(Long instructorId) {
+        List<Course> courses = courseRepository
+                .findByInstructorIdAndStatusIn(instructorId, STUDENT_VISIBLE_STATUSES);
+
+        List<Long> courseIds = courses.stream().map(Course::getId).toList();
+        Map<Long, Integer> completedCounts = courseEnrollmentPort.countCompletedByCourseIds(courseIds);
+
+        List<CourseCompletionItem> items = courses.stream()
+                .map(course -> toCourseCompletionItem(course, completedCounts))
+                .toList();
+
+        return new InstructorCompletionDashboard(items);
+    }
+
+    private CourseCompletionItem toCourseCompletionItem(Course course, Map<Long, Integer> completedCounts) {
+        int total = course.getStudentCount();
+        int completed = completedCounts.getOrDefault(course.getId(), 0);
+        int completionRate = total == 0 ? 0 : Math.round(completed * 100f / total);
+
+        return new CourseCompletionItem(
+                course.getId(),
+                course.getTitle(),
+                total,
+                completed,
+                completionRate
         );
     }
 
