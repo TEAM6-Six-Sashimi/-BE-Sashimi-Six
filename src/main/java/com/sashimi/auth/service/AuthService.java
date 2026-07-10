@@ -315,7 +315,7 @@ public class AuthService {
 
         Long tokenVersion = jwtTokenProvider.extractVersion(refreshTokenValue);
         if (!tokenVersionService.isValidVersion(user.getId(), tokenVersion)) {
-            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+            throw new BusinessException(ErrorCode.CONCURRENT_SESSION_DETECTED);
         }
 
         TokenResponseDto tokenResponse = jwtTokenProvider.generateToken(authentication, user.getId(), tokenVersion);
