@@ -9,15 +9,15 @@ import com.sashimi.credit.domain.repository.CreditRepository;
 import com.sashimi.credit.infrastructure.toss.TossPaymentConfirmResponse;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.payment.application.logging.PaymentAuditLogger;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-@Slf4j
+
 @Service
 @RequiredArgsConstructor
 public class CreditChargeTransactionService {
@@ -25,6 +25,7 @@ public class CreditChargeTransactionService {
     private final CreditRepository creditRepository;
     private final CreditChargePaymentRepository paymentRepository;
     private static final int MAX_CREDIT_CHARGE_RETRY_COUNT = 3;
+    private final PaymentAuditLogger paymentAuditLogger;
 
     @Transactional
     public CreditChargeConfirmResult complete(
@@ -64,8 +65,7 @@ public class CreditChargeTransactionService {
 
         paymentRepository.save(payment);
 
-        log.info(
-                "크레딧 토스 충전 완료 - userId={}, orderId={}, paymentMethod={}, amount={}, balance={}",
+        paymentAuditLogger.creditChargeCompleted(
                 command.userId(),
                 payment.getOrderId(),
                 payment.getPaymentMethod(),
@@ -98,6 +98,13 @@ public class CreditChargeTransactionService {
 
         payment.markFailed(failureReason);
         paymentRepository.save(payment);
+
+        paymentAuditLogger.creditChargeFailed(
+                command.userId(),
+                payment.getOrderId(),
+                payment.getAmount(),
+                failureReason
+        );
     }
 
     private CreditChargeConfirmResult createCompletedResult(
@@ -147,8 +154,7 @@ public class CreditChargeTransactionService {
 
         paymentRepository.save(payment);
 
-        log.error(
-                "크레딧 충전 내부 반영 실패로 재처리 대기 등록 - userId={}, orderId={}, amount={}, reason={}",
+        paymentAuditLogger.creditChargeNeedRetry(
                 command.userId(),
                 payment.getOrderId(),
                 payment.getAmount(),
@@ -184,8 +190,7 @@ public class CreditChargeTransactionService {
 
         paymentRepository.save(payment);
 
-        log.info(
-                "크레딧 충전 재처리 성공 - userId={}, orderId={}, amount={}, balance={}",
+        paymentAuditLogger.creditChargeRetrySucceeded(
                 payment.getUserId(),
                 payment.getOrderId(),
                 payment.getAmount(),
@@ -216,8 +221,7 @@ public class CreditChargeTransactionService {
 
         paymentRepository.save(payment);
 
-        log.error(
-                "크레딧 충전 재처리 실패 - paymentId={}, orderId={}, retryCount={}, reason={}",
+        paymentAuditLogger.creditChargeRetryFailed(
                 payment.getId(),
                 payment.getOrderId(),
                 payment.getRetryCount(),

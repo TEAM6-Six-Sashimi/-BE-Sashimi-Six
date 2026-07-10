@@ -4,6 +4,8 @@ import com.sashimi.credit.application.service.CreditChargeTransactionService;
 import com.sashimi.credit.domain.model.CreditChargePayment;
 import com.sashimi.credit.domain.repository.CreditChargePaymentRepository;
 import java.util.List;
+
+import com.sashimi.payment.application.logging.PaymentAuditLogger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +21,7 @@ public class CreditChargeRecoveryScheduler {
 
     private final CreditChargePaymentRepository paymentRepository;
     private final CreditChargeTransactionService transactionService;
+    private final PaymentAuditLogger paymentAuditLogger;
 
     @Scheduled(fixedDelayString = "${credit.charge.recovery.fixed-delay-ms:60000}")
     public void retryNeedRetryCharges() {
@@ -38,28 +41,27 @@ public class CreditChargeRecoveryScheduler {
             try {
                 transactionService.retryNeedRetryCharge(target.getId());
             } catch (RuntimeException e) {
-    try {
-        transactionService.markRetryFailed(
-                target.getId(),
-                e.getClass().getSimpleName()
-        );
-    } catch (RuntimeException markException) {
-        log.error(
-                "크레딧 충전 재처리 실패 상태 변경 실패 - paymentId={}, orderId={}, reason={}",
-                target.getId(),
-                target.getOrderId(),
-                markException.getClass().getSimpleName(),
-                markException
-        );
-    }
+                try {
+                    transactionService.markRetryFailed(
+                            target.getId(),
+                            e.getClass().getSimpleName()
+                    );
+                } catch (RuntimeException markException) {
+                    paymentAuditLogger.creditChargeRetryFailedMarkFailed(
+                            target.getId(),
+                            target.getOrderId(),
+                            markException.getClass().getSimpleName(),
+                            markException
+                    );
+                }
 
-    log.error(
-            "크레딧 충전 재처리 스케줄러 오류 - paymentId={}, orderId={}",
-            target.getId(),
-            target.getOrderId(),
-            e
-    );
-}
+                log.error(
+                        "크레딧 충전 재처리 스케줄러 오류 - paymentId={}, orderId={}",
+                        target.getId(),
+                        target.getOrderId(),
+                        e
+                );
+            }
         }
     }
 }

@@ -2,22 +2,23 @@ package com.sashimi.credit.infrastructure.toss;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
-import lombok.extern.slf4j.Slf4j;
+import com.sashimi.payment.application.logging.PaymentAuditLogger;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-@Slf4j
+
 @Component
-public class TossPaymentClient {
+public class    TossPaymentClient {
 
     private final RestClient restClient;
+    private final PaymentAuditLogger paymentAuditLogger;
 
     public TossPaymentClient(
-            @Qualifier("tossPaymentRestClient") RestClient restClient
-    ) {
+            @Qualifier("tossPaymentRestClient") RestClient restClient, PaymentAuditLogger paymentAuditLogger) {
         this.restClient = restClient;
+        this.paymentAuditLogger = paymentAuditLogger;
     }
 
     public TossPaymentConfirmResponse confirmOrRetrieve(
@@ -28,9 +29,9 @@ public class TossPaymentClient {
         try {
             return confirm(paymentKey, orderId, amount);
         } catch (RestClientException confirmException) {
-            log.warn(
-                    "토스 결제 승인 응답 확인 실패, 결제 조회로 복구 시도 - orderId={}",
-                    orderId
+            paymentAuditLogger.tossConfirmFallbackStarted(
+                    orderId,
+                    confirmException.getClass().getSimpleName()
             );
 
             return retrieveApprovedPayment(paymentKey, orderId);
@@ -63,9 +64,9 @@ public class TossPaymentClient {
                     .retrieve()
                     .requiredBody(TossPaymentConfirmResponse.class);
         } catch (RestClientException retrieveException) {
-            log.error(
-                    "토스 결제 승인 및 조회 모두 실패 - orderId={}",
-                    orderId
+            paymentAuditLogger.tossConfirmAndRetrieveFailed(
+                    orderId,
+                    retrieveException.getClass().getSimpleName()
             );
 
             throw new BusinessException(
