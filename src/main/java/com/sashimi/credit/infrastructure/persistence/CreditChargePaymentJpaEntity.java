@@ -57,6 +57,12 @@ public class CreditChargePaymentJpaEntity {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
+    @Column(name = "retry_count", nullable = false)
+    private Integer retryCount;
+
+    @Column(name = "last_retried_at")
+    private LocalDateTime lastRetriedAt;
+
     public static CreditChargePaymentJpaEntity from(CreditChargePayment payment) {
         CreditChargePaymentJpaEntity entity = new CreditChargePaymentJpaEntity();
         entity.id = payment.getId();
@@ -70,6 +76,8 @@ public class CreditChargePaymentJpaEntity {
         entity.requestedAt = payment.getRequestedAt();
         entity.approvedAt = payment.getApprovedAt();
         entity.balanceAfter = payment.getBalanceAfter();
+        entity.retryCount = payment.getRetryCount();
+        entity.lastRetriedAt = payment.getLastRetriedAt();
         return entity;
     }
 
@@ -85,7 +93,9 @@ public class CreditChargePaymentJpaEntity {
                 status,
                 failureReason,
                 requestedAt,
-                approvedAt
+                approvedAt,
+                retryCount,
+                lastRetriedAt
         );
     }
 }

@@ -14,7 +14,7 @@ public interface SubscriptionRepository {
 
     Optional<Subscription> findActiveByUserId(Long userId, LocalDateTime now);
 
-    Optional<Subscription> findActiveByUserIdForUpdate(Long userId);
+    Optional<Subscription> findActiveByUserIdForUpdate(Long userId, LocalDateTime now);
 
     Optional<Subscription> findByIdForUpdate(Long subscriptionId);
 

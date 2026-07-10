@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -53,5 +54,27 @@ public class CreditChargePaymentRepositoryAdapter implements CreditChargePayment
                 result.getNumber(),
                 result.getSize()
         );
+    }
+
+    @Override
+    public List<CreditChargePayment> findNeedRetryTargets(
+            int maxRetryCount,
+            int limit
+    ) {
+        return springDataCreditChargePaymentRepository
+                .findRetryTargets(
+                        CreditChargePaymentStatus.NEED_RETRY,
+                        maxRetryCount,
+                        PageRequest.of(0, limit)
+                )
+                .stream()
+                .map(CreditChargePaymentJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public Optional<CreditChargePayment> findByIdForUpdate(Long id) {
+        return springDataCreditChargePaymentRepository.findByIdForUpdate(id)
+                .map(CreditChargePaymentJpaEntity::toDomain);
     }
 }

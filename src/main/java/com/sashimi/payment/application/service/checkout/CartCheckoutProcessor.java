@@ -12,15 +12,14 @@ import com.sashimi.order.application.policy.CoursePurchasePolicy;
 import com.sashimi.order.domain.model.OrderItem;
 import com.sashimi.payment.application.command.PaymentCheckoutCommand;
 import com.sashimi.payment.application.command.PaymentPurchaseType;
+import com.sashimi.payment.application.logging.PaymentAuditLogger;
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase.PaidCourse;
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase.PaymentResult;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class CartCheckoutProcessor implements PaymentCheckoutProcessor {
@@ -30,6 +29,7 @@ public class CartCheckoutProcessor implements PaymentCheckoutProcessor {
     private final EnrollmentPort enrollmentPort;
     private final CreditCommandUseCase creditCommandUseCase;
     private final OrderPaymentWriter orderPaymentWriter;
+    private final PaymentAuditLogger paymentAuditLogger;
 
     @Override
     public PaymentPurchaseType supports() {
@@ -91,8 +91,7 @@ public class CartCheckoutProcessor implements PaymentCheckoutProcessor {
                 command.userId()
         );
 
-        log.info(
-                "장바구니 결제 완료 - userId={}, orderId={}, paymentId={}, amount={}, courseCount={}",
+        paymentAuditLogger.cartPaymentCompleted(
                 command.userId(),
                 saved.order().getId(),
                 saved.payment().getId(),

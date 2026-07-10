@@ -2,6 +2,7 @@ package com.sashimi.payment.application.service;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.payment.application.logging.PaymentAuditLogger;
 import com.sashimi.payment.domain.model.PaymentIdempotency;
 import com.sashimi.payment.domain.repository.PaymentIdempotencyRepository;
 import com.sashimi.payment.application.command.PaymentPurchaseType;
@@ -21,6 +22,7 @@ public class PaymentIdempotencyTransactionService {
 
     private final PaymentIdempotencyRepository repository;
     private final PaymentMetrics paymentMetrics;
+    private final PaymentAuditLogger paymentAuditLogger;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public PaymentIdempotency createProcessing(
@@ -61,18 +63,33 @@ public class PaymentIdempotencyTransactionService {
             paymentMetrics.recordPaymentIdempotencyConflict(
                     purchaseType
             );
+
+            paymentAuditLogger.idempotencyConflict(
+                    userId, purchaseType);
+
             throw e;
         }
 
         if (existing.isCompleted()) {
-            paymentMetrics.recordPaymentIdempotencyReused(purchaseType);
-            return ExistingRequestResolution.completed(existing.getResultJson());}
-        if (existing.isFailed()) {
-            return ExistingRequestResolution.failed();}
+            paymentMetrics.recordPaymentIdempotencyReused(
+                    purchaseType);
+
+            paymentAuditLogger.idempotencyReused(
+                    userId, purchaseType);
+
+            return ExistingRequestResolution.completed(existing.getResultJson());
+
+        } if (existing.isFailed()) {
+            return ExistingRequestResolution.failed();
+        }
             LocalDateTime now = LocalDateTime.now();
-        if (existing.isProcessingExpired(now, PROCESSING_TIMEOUT_MINUTES))
-           {existing.fail();repository.save(existing);
-            return ExistingRequestResolution.failed();}
+
+        if (existing.isProcessingExpired(now, PROCESSING_TIMEOUT_MINUTES)) {
+            existing.fail();
+            repository.save(existing);
+            return ExistingRequestResolution.failed();
+        }
+
         return ExistingRequestResolution.processing();
     }
 
