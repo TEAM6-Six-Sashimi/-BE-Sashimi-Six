@@ -193,20 +193,31 @@ public class CreditCommandService implements CreditCommandUseCase {
                 return result;
 
             } catch (RuntimeException e) {
-                paymentMetrics.recordTossCreditChargeInconsistency(
-                        "INTERNAL_CREDIT_REFLECTION_FAILED"
-                );
+    paymentMetrics.recordTossCreditChargeInconsistency(
+            "INTERNAL_CREDIT_REFLECTION_FAILED"
+    );
 
-                creditChargeTransactionService.markNeedRetry(
-                        command,
-                        response,
-                        e.getClass().getSimpleName()
-                );
+    try {
+        creditChargeTransactionService.markNeedRetry(
+                command,
+                response,
+                e.getClass().getSimpleName()
+        );
+    } catch (RuntimeException markException) {
+        log.error(
+                "크레딧 충전 재처리 대기 등록 실패 - userId={}, orderId={}, amount={}, reason={}",
+                command.userId(),
+                command.orderId(),
+                command.amount(),
+                markException.getClass().getSimpleName(),
+                markException
+        );
+    }
 
-                throw new BusinessException(
-                        ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
-                );
-            }
+    throw new BusinessException(
+            ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+    );
+}
 
         } catch (RuntimeException e) {
             paymentMetrics.recordCreditChargeProcessingFailure(sample);
