@@ -8,6 +8,7 @@ import com.sashimi.instructorapplication.application.usecase.InstructorApplicati
 import com.sashimi.instructorapplication.presentation.api.request.RejectInstructorRequest;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationListResponse;
+import com.sashimi.instructorapplication.presentation.api.response.InstructorProfileResponse;
 import com.sashimi.instructorapplication.presentation.api.response.MyInstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.MyInstructorApplicationListResponse;
 import com.sashimi.instructorapplication.presentation.api.response.RejectedApplicationListResponse;
@@ -147,6 +148,24 @@ public class InstructorApplicationController {
         }
 
         return ResponseEntity.ok(instructorApplicationQueryUseCase.getMyInstructorApplicationDetail(userId, applicationId));
+    }
+
+    @Operation(summary = "나의 강사 프로필 조회", description = "승인된 강사 프로필(소개, 주요 이력, 포트폴리오)을 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 계정만 접근 가능"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "승인된 강사 프로필이 없음")
+    })
+    @GetMapping("/{userId}/instructor-profile")
+    public ResponseEntity<InstructorProfileResponse> getMyInstructorProfile(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable Long userId) {
+        if (!principal.getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        return ResponseEntity.ok(instructorApplicationQueryUseCase.getMyInstructorProfile(userId));
     }
 
     @Operation(summary = "강사 신청 대기 목록 조회 [ADMIN 전용]", description = "관리자만 승인 대기 중인 강사 신청 목록을 조회할 수 있습니다. ROLE_ADMIN 권한 필요.")
