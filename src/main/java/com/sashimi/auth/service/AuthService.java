@@ -5,6 +5,10 @@ import com.sashimi.auth.application.policy.SignupEligibilityPolicy;
 import com.sashimi.global.ratelimit.RateLimiterService;
 import com.sashimi.security.blacklist.TokenBlacklistService;
 import com.sashimi.security.session.TokenVersionService;
+import com.sashimi.auth.dto.FindLoginIdConfirmRequestDto;
+import com.sashimi.auth.dto.FindLoginIdConfirmResponseDto;
+import com.sashimi.auth.dto.FindLoginIdRequestDto;
+import com.sashimi.auth.dto.FindLoginIdRequestResponseDto;
 import com.sashimi.auth.dto.LoginRequestDto;
 import com.sashimi.auth.dto.PasswordResetConfirmRequestDto;
 import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
@@ -188,6 +192,58 @@ public class AuthService {
         );
 
         return new PasswordResetConfirmResponseDto(true, true);
+    }
+
+    public FindLoginIdRequestResponseDto requestFindLoginId(FindLoginIdRequestDto request) {
+        String email = normalizeEmail(request.getEmail());
+        if (!rateLimiterService.isAllowed("find-id:" + email, 3, 3600)) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+        }
+
+        User user = findActiveUserByNameAndEmail(request.getName(), email);
+
+        EmailVerificationRequestResult result = emailVerificationUseCase.requestEmailVerification(
+                new RequestEmailVerificationCommand(
+                        email,
+                        VerificationPurpose.FIND_ID,
+                        user.getId()
+                )
+        );
+
+        return new FindLoginIdRequestResponseDto(
+                result.targetEmail(),
+                result.purpose(),
+                result.expiresInSeconds(),
+                result.resendAvailableInSeconds()
+        );
+    }
+
+    public FindLoginIdConfirmResponseDto findLoginId(FindLoginIdConfirmRequestDto request) {
+        String email = normalizeEmail(request.getEmail());
+
+        emailVerificationUseCase.confirmEmailVerification(
+                new ConfirmEmailVerificationCommand(
+                        email,
+                        VerificationPurpose.FIND_ID,
+                        request.getCode()
+                )
+        );
+
+        User user = findActiveUserByNameAndEmail(request.getName(), email);
+
+        return new FindLoginIdConfirmResponseDto(user.getLoginId());
+    }
+
+    private User findActiveUserByNameAndEmail(String name, String email) {
+        User user = userRepository.findByEmail(email)
+                .filter(candidate -> candidate.getName().equals(name))
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.INACTIVE_USER);
+        }
+
+        return user;
     }
 
     public TokenResponseDto login(LoginRequestDto request) {

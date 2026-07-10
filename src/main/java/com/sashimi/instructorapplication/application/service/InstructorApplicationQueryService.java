@@ -12,6 +12,7 @@ import com.sashimi.instructorapplication.domain.model.InstructorCertification;
 import com.sashimi.instructorapplication.domain.repository.InstructorApplicationRepository;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationListResponse;
+import com.sashimi.instructorapplication.presentation.api.response.InstructorProfileResponse;
 import com.sashimi.instructorapplication.presentation.api.response.MyInstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.MyInstructorApplicationListResponse;
 import com.sashimi.instructorapplication.presentation.api.response.RejectedApplicationListResponse;
@@ -93,6 +94,17 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                         .toList();
 
         return MyInstructorApplicationDetailResponse.of(application, user, profileImageUrl, resumeFileUrl, certFileUrls);
+    }
+
+    @Override
+    public InstructorProfileResponse getMyInstructorProfile(Long userId) {
+        InstructorApplication application = instructorApplicationRepository.findApprovedByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        String profileImageUrl = toDownloadUrl(application.getProfileImagePath());
+        return InstructorProfileResponse.of(application, user, profileImageUrl);
     }
 
     @Override

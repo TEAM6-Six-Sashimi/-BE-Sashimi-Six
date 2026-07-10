@@ -12,7 +12,7 @@ public interface InstructorApplicationRepository {
 
     Optional<InstructorApplication> findById(Long id);
 
-    Optional<InstructorApplication> findByUserId(Long userId);
+    Optional<InstructorApplication> findApprovedByUserId(Long userId);
 
     List<InstructorApplication> findAllByUserId(Long userId);
 
