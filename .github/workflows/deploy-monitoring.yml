@@ -40,19 +40,26 @@ jobs:
       - name: Deploy monitoring stack
         env:
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           if [ -z "$GRAFANA_ADMIN_PASSWORD" ]; then
             echo "Missing GitHub secret: GRAFANA_ADMIN_PASSWORD" >&2
             exit 1
           fi
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "Missing GitHub secret: SLACK_WEBHOOK_URL" >&2
+            exit 1
+          fi
 
           GRAFANA_PASSWORD_B64="$(printf '%s' "$GRAFANA_ADMIN_PASSWORD" | base64 -w 0)"
+          SLACK_WEBHOOK_URL_B64="$(printf '%s' "$SLACK_WEBHOOK_URL" | base64 -w 0)"
 
           ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$EC2_HOST" \
-            "APP_DIR='$EC2_APP_DIR' DOCKER_NETWORK='$DOCKER_NETWORK' GRAFANA_PASSWORD_B64='$GRAFANA_PASSWORD_B64' bash -s" <<'REMOTE'
+            "APP_DIR='$EC2_APP_DIR' DOCKER_NETWORK='$DOCKER_NETWORK' GRAFANA_PASSWORD_B64='$GRAFANA_PASSWORD_B64' SLACK_WEBHOOK_URL_B64='$SLACK_WEBHOOK_URL_B64' bash -s" <<'REMOTE'
           set -euo pipefail
 
           GRAFANA_PASSWORD="$(printf '%s' "$GRAFANA_PASSWORD_B64" | base64 -d)"
+          SLACK_WEBHOOK_URL="$(printf '%s' "$SLACK_WEBHOOK_URL_B64" | base64 -d)"
 
           cd "$APP_DIR"
           git fetch origin develop
@@ -69,6 +76,12 @@ jobs:
           # Grafana 비밀번호 환경파일 기록
           printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_PASSWORD" \
             > monitoring/.env
+
+          # Slack Webhook URL을 alerting 프로비저닝 파일에 주입 (템플릿 → 실제 파일, git에는 템플릿만 커밋됨)
+          SLACK_WEBHOOK_URL_ESCAPED=$(printf '%s' "$SLACK_WEBHOOK_URL" | sed -e 's/[\/&]/\\&/g')
+          sed "s/__SLACK_WEBHOOK_URL__/${SLACK_WEBHOOK_URL_ESCAPED}/" \
+            monitoring/grafana/provisioning/alerting/contactpoints.yml.template \
+            > monitoring/grafana/provisioning/alerting/contactpoints.yml
 
           if sudo docker compose version >/dev/null 2>&1; then
             compose() { sudo docker compose "$@"; }
