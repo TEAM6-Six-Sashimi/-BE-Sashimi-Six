@@ -54,4 +54,30 @@ public class CourseEnrollmentPortAdapter implements CourseEnrollmentPort {
         }, courseIds.toArray());
         return result;
     }
+
+    @Override
+    public Map<Long, Integer> countStudentsByCourseIds(List<Long> courseIds) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Map.of();
+        }
+
+        String placeholders = courseIds.stream()
+                .map(id -> "?")
+                .collect(Collectors.joining(","));
+
+        String sql = """
+            SELECT course_id, COUNT(*) AS student_count
+            FROM enrollments
+            WHERE course_id IN (%s)
+            GROUP BY course_id
+            """.formatted(placeholders);
+
+        Map<Long, Integer> result = new HashMap<>();
+
+        jdbcTemplate.query(sql, rs -> {
+            result.put(rs.getLong("course_id"), rs.getInt("student_count"));
+        }, courseIds.toArray());
+
+        return result;
+    }
 }
