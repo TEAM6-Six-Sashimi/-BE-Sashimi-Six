@@ -18,6 +18,7 @@ import com.sashimi.credit.infrastructure.toss.TossPaymentClient;
 import com.sashimi.credit.infrastructure.toss.TossPaymentConfirmResponse;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.payment.application.logging.PaymentAuditLogger;
 import com.sashimi.payment.metric.PaymentMetrics;
 import io.micrometer.core.instrument.Timer;
 
@@ -25,14 +26,12 @@ import java.util.Objects;
 import org.springframework.transaction.annotation.Propagation;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -47,6 +46,7 @@ public class CreditCommandService implements CreditCommandUseCase {
     private final TossPaymentClient tossPaymentClient;
     private final CreditChargeTransactionService creditChargeTransactionService;
     private final PaymentMetrics paymentMetrics;
+    private final PaymentAuditLogger paymentAuditLogger;
 
     @Override
     public void createInitialCredit(CreateInitialCreditCommand command) {
@@ -71,8 +71,11 @@ public class CreditCommandService implements CreditCommandUseCase {
 
         Credit savedCredit = creditRepository.save(credit);
 
-        log.info("크레딧 사용 완료 - userId={}, usedAmount={}, balance={}",
-                command.userId(), command.amount(), savedCredit.getBalance());
+        paymentAuditLogger.creditUsed(
+                command.userId(),
+                command.amount(),
+                savedCredit.getBalance()
+        );
 
         return new CreditBalanceResult(savedCredit.getBalance());
     }
@@ -116,8 +119,11 @@ public class CreditCommandService implements CreditCommandUseCase {
 
         creditChargePaymentRepository.save(payment);
 
-        log.info("크레딧 충전 결제 요청 생성 - userId={}, orderId={}, amount={}",
-                command.userId(), orderId, command.amount());
+        paymentAuditLogger.creditChargeReady(
+                command.userId(),
+                orderId,
+                command.amount()
+        );
 
         return new CreditChargeReadyResult(orderId, orderName, command.amount());
     }
@@ -142,6 +148,13 @@ public class CreditCommandService implements CreditCommandUseCase {
 
                 if (payment.getBalanceAfter() == null) {
                     paymentMetrics.recordTossCreditChargeInconsistency(
+                            "DONE_WITHOUT_BALANCE_AFTER"
+                    );
+
+                    paymentAuditLogger.completedCreditChargeResultInvalid(
+                            command.userId(),
+                            payment.getOrderId(),
+                            payment.getAmount(),
                             "DONE_WITHOUT_BALANCE_AFTER"
                     );
 
@@ -204,8 +217,7 @@ public class CreditCommandService implements CreditCommandUseCase {
                 e.getClass().getSimpleName()
         );
     } catch (RuntimeException markException) {
-        log.error(
-                "크레딧 충전 재처리 대기 등록 실패 - userId={}, orderId={}, amount={}, reason={}",
+        paymentAuditLogger.creditChargeNeedRetryMarkFailed(
                 command.userId(),
                 command.orderId(),
                 command.amount(),
