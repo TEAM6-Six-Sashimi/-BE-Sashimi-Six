@@ -16,5 +16,7 @@ public interface ReviewReportRepository {
 
     List<ReviewReport> findAllByStatus(ReviewReportStatus status);
 
+    List<ReviewReport> findAllByReviewIdAndStatus(Long reviewId, ReviewReportStatus status);
+
     Optional<ReviewReport> findById(Long reportId);
 }

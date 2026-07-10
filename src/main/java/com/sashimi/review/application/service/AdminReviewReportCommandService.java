@@ -5,6 +5,7 @@ import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.review.application.usecase.AdminReviewReportCommandUseCase;
 import com.sashimi.review.domain.model.Review;
 import com.sashimi.review.domain.model.ReviewReport;
+import com.sashimi.review.domain.model.ReviewReportStatus;
 import com.sashimi.review.domain.repository.ReviewReportRepository;
 import com.sashimi.review.domain.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class AdminReviewReportCommandService implements AdminReviewReportCommand
                 .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
         reviewRepository.save(review.delete());
-        reviewReportRepository.save(report.process());
+        processAllPendingReportsForReview(report.getReviewId());
     }
 
     @Override
@@ -36,6 +37,11 @@ public class AdminReviewReportCommandService implements AdminReviewReportCommand
         ReviewReport report = reviewReportRepository.findById(reportId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
-        reviewReportRepository.save(report.process());
+        processAllPendingReportsForReview(report.getReviewId());
+    }
+
+    private void processAllPendingReportsForReview(Long reviewId) {
+        reviewReportRepository.findAllByReviewIdAndStatus(reviewId, ReviewReportStatus.PENDING)
+                .forEach(pendingReport -> reviewReportRepository.save(pendingReport.process()));
     }
 }
