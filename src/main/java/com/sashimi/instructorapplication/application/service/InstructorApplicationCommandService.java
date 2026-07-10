@@ -19,8 +19,8 @@ import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -28,10 +28,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executor;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class InstructorApplicationCommandService implements InstructorApplicationCommandUseCase {
 
@@ -43,6 +45,29 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
     private final CategoryRepository categoryRepository;
     private final ApplicationEventPublisher eventPublisher;
     private final MeterRegistry meterRegistry;
+    private final Executor instructorApplicationExecutor;
+
+    public InstructorApplicationCommandService(
+            InstructorApplicationRepository instructorApplicationRepository,
+            UserRepository userRepository,
+            OcrPort ocrPort,
+            DocxPort docxPort,
+            FileStoragePort fileStoragePort,
+            CategoryRepository categoryRepository,
+            ApplicationEventPublisher eventPublisher,
+            MeterRegistry meterRegistry,
+            @Qualifier("instructorApplicationExecutor") Executor instructorApplicationExecutor
+    ) {
+        this.instructorApplicationRepository = instructorApplicationRepository;
+        this.userRepository = userRepository;
+        this.ocrPort = ocrPort;
+        this.docxPort = docxPort;
+        this.fileStoragePort = fileStoragePort;
+        this.categoryRepository = categoryRepository;
+        this.eventPublisher = eventPublisher;
+        this.meterRegistry = meterRegistry;
+        this.instructorApplicationExecutor = instructorApplicationExecutor;
+    }
 
     @Override
     public void applyInstructor(ApplyInstructorCommand command) {
@@ -89,58 +114,88 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 throw new BusinessException(ErrorCode.ALREADY_INSTRUCTOR);
             }
 
-            // 자격증 OCR 검증 (S3 업로드 전, 메모리에만 보관)
+            // 자격증 OCR 검증 + 이력서 주요 이력 추출 - 서로 무관한 작업이라 병렬 실행
             record CertCandidate(OcrPort.OcrResult ocr, ApplyInstructorCommand.FileEntry file) {}
-            List<CertCandidate> certCandidates = new ArrayList<>();
-            for (ApplyInstructorCommand.FileEntry certFile : command.certificateFiles()) {
-                OcrPort.OcrResult ocrResult = ocrPort.extractCertificateInfo(certFile.fileBytes(), certFile.fileName());
-                if (ocrResult.success()) {
-                    certCandidates.add(new CertCandidate(ocrResult, certFile));
+
+            CompletableFuture<List<CertCandidate>> certFuture = CompletableFuture.supplyAsync(() -> {
+                List<CertCandidate> candidates = new ArrayList<>();
+                for (ApplyInstructorCommand.FileEntry certFile : command.certificateFiles()) {
+                    OcrPort.OcrResult ocrResult = ocrPort.extractCertificateInfo(certFile.fileBytes(), certFile.fileName());
+                    if (ocrResult.success()) {
+                        candidates.add(new CertCandidate(ocrResult, certFile));
+                    }
                 }
-            }
+                return candidates;
+            }, instructorApplicationExecutor);
+
+            CompletableFuture<List<String>> careersFuture = CompletableFuture.supplyAsync(
+                    () -> docxPort.extractMainCareers(command.resumeFile().fileBytes()),
+                    instructorApplicationExecutor
+            );
+
+            List<CertCandidate> certCandidates = joinUnwrapped(certFuture);
+            List<String> mainCareers = joinUnwrapped(careersFuture);
 
             if (certCandidates.isEmpty()) {
                 throw new BusinessException(ErrorCode.CERTIFICATE_OCR_FAILED);
             }
-
-            // 이력서 docx - 주요 이력 추출
-            List<String> mainCareers = docxPort.extractMainCareers(command.resumeFile().fileBytes());
             if (mainCareers.isEmpty()) {
                 throw new BusinessException(ErrorCode.RESUME_PARSE_FAILED);
             }
 
-            // 모든 검증 통과 후 S3 업로드 한꺼번에 수행 (실패 시 보상 삭제)
-            List<String> uploadedKeys = new ArrayList<>();
+            // 모든 검증 통과 후 S3 업로드 3종(자격증 N개+프로필+이력서) 병렬 수행 (실패 시 보상 삭제)
+            List<CompletableFuture<String>> certUploadFutures = certCandidates.stream()
+                    .map(candidate -> CompletableFuture.supplyAsync(() ->
+                            fileStoragePort.storePrivate(
+                                    candidate.file().fileBytes(),
+                                    candidate.file().fileName(),
+                                    "instructor-applications/certificates"
+                            ), instructorApplicationExecutor))
+                    .toList();
+
+            CompletableFuture<String> profileUploadFuture = CompletableFuture.supplyAsync(() ->
+                    fileStoragePort.storePrivate(
+                            command.profileImage().fileBytes(),
+                            command.profileImage().fileName(),
+                            "instructor-applications/profile"
+                    ), instructorApplicationExecutor);
+
+            CompletableFuture<String> resumeUploadFuture = CompletableFuture.supplyAsync(() ->
+                    fileStoragePort.storePrivate(
+                            command.resumeFile().fileBytes(),
+                            command.resumeFile().fileName(),
+                            "instructor-applications/resume"
+                    ), instructorApplicationExecutor);
+
+            List<CompletableFuture<String>> allUploadFutures = new ArrayList<>(certUploadFutures);
+            allUploadFutures.add(profileUploadFuture);
+            allUploadFutures.add(resumeUploadFuture);
+
             try {
-                List<InstructorCertification> certifications = new ArrayList<>();
-                for (CertCandidate candidate : certCandidates) {
-                    String certFileKey = fileStoragePort.storePrivate(
-                            candidate.file().fileBytes(),
-                            candidate.file().fileName(),
-                            "instructor-applications/certificates"
-                    );
-                    uploadedKeys.add(certFileKey);
-                    certifications.add(InstructorCertification.of(
-                            candidate.ocr().certificationName(),
-                            candidate.ocr().issuedBy(),
-                            certFileKey
-                    ));
+                CompletableFuture.allOf(allUploadFutures.toArray(new CompletableFuture[0])).join();
+            } catch (CompletionException e) {
+                compensateSucceeded(allUploadFutures);
+                Throwable cause = e.getCause();
+                if (cause instanceof RuntimeException re) {
+                    throw re;
                 }
+                throw e;
+            }
 
-                String profileImageKey = fileStoragePort.storePrivate(
-                        command.profileImage().fileBytes(),
-                        command.profileImage().fileName(),
-                        "instructor-applications/profile"
-                );
-                uploadedKeys.add(profileImageKey);
+            List<String> certFileKeys = certUploadFutures.stream().map(CompletableFuture::join).toList();
+            String profileImageKey = profileUploadFuture.join();
+            String resumeFileKey = resumeUploadFuture.join();
 
-                String resumeFileKey = fileStoragePort.storePrivate(
-                        command.resumeFile().fileBytes(),
-                        command.resumeFile().fileName(),
-                        "instructor-applications/resume"
-                );
-                uploadedKeys.add(resumeFileKey);
+            List<InstructorCertification> certifications = new ArrayList<>();
+            for (int i = 0; i < certCandidates.size(); i++) {
+                certifications.add(InstructorCertification.of(
+                        certCandidates.get(i).ocr().certificationName(),
+                        certCandidates.get(i).ocr().issuedBy(),
+                        certFileKeys.get(i)
+                ));
+            }
 
+            try {
                 InstructorApplication application = InstructorApplication.create(
                         command.userId(),
                         command.bio(),
@@ -155,6 +210,9 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
 
                 instructorApplicationRepository.save(application);
             } catch (Exception e) {
+                List<String> uploadedKeys = new ArrayList<>(certFileKeys);
+                uploadedKeys.add(profileImageKey);
+                uploadedKeys.add(resumeFileKey);
                 uploadedKeys.forEach(key -> {
                     try {
                         fileStoragePort.deleteFromDocs(key);
@@ -179,6 +237,30 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                     .description("강사 신청 처리 시간")
                     .register(meterRegistry));
         }
+    }
+
+    private <T> T joinUnwrapped(CompletableFuture<T> future) {
+        try {
+            return future.join();
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof RuntimeException re) {
+                throw re;
+            }
+            throw e;
+        }
+    }
+
+    private void compensateSucceeded(List<CompletableFuture<String>> uploadFutures) {
+        uploadFutures.stream()
+                .filter(f -> f.isDone() && !f.isCompletedExceptionally())
+                .forEach(f -> {
+                    String key = f.join();
+                    try {
+                        fileStoragePort.deleteFromDocs(key);
+                    } catch (Exception deleteEx) {
+                        log.error("[S3 보상] 파일 삭제 실패 - key: {}", key, deleteEx);
+                    }
+                });
     }
 
     @Override
