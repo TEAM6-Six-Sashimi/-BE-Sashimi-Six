@@ -4,6 +4,7 @@ import com.sashimi.category.domain.model.Category;
 import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.instructorapplication.application.usecase.InstructorApplicationQueryUseCase;
 import com.sashimi.instructorapplication.domain.model.ApprovalStatus;
 import com.sashimi.instructorapplication.domain.model.InstructorApplication;
@@ -20,8 +21,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
@@ -29,11 +28,12 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class InstructorApplicationQueryService implements InstructorApplicationQueryUseCase {
 
-    private static final String FILE_DOWNLOAD_BASE = "/files/download?key=";
+    private static final int FILE_URL_EXPIRY_MINUTES = 30;
 
     private final InstructorApplicationRepository instructorApplicationRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final FileStoragePort fileStoragePort;
 
     @Override
     public List<InstructorApplicationListResponse> getPendingInstructorApplications() {
@@ -109,6 +109,6 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
 
     private String toDownloadUrl(String s3Key) {
         if (s3Key == null) return null;
-        return FILE_DOWNLOAD_BASE + URLEncoder.encode(s3Key, StandardCharsets.UTF_8);
+        return fileStoragePort.generatePresignedDownloadUrl(s3Key, FILE_URL_EXPIRY_MINUTES);
     }
 }
