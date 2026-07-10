@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface SpringDataCreditChargePaymentRepository extends JpaRepository<CreditChargePaymentJpaEntity, Long> {
@@ -21,4 +22,27 @@ public interface SpringDataCreditChargePaymentRepository extends JpaRepository<C
 
     Page<CreditChargePaymentJpaEntity> findAllByUserIdAndStatusOrderByApprovedAtDescIdDesc(
             Long userId, CreditChargePaymentStatus status, Pageable pageable);
+
+    @Query("""
+        select p
+        from CreditChargePaymentJpaEntity p
+        where p.status = :status
+          and p.retryCount < :maxRetryCount
+        order by p.requestedAt asc
+        """)
+    List<CreditChargePaymentJpaEntity> findRetryTargets(
+            @Param("status") CreditChargePaymentStatus status,
+            @Param("maxRetryCount") int maxRetryCount,
+            Pageable pageable
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select p
+        from CreditChargePaymentJpaEntity p
+        where p.id = :id
+        """)
+    Optional<CreditChargePaymentJpaEntity> findByIdForUpdate(
+            @Param("id") Long id
+    );
 }

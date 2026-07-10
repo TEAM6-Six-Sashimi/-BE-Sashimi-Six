@@ -166,6 +166,12 @@ public class CreditCommandService implements CreditCommandUseCase {
                 );
             }
 
+            if (payment.isNeedRetry() || payment.isManualReview()) {
+                throw new BusinessException(
+                        ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+                );
+            }
+
             TossPaymentConfirmResponse response =
                     tossPaymentClient.confirmOrRetrieve(
                             command.paymentKey(),
@@ -185,13 +191,34 @@ public class CreditCommandService implements CreditCommandUseCase {
                 paymentMetrics.recordCreditChargeProcessingSuccess(sample);
 
                 return result;
-            } catch (RuntimeException e) {
-                paymentMetrics.recordTossCreditChargeInconsistency(
-                        "INTERNAL_CREDIT_REFLECTION_FAILED"
-                );
 
-                throw e;
-            }
+            } catch (RuntimeException e) {
+    paymentMetrics.recordTossCreditChargeInconsistency(
+            "INTERNAL_CREDIT_REFLECTION_FAILED"
+    );
+
+    try {
+        creditChargeTransactionService.markNeedRetry(
+                command,
+                response,
+                e.getClass().getSimpleName()
+        );
+    } catch (RuntimeException markException) {
+        log.error(
+                "크레딧 충전 재처리 대기 등록 실패 - userId={}, orderId={}, amount={}, reason={}",
+                command.userId(),
+                command.orderId(),
+                command.amount(),
+                markException.getClass().getSimpleName(),
+                markException
+        );
+    }
+
+    throw new BusinessException(
+            ErrorCode.CREDIT_CHARGE_RESULT_INCONSISTENT
+    );
+}
+
         } catch (RuntimeException e) {
             paymentMetrics.recordCreditChargeProcessingFailure(sample);
 

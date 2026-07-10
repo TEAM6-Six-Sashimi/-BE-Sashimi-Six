@@ -46,7 +46,7 @@ public class SubscriptionCheckoutProcessor implements PaymentCheckoutProcessor {
         SubscriptionPlan plan = command.planCode();
         LocalDateTime now = LocalDateTime.now();
 
-        subscriptionRepository.findActiveByUserIdForUpdate(userId)
+        subscriptionRepository.findActiveByUserIdForUpdate(userId, now)
                 .ifPresent(subscription -> {
                     if (subscription.isActive(now)) {
                         throw new BusinessException(
