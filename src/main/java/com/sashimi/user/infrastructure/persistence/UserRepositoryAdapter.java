@@ -77,4 +77,12 @@ public class UserRepositoryAdapter implements UserRepository {
                 .map(UserJpaEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public List<User> findAllByIdIn(List<Long> ids) {
+        return springDataUserRepository.findAllById(ids)
+                .stream()
+                .map(UserJpaEntity::toDomain)
+                .toList();
+    }
 }
