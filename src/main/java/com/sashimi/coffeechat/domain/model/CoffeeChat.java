@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Getter
 @Builder
@@ -56,7 +57,7 @@ public class CoffeeChat {
         if (this.status != CoffeeChatStatus.ACCEPTED) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
         }
-        if (!senderId.equals(this.studentId) && !senderId.equals(this.instructorId)) {
+        if (!Objects.equals(senderId, this.studentId) && !Objects.equals(senderId, this.instructorId)) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_MESSAGE_FORBIDDEN);
         }
         return CoffeeChatMessage.create(this.id, senderId, content);

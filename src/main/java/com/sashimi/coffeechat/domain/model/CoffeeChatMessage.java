@@ -1,5 +1,7 @@
 package com.sashimi.coffeechat.domain.model;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -17,6 +19,9 @@ public class CoffeeChatMessage {
     private LocalDateTime createdAt;
 
     static CoffeeChatMessage create(Long coffeeChatId, Long senderId, String content) {
+        if (content == null || content.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
         return CoffeeChatMessage.builder()
                 .coffeeChatId(coffeeChatId)
                 .senderId(senderId)
