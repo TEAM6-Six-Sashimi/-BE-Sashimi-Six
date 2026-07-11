@@ -3,15 +3,15 @@ package com.sashimi.course.presentation.api;
 import com.sashimi.course.application.command.*;
 import com.sashimi.course.application.usecase.CourseCommandUseCase;
 import com.sashimi.course.application.usecase.CourseQueryUseCase;
-import com.sashimi.course.application.usecase.InstructorDashboardQueryUseCase;
+import com.sashimi.course.application.usecase.InstructorCourseStatisticsQueryUseCase;
 import com.sashimi.course.presentation.api.request.CreateCourseRequest;
 import com.sashimi.course.presentation.api.request.UpdateCourseRequest;
 import com.sashimi.course.presentation.api.response.ApprovedCourseResponse;
 import com.sashimi.course.presentation.api.response.CourseResponse;
 import com.sashimi.course.presentation.api.response.InstructorCourseDetailResponse;
-import com.sashimi.course.presentation.api.response.InstructorSalesDashboardResponse;
-import com.sashimi.course.presentation.api.response.InstructorStudentDashboardResponse;
-import com.sashimi.course.presentation.api.response.InstructorCompletionDashboardResponse;
+import com.sashimi.course.presentation.api.response.InstructorCourseCompletionStatisticsResponse;
+import com.sashimi.course.presentation.api.response.InstructorCourseSalesStatisticsResponse;
+import com.sashimi.course.presentation.api.response.InstructorCourseStudentStatisticsResponse;
 import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,16 +30,16 @@ public class InstructorCourseController {
     private final CourseCommandUseCase courseCommandUseCase;
     private final CourseQueryUseCase courseQueryUseCase;
     private final FileStoragePort fileStoragePort;
-    private final InstructorDashboardQueryUseCase instructorDashboardQueryUseCase;
+    private final InstructorCourseStatisticsQueryUseCase instructorCourseStatisticsQueryUseCase;
 
     public InstructorCourseController(CourseCommandUseCase courseCommandUseCase,
                                        CourseQueryUseCase courseQueryUseCase,
                                        FileStoragePort fileStoragePort,
-                                       InstructorDashboardQueryUseCase instructorDashboardQueryUseCase) {
+                                       InstructorCourseStatisticsQueryUseCase instructorCourseStatisticsQueryUseCase) {
         this.courseCommandUseCase = courseCommandUseCase;
         this.courseQueryUseCase = courseQueryUseCase;
         this.fileStoragePort = fileStoragePort;
-        this.instructorDashboardQueryUseCase = instructorDashboardQueryUseCase;
+        this.instructorCourseStatisticsQueryUseCase = instructorCourseStatisticsQueryUseCase;
     }
 
     @GetMapping("/approved")
@@ -126,48 +126,56 @@ public class InstructorCourseController {
     }
 
     @Operation(
-            summary = "강사 월별 매출 대시보드 조회",
+            summary = "강사 월별 매출 조회",
             description = "로그인한 강사의 이번달 강의 매출, 플랫폼 수수료, 정산 금액, 강의별 매출을 조회합니다."
     )
-    @GetMapping("/dashboard/sales")
-    public ResponseEntity<InstructorSalesDashboardResponse> getSalesDashboard(
-            @AuthenticationPrincipal CustomUserPrincipal principal,
+    @GetMapping("/statistics/sales")
+    public ResponseEntity<InstructorCourseSalesStatisticsResponse> getSalesStatistics(
+            @AuthenticationPrincipal CustomUserPrincipal  principal,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month
     ) {
         return ResponseEntity.ok(
-                InstructorSalesDashboardResponse.from(
-                        instructorDashboardQueryUseCase.getMonthlySales(principal.getId(), year, month)
+                InstructorCourseSalesStatisticsResponse.from(
+                        instructorCourseStatisticsQueryUseCase.getMonthlySales(
+                                principal.getId(),
+                                year,
+                                month
+                        )
                 )
         );
     }
 
     @Operation(
-            summary = "강사 강좌별 수강생 수 대시보드 조회",
+            summary = "강사 강좌별 수강생 수 조회",
             description = "로그인한 강사의 승인·비공개 강의별 수강생 수와 전체 수강생 수를 조회합니다."
     )
-    @GetMapping("/dashboard/students")
-    public ResponseEntity<InstructorStudentDashboardResponse> getStudentDashboard(
-            @AuthenticationPrincipal CustomUserPrincipal principal
+    @GetMapping("/statistics/students")
+    public ResponseEntity<InstructorCourseStudentStatisticsResponse> getStudentStatistics(
+            @AuthenticationPrincipal CustomUserPrincipal     principal
     ) {
         return ResponseEntity.ok(
-                InstructorStudentDashboardResponse.from(
-                        instructorDashboardQueryUseCase.getStudentCounts(principal.getId())
+                InstructorCourseStudentStatisticsResponse.from(
+                        instructorCourseStatisticsQueryUseCase.getStudentCounts(
+                                principal.getId()
+                        )
                 )
         );
     }
 
     @Operation(
-            summary = "강사 강좌별 완강률 대시보드 조회",
+            summary = "강사 강좌별 완강률 조회",
             description = "로그인한 강사의 승인·비공개 강의별 전체 수강생 수, 완강생 수, 완강률(%)을 조회합니다."
     )
-    @GetMapping("/dashboard/completion-rate")
-    public ResponseEntity<InstructorCompletionDashboardResponse> getCompletionDashboard(
-            @AuthenticationPrincipal CustomUserPrincipal principal
+    @GetMapping("/statistics/completion-rate")
+    public ResponseEntity<InstructorCourseCompletionStatisticsResponse> getCompletionStatistics(
+            @AuthenticationPrincipal CustomUserPrincipal  principal
     ) {
         return ResponseEntity.ok(
-                InstructorCompletionDashboardResponse.from(
-                        instructorDashboardQueryUseCase.getCompletionRates(principal.getId())
+                InstructorCourseCompletionStatisticsResponse.from(
+                        instructorCourseStatisticsQueryUseCase.getCompletionRates(
+                                principal.getId()
+                        )
                 )
         );
     }
