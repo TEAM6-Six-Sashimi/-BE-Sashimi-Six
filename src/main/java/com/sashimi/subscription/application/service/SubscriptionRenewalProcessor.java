@@ -10,10 +10,14 @@ import com.sashimi.order.domain.repository.OrderItemRepository;
 import com.sashimi.order.domain.repository.OrderRepository;
 import com.sashimi.payment.domain.model.Payment;
 import com.sashimi.payment.domain.repository.PaymentRepository;
+import com.sashimi.subscription.application.event.SubscriptionRenewedEvent;
 import com.sashimi.subscription.domain.model.Subscription;
 import com.sashimi.subscription.domain.model.SubscriptionPayment;
 import com.sashimi.subscription.domain.repository.SubscriptionPaymentRepository;
 import com.sashimi.subscription.domain.repository.SubscriptionRepository;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.repository.UserRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +35,8 @@ public class SubscriptionRenewalProcessor {
     private final OrderItemRepository orderItemRepository;
     private final PaymentRepository paymentRepository;
     private final CreditRepository creditRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final UserRepository userRepository;
 
     public SubscriptionRenewalProcessor(
             SubscriptionRepository subscriptionRepository,
@@ -38,7 +44,9 @@ public class SubscriptionRenewalProcessor {
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             PaymentRepository paymentRepository,
-            CreditRepository creditRepository
+            CreditRepository creditRepository,
+            ApplicationEventPublisher eventPublisher,
+            UserRepository userRepository
     ) {
         this.subscriptionRepository = subscriptionRepository;
         this.subscriptionPaymentRepository =
@@ -47,6 +55,8 @@ public class SubscriptionRenewalProcessor {
         this.orderItemRepository = orderItemRepository;
         this.paymentRepository = paymentRepository;
         this.creditRepository = creditRepository;
+        this.eventPublisher = eventPublisher;
+        this.userRepository = userRepository;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -118,9 +128,19 @@ public class SubscriptionRenewalProcessor {
                 )
         );
 
-        subscriptionRepository.save(
+        Subscription renewed = subscriptionRepository.save(
                 subscription.renew(renewalBaseAt)
         );
+
+        User user = userRepository.findById(subscription.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        eventPublisher.publishEvent(new SubscriptionRenewedEvent(
+                subscription.getUserId(),
+                user.getEmail(),
+                user.getName(),
+                subscription.getPlan().getPlanName(),
+                renewed.getNextBillingAt()
+        ));
 
         return RenewalResult.RENEWED;
     }

@@ -17,9 +17,12 @@ import com.sashimi.subscription.domain.model.SubscriptionPlan;
 import com.sashimi.subscription.domain.model.SubscriptionStatus;
 import com.sashimi.subscription.domain.repository.SubscriptionPaymentRepository;
 import com.sashimi.subscription.domain.repository.SubscriptionRepository;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -47,6 +50,8 @@ class SubscriptionRenewalProcessorTest {
     private OrderItemRepository orderItemRepository;
     private PaymentRepository paymentRepository;
     private CreditRepository creditRepository;
+    private ApplicationEventPublisher eventPublisher;
+    private UserRepository userRepository;
 
     private SubscriptionRenewalProcessor renewalProcessor;
 
@@ -59,6 +64,8 @@ class SubscriptionRenewalProcessorTest {
         orderItemRepository = mock(OrderItemRepository.class);
         paymentRepository = mock(PaymentRepository.class);
         creditRepository = mock(CreditRepository.class);
+        eventPublisher = mock(ApplicationEventPublisher.class);
+        userRepository = mock(UserRepository.class);
 
         renewalProcessor = new SubscriptionRenewalProcessor(
                 subscriptionRepository,
@@ -66,8 +73,15 @@ class SubscriptionRenewalProcessorTest {
                 orderRepository,
                 orderItemRepository,
                 paymentRepository,
-                creditRepository
+                creditRepository,
+                eventPublisher,
+                userRepository
         );
+
+        User user = mock(User.class);
+        when(user.getEmail()).thenReturn("user@example.com");
+        when(user.getName()).thenReturn("테스트유저");
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
 
         when(orderRepository.save(any(Order.class)))
                 .thenAnswer(invocation -> {

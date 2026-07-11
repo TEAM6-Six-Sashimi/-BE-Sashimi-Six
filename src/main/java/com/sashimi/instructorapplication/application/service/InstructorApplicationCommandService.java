@@ -7,6 +7,8 @@ import com.sashimi.global.storage.FileSignatureValidator;
 import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.instructorapplication.application.command.ApplyInstructorCommand;
 import com.sashimi.instructorapplication.application.event.InstructorApprovedEvent;
+import com.sashimi.instructorapplication.application.event.InstructorAppliedEvent;
+import com.sashimi.instructorapplication.application.event.InstructorRejectedEvent;
 import com.sashimi.instructorapplication.application.port.DocxPort;
 import com.sashimi.instructorapplication.application.usecase.InstructorApplicationCommandUseCase;
 import com.sashimi.instructorapplication.domain.model.ApprovalStatus;
@@ -231,6 +233,14 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 }
                 throw e;
             }
+            User applicant = userRepository.findById(command.userId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+            eventPublisher.publishEvent(new InstructorAppliedEvent(
+                    applicant.getId(),
+                    applicant.getName(),
+                    applicant.getEmail()
+            ));
+
             meterRegistry.counter("instructor.application.total", "status", "success", "reason", "NONE").increment();
         } catch (BusinessException e) {
             meterRegistry.counter("instructor.application.total", "status", "failure", "reason", e.getErrorCode().name()).increment();
@@ -296,5 +306,15 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
         application.reject(rejectionCategory, rejectionReason);
         instructorApplicationRepository.save(application);
+
+        User user = userRepository.findById(application.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        eventPublisher.publishEvent(new InstructorRejectedEvent(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                rejectionCategory,
+                rejectionReason
+        ));
     }
 }

@@ -26,6 +26,13 @@ public class InstructorPortAdapter implements InstructorPort {
     }
 
     @Override
+    public String getInstructorEmail(Long instructorId) {
+        return userRepository.findById(instructorId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND))
+                .getEmail();
+    }
+
+    @Override
     public String getInstructorLoginId(Long instructorId) {
         return userRepository.findById(instructorId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND))

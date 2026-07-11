@@ -1,6 +1,7 @@
 package com.sashimi.credit.application.service;
 
 import com.sashimi.credit.application.command.ConfirmCreditChargeCommand;
+import com.sashimi.credit.application.event.CreditChargedEvent;
 import com.sashimi.credit.application.result.CreditChargeConfirmResult;
 import com.sashimi.credit.domain.model.Credit;
 import com.sashimi.credit.domain.model.CreditChargePayment;
@@ -10,7 +11,10 @@ import com.sashimi.credit.infrastructure.toss.TossPaymentConfirmResponse;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.payment.application.logging.PaymentAuditLogger;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +30,8 @@ public class CreditChargeTransactionService {
     private final CreditChargePaymentRepository paymentRepository;
     private static final int MAX_CREDIT_CHARGE_RETRY_COUNT = 3;
     private final PaymentAuditLogger paymentAuditLogger;
+    private final ApplicationEventPublisher eventPublisher;
+    private final UserRepository userRepository;
 
     @Transactional
     public CreditChargeConfirmResult complete(
@@ -72,6 +78,16 @@ public class CreditChargeTransactionService {
                 payment.getAmount(),
                 savedCredit.getBalance()
         );
+
+        User user = userRepository.findById(command.userId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        eventPublisher.publishEvent(new CreditChargedEvent(
+                command.userId(),
+                user.getEmail(),
+                user.getName(),
+                payment.getAmount(),
+                savedCredit.getBalance()
+        ));
 
         return new CreditChargeConfirmResult(
                 savedCredit.getBalance(),
