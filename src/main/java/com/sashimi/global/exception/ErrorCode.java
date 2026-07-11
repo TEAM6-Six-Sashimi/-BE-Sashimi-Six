@@ -148,7 +148,12 @@ public enum ErrorCode {
     FILE_INVALID_TYPE(400, "FILE_002", "지원하지 않는 파일 형식입니다. (jpg, png, gif, webp만 허용)"),
     FILE_UPLOAD_FAILED(500, "FILE_003", "파일 업로드에 실패했습니다."),
     FILE_NOT_FOUND(404, "FILE_004", "파일을 찾을 수 없습니다."),
-    CERTIFICATE_FILE_INVALID_TYPE(400, "FILE_005", "지원하지 않는 파일 형식입니다. (jpg, png, pdf만 지원)");
+    CERTIFICATE_FILE_INVALID_TYPE(400, "FILE_005", "지원하지 않는 파일 형식입니다. (jpg, png, pdf만 지원)"),
+
+    NOTICE_NOT_FOUND(404, "NOTICE_001", "공지사항을 찾을 수 없습니다."),
+    NOTICE_TITLE_REQUIRED(400, "NOTICE_002", "공지사항 제목을 입력해 주세요."),
+    NOTICE_CONTENT_REQUIRED(400, "NOTICE_003", "공지사항 내용을 입력해 주세요."),
+    NOTICE_PAGE_SIZE_INVALID(400, "NOTICE_004", "공지사항 조회 조건이 올바르지 않습니다.");
 
 
     private final int status;
