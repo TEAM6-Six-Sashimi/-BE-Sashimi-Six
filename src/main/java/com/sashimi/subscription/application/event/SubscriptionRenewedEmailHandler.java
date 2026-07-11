@@ -7,10 +7,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.time.format.DateTimeFormatter;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SubscriptionRenewedEmailHandler {
+
+    private static final DateTimeFormatter BILLING_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy년 M월 d일 HH:mm");
 
     private final EmailSender emailSender;
 
@@ -30,6 +35,6 @@ public class SubscriptionRenewedEmailHandler {
 
     private String createContent(String name, String planName, java.time.LocalDateTime nextBillingAt) {
         return name + "님, '" + planName + "' 구독이 정상적으로 자동 결제되었습니다.\n"
-                + "다음 결제 예정일: " + nextBillingAt;
+                + "다음 결제 예정일: " + nextBillingAt.format(BILLING_DATE_FORMATTER);
     }
 }

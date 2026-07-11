@@ -143,7 +143,7 @@ public class CourseCommandService implements CourseCommandUseCase {
                 rejected.getId(),
                 rejected.getTitle(),
                 command.category(),
-                command.detail()
+                rejected.getRejectDetail()
         ));
     }
 

@@ -17,6 +17,7 @@ import com.sashimi.subscription.domain.repository.SubscriptionPaymentRepository;
 import com.sashimi.subscription.domain.repository.SubscriptionRepository;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class SubscriptionRenewalProcessor {
 
@@ -132,15 +134,7 @@ public class SubscriptionRenewalProcessor {
                 subscription.renew(renewalBaseAt)
         );
 
-        User user = userRepository.findById(subscription.getUserId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        eventPublisher.publishEvent(new SubscriptionRenewedEvent(
-                subscription.getUserId(),
-                user.getEmail(),
-                user.getName(),
-                subscription.getPlan().getPlanName(),
-                renewed.getNextBillingAt()
-        ));
+        publishRenewedEvent(subscription, renewed);
 
         return RenewalResult.RENEWED;
     }
@@ -163,6 +157,22 @@ public class SubscriptionRenewalProcessor {
         subscriptionRepository.save(subscription.expire());
 
         return true;
+    }
+
+    private void publishRenewedEvent(Subscription subscription, Subscription renewed) {
+        try {
+            User user = userRepository.findById(subscription.getUserId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+            eventPublisher.publishEvent(new SubscriptionRenewedEvent(
+                    subscription.getUserId(),
+                    user.getEmail(),
+                    user.getName(),
+                    subscription.getPlan().getPlanName(),
+                    renewed.getNextBillingAt()
+            ));
+        } catch (RuntimeException e) {
+            log.warn("구독 갱신 알림 이벤트 발행 실패. subscriptionId={}", subscription.getId(), e);
+        }
     }
 
     private String createOrderNo() {

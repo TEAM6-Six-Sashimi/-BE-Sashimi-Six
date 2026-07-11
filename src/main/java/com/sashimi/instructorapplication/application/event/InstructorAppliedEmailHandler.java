@@ -22,9 +22,9 @@ public class InstructorAppliedEmailHandler {
                     "[FitGyeok] 강사 지원이 접수되었습니다",
                     createContent(event.name())
             );
-            log.info("강사 지원 접수 이메일 발송 완료. userId={}, email={}", event.userId(), event.email());
+            log.info("강사 지원 접수 이메일 발송 완료. userId={}", event.userId());
         } catch (RuntimeException e) {
-            log.error("강사 지원 접수 이메일 발송 실패. userId={}, email={}", event.userId(), event.email(), e);
+            log.error("강사 지원 접수 이메일 발송 실패. userId={}", event.userId(), e);
         }
     }
 

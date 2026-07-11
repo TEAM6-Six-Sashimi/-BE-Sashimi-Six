@@ -22,9 +22,9 @@ public class InstructorRejectedEmailHandler {
                     "[FitGyeok] 강사 지원 결과 안내",
                     createContent(event.name(), event.rejectionReason())
             );
-            log.info("강사 거절 이메일 발송 완료. userId={}, email={}", event.userId(), event.email());
+            log.info("강사 거절 이메일 발송 완료. userId={}", event.userId());
         } catch (RuntimeException e) {
-            log.error("강사 거절 이메일 발송 실패. userId={}, email={}", event.userId(), event.email(), e);
+            log.error("강사 거절 이메일 발송 실패. userId={}", event.userId(), e);
         }
     }
 
