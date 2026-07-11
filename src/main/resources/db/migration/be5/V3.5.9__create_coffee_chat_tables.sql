@@ -19,7 +19,8 @@ CREATE TABLE coffee_chat_messages (
     content TEXT NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_coffee_chat_messages_chat FOREIGN KEY (coffee_chat_id) REFERENCES coffee_chats(coffee_chat_id)
+    CONSTRAINT fk_coffee_chat_messages_chat FOREIGN KEY (coffee_chat_id) REFERENCES coffee_chats(coffee_chat_id),
+    CONSTRAINT fk_coffee_chat_messages_sender FOREIGN KEY (sender_id) REFERENCES users(user_id)
 );
 
 -- 목록 조회/정렬 최적화
