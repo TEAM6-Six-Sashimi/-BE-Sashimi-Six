@@ -23,6 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,14 +41,26 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
 
     @Override
     public List<InstructorApplicationListResponse> getPendingInstructorApplications() {
-        return instructorApplicationRepository.findAllByStatus(ApprovalStatus.PENDING)
+        List<InstructorApplication> applications =
+                instructorApplicationRepository.findAllByStatus(ApprovalStatus.PENDING);
+
+        Map<Long, User> userById = userRepository.findAllByIdIn(
+                        applications.stream().map(InstructorApplication::getUserId).distinct().toList())
                 .stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        Map<Long, String> categoryNameById = categoryRepository.findAllByIdIn(
+                        applications.stream().map(InstructorApplication::getCategoryId).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(Category::getId, Category::getName));
+
+        return applications.stream()
                 .map(application -> {
-                    User user = userRepository.findById(application.getUserId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-                    String categoryName = categoryRepository.findById(application.getCategoryId())
-                            .map(Category::getName)
-                            .orElse(null);
+                    User user = userById.get(application.getUserId());
+                    if (user == null) {
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+                    }
+                    String categoryName = categoryNameById.get(application.getCategoryId());
                     return InstructorApplicationListResponse.of(application, user, categoryName);
                 })
                 .toList();
@@ -109,11 +124,20 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
 
     @Override
     public List<RejectedApplicationListResponse> getRejectedInstructorApplications() {
-        return instructorApplicationRepository.findAllByStatus(ApprovalStatus.REJECTED)
+        List<InstructorApplication> applications =
+                instructorApplicationRepository.findAllByStatus(ApprovalStatus.REJECTED);
+
+        Map<Long, User> userById = userRepository.findAllByIdIn(
+                        applications.stream().map(InstructorApplication::getUserId).distinct().toList())
                 .stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return applications.stream()
                 .map(application -> {
-                    User user = userRepository.findById(application.getUserId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    User user = userById.get(application.getUserId());
+                    if (user == null) {
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+                    }
                     return RejectedApplicationListResponse.of(application, user);
                 })
                 .toList();
