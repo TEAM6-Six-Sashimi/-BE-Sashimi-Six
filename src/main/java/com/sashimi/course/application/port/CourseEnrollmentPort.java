@@ -14,4 +14,6 @@ public interface CourseEnrollmentPort {
      * @return courseId -> 완강생 수 (완강생이 0명인 강의는 맵에 없음)
      */
     Map<Long, Integer> countCompletedByCourseIds(List<Long> courseIds);
+
+    Map<Long, Integer> countStudentsByCourseIds(List<Long> courseIds);
 }
