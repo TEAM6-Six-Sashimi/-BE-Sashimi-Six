@@ -118,6 +118,9 @@ public enum ErrorCode {
     RESUME_INVALID_FORMAT(400, "MEMBER_008", "이력서 파일은 .docx 형식만 업로드 가능합니다."),
     ALREADY_INSTRUCTOR(400, "MEMBER_010", "이미 승인된 강사는 재신청할 수 없습니다."),
 
+    COFFEE_CHAT_INVALID_STATUS(400, "COFFEECHAT_001", "처리할 수 없는 커피챗 상태입니다."),
+    COFFEE_CHAT_MESSAGE_FORBIDDEN(403, "COFFEECHAT_002", "채팅방 참여자만 메시지를 보낼 수 있습니다."),
+
     REVIEW_ALREADY_EXISTS(409, "REVIEW_001", "이미 해당 강의에 리뷰를 작성하셨습니다."),
     REVIEW_NOT_ENROLLED(403, "REVIEW_002", "수강 중인 강의에만 리뷰를 작성할 수 있습니다."),
     REVIEW_PROGRESS_REQUIRED(400, "REVIEW_003", "수강 후 리뷰를 작성할 수 있습니다."),
