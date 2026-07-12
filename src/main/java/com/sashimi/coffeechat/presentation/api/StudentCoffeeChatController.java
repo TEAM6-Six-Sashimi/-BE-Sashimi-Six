@@ -6,6 +6,7 @@ import com.sashimi.coffeechat.presentation.api.response.CoffeeChatMessageRespons
 import com.sashimi.coffeechat.presentation.api.response.CoffeeChatSummaryResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/student/coffee-chats")
 @RequiredArgsConstructor
@@ -45,7 +47,13 @@ public class StudentCoffeeChatController {
                 .stream()
                 .map(CoffeeChatMessageResponse::from)
                 .toList();
-        coffeeChatCommandUseCase.markMessagesAsRead(chatId, principal.getId());
+
+        try {
+            coffeeChatCommandUseCase.markMessagesAsRead(chatId, principal.getId());
+        } catch (RuntimeException e) {
+            log.warn("메시지 읽음처리 실패 - chatId={}, readerId={}", chatId, principal.getId(), e);
+        }
+
         return ResponseEntity.ok(response);
     }
 }
