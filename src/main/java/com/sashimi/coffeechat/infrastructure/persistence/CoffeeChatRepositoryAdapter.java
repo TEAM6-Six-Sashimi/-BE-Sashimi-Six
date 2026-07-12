@@ -53,14 +53,7 @@ public class CoffeeChatRepositoryAdapter implements CoffeeChatRepository {
     }
 
     @Override
-    public boolean existsByStudentIdAndInstructorIdAndCourseIdAndStatusIn(
-            Long studentId, Long instructorId, Long courseId, List<CoffeeChatStatus> statuses) {
-        return springDataRepository.existsByStudentIdAndInstructorIdAndCourseIdAndStatusIn(
-                studentId, instructorId, courseId, statuses);
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        springDataRepository.deleteById(id);
+    public boolean existsByStudentIdAndInstructorIdAndCourseId(Long studentId, Long instructorId, Long courseId) {
+        return springDataRepository.existsByStudentIdAndInstructorIdAndCourseId(studentId, instructorId, courseId);
     }
 }

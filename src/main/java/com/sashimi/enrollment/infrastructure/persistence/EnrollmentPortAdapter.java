@@ -1,5 +1,6 @@
 package com.sashimi.enrollment.infrastructure.persistence;
 
+import com.sashimi.enrollment.application.event.EnrollmentCreatedEvent;
 import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.enrollment.application.port.EnrollmentSummary;
 import com.sashimi.enrollment.domain.model.EnrollmentType;
@@ -7,6 +8,7 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -21,6 +23,7 @@ import java.util.Optional;
 public class EnrollmentPortAdapter implements EnrollmentPort {
 
     private final JdbcTemplate jdbcTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public boolean isEnrolled(Long userId, Long courseId) {
@@ -78,6 +81,8 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
             );
 
             recalculateStudentCount(courseId);
+
+            eventPublisher.publishEvent(new EnrollmentCreatedEvent(userId, courseId));
 
             log.info("수강 등록 완료 - userId={}, courseId={}, orderItemId={}",
                     userId, courseId, orderItemId);

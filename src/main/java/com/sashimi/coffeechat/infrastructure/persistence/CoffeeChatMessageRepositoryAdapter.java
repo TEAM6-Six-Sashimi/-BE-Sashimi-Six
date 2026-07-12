@@ -8,7 +8,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -43,5 +45,17 @@ public class CoffeeChatMessageRepositoryAdapter implements CoffeeChatMessageRepo
     @Override
     public void markAllAsRead(Long coffeeChatId, Long readerId) {
         springDataRepository.markAllAsRead(coffeeChatId, readerId);
+    }
+
+    @Override
+    public Map<Long, CoffeeChatMessage> findLatestMessagesByCoffeeChatIds(List<Long> coffeeChatIds) {
+        if (coffeeChatIds.isEmpty()) {
+            return Map.of();
+        }
+        return springDataRepository.findLatestMessagesByCoffeeChatIds(coffeeChatIds)
+                .stream()
+                .map(CoffeeChatMessageJpaEntity::toDomain)
+                .collect(Collectors.toMap(
+                        CoffeeChatMessage::getCoffeeChatId, Function.identity(), (first, second) -> first));
     }
 }

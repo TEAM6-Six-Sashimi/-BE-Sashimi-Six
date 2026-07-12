@@ -1,10 +1,6 @@
 package com.sashimi.coffeechat.application.usecase;
 
-import com.sashimi.coffeechat.application.command.ApplyCoffeeChatCommand;
-
 public interface CoffeeChatCommandUseCase {
-
-    void apply(ApplyCoffeeChatCommand command);
 
     void accept(Long chatId, Long instructorId);
 

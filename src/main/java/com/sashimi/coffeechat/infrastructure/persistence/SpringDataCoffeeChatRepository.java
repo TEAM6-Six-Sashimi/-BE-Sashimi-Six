@@ -13,6 +13,5 @@ public interface SpringDataCoffeeChatRepository extends JpaRepository<CoffeeChat
 
     List<CoffeeChatJpaEntity> findAllByInstructorIdAndStatusOrderByAcceptedAtDesc(Long instructorId, CoffeeChatStatus status);
 
-    boolean existsByStudentIdAndInstructorIdAndCourseIdAndStatusIn(
-            Long studentId, Long instructorId, Long courseId, List<CoffeeChatStatus> statuses);
+    boolean existsByStudentIdAndInstructorIdAndCourseId(Long studentId, Long instructorId, Long courseId);
 }

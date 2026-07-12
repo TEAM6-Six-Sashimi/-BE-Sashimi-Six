@@ -71,10 +71,12 @@ class CoffeeChatTest {
     }
 
     @Test
-    void PENDING_상태는_거절_가능하다() {
+    void PENDING_상태는_거절하면_REJECTED_상태가_된다() {
         CoffeeChat coffeeChat = CoffeeChat.create(STUDENT_ID, INSTRUCTOR_ID, COURSE_ID);
 
-        coffeeChat.validateCanReject();
+        coffeeChat.reject();
+
+        assertThat(coffeeChat.getStatus()).isEqualTo(CoffeeChatStatus.REJECTED);
     }
 
     @Test
@@ -82,7 +84,7 @@ class CoffeeChatTest {
         CoffeeChat coffeeChat = alreadyAccepted();
 
         BusinessException exception = catchThrowableOfType(
-                coffeeChat::validateCanReject,
+                coffeeChat::reject,
                 BusinessException.class
         );
 
@@ -111,11 +113,56 @@ class CoffeeChatTest {
     }
 
     @Test
-    void ACCEPTED가_아니면_메시지를_보낼_수_없다() {
+    void PENDING_상태에서_학생은_메시지를_보낼_수_있다() {
+        CoffeeChat coffeeChat = CoffeeChat.create(STUDENT_ID, INSTRUCTOR_ID, COURSE_ID);
+
+        CoffeeChatMessage message = coffeeChat.sendMessage(STUDENT_ID, "질문 있습니다");
+
+        assertThat(message.getSenderId()).isEqualTo(STUDENT_ID);
+        assertThat(coffeeChat.getStatus()).isEqualTo(CoffeeChatStatus.PENDING);
+    }
+
+    @Test
+    void PENDING_상태에서_강사는_메시지를_보낼_수_없다() {
         CoffeeChat coffeeChat = CoffeeChat.create(STUDENT_ID, INSTRUCTOR_ID, COURSE_ID);
 
         BusinessException exception = catchThrowableOfType(
-                () -> coffeeChat.sendMessage(STUDENT_ID, "메시지"),
+                () -> coffeeChat.sendMessage(INSTRUCTOR_ID, "아직 수락 안 함"),
+                BusinessException.class
+        );
+
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
+    }
+
+    @Test
+    void LEFT_상태에서_학생이_메시지를_보내면_PENDING으로_복귀한다() {
+        CoffeeChat coffeeChat = alreadyAccepted();
+        coffeeChat.leave();
+
+        CoffeeChatMessage message = coffeeChat.sendMessage(STUDENT_ID, "재요청합니다");
+
+        assertThat(message.getSenderId()).isEqualTo(STUDENT_ID);
+        assertThat(coffeeChat.getStatus()).isEqualTo(CoffeeChatStatus.PENDING);
+    }
+
+    @Test
+    void REJECTED_상태에서_학생이_메시지를_보내면_PENDING으로_복귀한다() {
+        CoffeeChat coffeeChat = CoffeeChat.create(STUDENT_ID, INSTRUCTOR_ID, COURSE_ID);
+        coffeeChat.reject();
+
+        CoffeeChatMessage message = coffeeChat.sendMessage(STUDENT_ID, "다시 요청합니다");
+
+        assertThat(message.getSenderId()).isEqualTo(STUDENT_ID);
+        assertThat(coffeeChat.getStatus()).isEqualTo(CoffeeChatStatus.PENDING);
+    }
+
+    @Test
+    void LEFT_상태에서_강사는_메시지를_보낼_수_없다() {
+        CoffeeChat coffeeChat = alreadyAccepted();
+        coffeeChat.leave();
+
+        BusinessException exception = catchThrowableOfType(
+                () -> coffeeChat.sendMessage(INSTRUCTOR_ID, "메시지"),
                 BusinessException.class
         );
 
