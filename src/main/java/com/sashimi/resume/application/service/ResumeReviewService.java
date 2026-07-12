@@ -1,6 +1,9 @@
 package com.sashimi.resume.application.service;
 
 import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
+import com.sashimi.ai.domain.model.AiFeatureType;
+import com.sashimi.ai.infrastructure.persistence.AiRequestHistoryJpaEntity;
+import com.sashimi.ai.infrastructure.persistence.SpringDataAiRequestHistoryRepository;
 import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -18,15 +21,18 @@ public class ResumeReviewService implements ReviewResumeUseCase {
     private final ResumeRepository resumeRepository;
     private final ResumeReviewProcessor resumeReviewProcessor;
     private final AiFeatureAccessPolicy aiFeatureAccessPolicy;
+    private final SpringDataAiRequestHistoryRepository aiRequestHistoryRepository;
 
     public ResumeReviewService(
             ResumeRepository resumeRepository,
             ResumeReviewProcessor resumeReviewProcessor,
-            AiFeatureAccessPolicy aiFeatureAccessPolicy
+            AiFeatureAccessPolicy aiFeatureAccessPolicy,
+            SpringDataAiRequestHistoryRepository aiRequestHistoryRepository
     ) {
         this.resumeRepository = resumeRepository;
         this.resumeReviewProcessor = resumeReviewProcessor;
         this.aiFeatureAccessPolicy = aiFeatureAccessPolicy;
+        this.aiRequestHistoryRepository = aiRequestHistoryRepository;
     }
 
     @Override
@@ -46,6 +52,14 @@ public class ResumeReviewService implements ReviewResumeUseCase {
                                 ErrorCode.RESUME_NOT_FOUND
                         )
                 );
+
+        aiRequestHistoryRepository.save(
+                AiRequestHistoryJpaEntity.started(
+                        userId,
+                        AiFeatureType.RESUME_REVIEW,
+                        null
+                )
+        );
 
         return resumeReviewProcessor.process(
                 resume

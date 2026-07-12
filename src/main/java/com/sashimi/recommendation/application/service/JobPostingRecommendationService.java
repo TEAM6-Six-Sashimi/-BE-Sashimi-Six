@@ -1,6 +1,9 @@
 package com.sashimi.recommendation.application.service;
 
 import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
+import com.sashimi.ai.domain.model.AiFeatureType;
+import com.sashimi.ai.infrastructure.persistence.AiRequestHistoryJpaEntity;
+import com.sashimi.ai.infrastructure.persistence.SpringDataAiRequestHistoryRepository;
 import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -25,19 +28,22 @@ public class JobPostingRecommendationService implements
     private final JobPostingRecommendationAsyncService asyncService;
     private final JobPostingResumeSummaryBuilder resumeSummaryBuilder;
     private final AiFeatureAccessPolicy aiFeatureAccessPolicy;
+    private final SpringDataAiRequestHistoryRepository aiRequestHistoryRepository;
 
     public JobPostingRecommendationService(
             JobPostingRecommendationRepository recommendationRepository,
             JobPostingRecommendationPolicy recommendationPolicy,
             JobPostingRecommendationAsyncService asyncService,
             JobPostingResumeSummaryBuilder resumeSummaryBuilder,
-            AiFeatureAccessPolicy aiFeatureAccessPolicy
+            AiFeatureAccessPolicy aiFeatureAccessPolicy,
+            SpringDataAiRequestHistoryRepository aiRequestHistoryRepository
     ) {
         this.recommendationRepository = recommendationRepository;
         this.recommendationPolicy = recommendationPolicy;
         this.asyncService = asyncService;
         this.resumeSummaryBuilder = resumeSummaryBuilder;
         this.aiFeatureAccessPolicy = aiFeatureAccessPolicy;
+        this.aiRequestHistoryRepository = aiRequestHistoryRepository;
     }
 
     @Override
@@ -46,6 +52,14 @@ public class JobPostingRecommendationService implements
         aiFeatureAccessPolicy.validate(
                 command.userId(),
                 AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION
+        );
+
+        aiRequestHistoryRepository.save(
+                AiRequestHistoryJpaEntity.started(
+                        command.userId(),
+                        AiFeatureType.JOB_POSTING_ANALYSIS,
+                        null
+                )
         );
 
         log.info("채용공고 추천 요청 접수: userId={}, resumeId={}, inputType={}, hasSourceUrl={}, rawContentLength={}",
