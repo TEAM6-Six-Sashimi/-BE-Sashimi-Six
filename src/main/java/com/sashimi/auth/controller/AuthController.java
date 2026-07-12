@@ -9,6 +9,8 @@ import com.sashimi.auth.dto.LogoutRequestDto;
 import com.sashimi.auth.dto.ReissueRequestDto;
 import com.sashimi.auth.dto.TokenResponseDto;
 import com.sashimi.auth.service.AuthService;
+import com.sashimi.global.web.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
 import com.sashimi.user.dto.LoginIdCheckResponseDto;
 import com.sashimi.user.dto.ReferralCodeCheckResponseDto;
 import com.sashimi.user.dto.SignupRequestDto;
@@ -77,8 +79,12 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping("/login")
-    public ResponseEntity<TokenResponseDto> login(@RequestBody @Valid LoginRequestDto request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<TokenResponseDto> login(
+            @RequestBody @Valid LoginRequestDto request,
+            HttpServletRequest httpRequest
+    ) {
+        String clientIp = ClientIpResolver.resolve(httpRequest);
+        return ResponseEntity.ok(authService.login(request, clientIp));
     }
 
     @Operation(summary = "재로그인", description = "로그인 상태에서 refresh토큰을 사용하여 재로그인 합니다")

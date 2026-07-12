@@ -23,6 +23,7 @@ public enum ErrorCode {
     LOGIN_FAILED(401, "AUTH_006", "아이디 또는 비밀번호가 올바르지 않습니다."),
     TOO_MANY_REQUESTS(429, "AUTH_007", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
     CONCURRENT_SESSION_DETECTED(401, "AUTH_008", "다른 기기에서 로그인되어 자동 로그아웃되었습니다."),
+    IP_BLOCKED(429, "AUTH_009", "일시적으로 접근이 제한되었습니다. 잠시 후 다시 시도해주세요."),
 
     DUPLICATE_LOGIN_ID(409, "USER_001", "이미 사용 중인 아이디입니다."),
     DUPLICATE_EMAIL(409, "USER_002", "이미 사용 중인 이메일입니다."),
