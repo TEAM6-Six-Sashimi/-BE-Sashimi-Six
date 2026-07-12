@@ -105,3 +105,46 @@ groups:
               conditions:
                 - evaluator: { type: gt, params: [0] }
               refId: C
+
+  - orgId: 1
+    name: sashimi-security
+    folder: Sashimi Alerts
+    interval: 1m
+    rules:
+      - uid: sashimi-login-failure-spike
+        title: "[WARNING] 로그인 실패율 급증 (스프레이 공격 의심)"
+        condition: D
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "최근 5분 로그인 실패 건수가 1시간 평균 대비 3배 이상, 절대치 10건 이상입니다."
+        data:
+          - refId: A
+            relativeTimeRange: { from: 3900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              expr: 'sum(increase(auth_login_failed_total{job="sashimi"}[5m]))'
+              instant: true
+              refId: A
+          - refId: B
+            relativeTimeRange: { from: 3900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              expr: 'sum(increase(auth_login_failed_total{job="sashimi"}[1h] offset 5m)) / 12'
+              instant: true
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: math
+              expression: '$A >= 10 && $A >= $B * 3'
+              refId: C
+          - refId: D
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: C
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+              refId: D

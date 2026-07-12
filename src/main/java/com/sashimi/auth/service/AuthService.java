@@ -22,8 +22,11 @@ import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.security.jwt.JwtTokenProvider;
+import com.sashimi.security.loginprotection.AccountLockCheckResult;
+import com.sashimi.security.loginprotection.LoginProtectionService;
 import com.sashimi.token.entity.RefreshToken;
 import com.sashimi.token.service.RefreshService;
+import com.sashimi.user.application.event.SuspiciousLoginDetectedEvent;
 import com.sashimi.user.application.event.UserPasswordChangedEvent;
 import com.sashimi.user.application.event.UserRegisteredEvent;
 import com.sashimi.user.domain.model.User;
@@ -86,6 +89,7 @@ public class AuthService {
     private final TokenBlacklistService tokenBlacklistService;
     private final TokenVersionService tokenVersionService;
     private final RateLimiterService rateLimiterService;
+    private final LoginProtectionService loginProtectionService;
 
     public UserResponseDto register(SignupRequestDto request) {
         SignupEligibility eligibility = signupEligibilityPolicy.validate(request);
@@ -246,8 +250,23 @@ public class AuthService {
         return user;
     }
 
-    public TokenResponseDto login(LoginRequestDto request) {
-        if (!rateLimiterService.isAllowed("login:" + request.getLoginId(), 5, 300)) {
+    public TokenResponseDto login(LoginRequestDto request, String clientIp) {
+        if (loginProtectionService.isIpBlocked(clientIp)) {
+            throw new BusinessException(ErrorCode.IP_BLOCKED);
+        }
+
+        AccountLockCheckResult lockCheck = loginProtectionService.checkAccountLock(request.getLoginId());
+        if (lockCheck.locked()) {
+            if (lockCheck.justEscalated()) {
+                userRepository.findByLoginId(request.getLoginId()).ifPresent(user ->
+                        eventPublisher.publishEvent(new SuspiciousLoginDetectedEvent(
+                                user.getId(),
+                                user.getName(),
+                                user.getEmail(),
+                                lockCheck.violationCount(),
+                                lockCheck.lockDurationSeconds()
+                        )));
+            }
             throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
         }
 
@@ -263,10 +282,15 @@ public class AuthService {
                         )
                 );
             } catch (AuthenticationException e) {
+                loginProtectionService.recordFailedAttempt(clientIp, request.getLoginId());
                 authMetrics.recordLoginFailed(resolveFailureReason(e));
                 log.warn("event=login_failed loginId={} reason={}", maskLoginId(request.getLoginId()), resolveFailureReason(e));
                 throw e;
             }
+
+            // 인증 성공: 실패 카운트를 남겨두면 정상 사용자가 재시도 몇 번만으로도
+            // 위반 처리될 수 있으므로 초기화한다.
+            rateLimiterService.reset("login:" + request.getLoginId());
 
             CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
             User user = userRepository.findById(principal.getId())
