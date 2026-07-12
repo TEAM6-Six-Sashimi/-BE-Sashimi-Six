@@ -57,9 +57,13 @@ public class CoffeeChat {
         if (this.status != CoffeeChatStatus.ACCEPTED) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
         }
-        if (!Objects.equals(senderId, this.studentId) && !Objects.equals(senderId, this.instructorId)) {
+        if (!isParticipant(senderId)) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_MESSAGE_FORBIDDEN);
         }
         return CoffeeChatMessage.create(this.id, senderId, content);
+    }
+
+    public boolean isParticipant(Long userId) {
+        return Objects.equals(userId, this.studentId) || Objects.equals(userId, this.instructorId);
     }
 }
