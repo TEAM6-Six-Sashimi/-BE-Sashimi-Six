@@ -1,0 +1,2 @@
+ALTER TABLE email_verifications
+    MODIFY purpose ENUM('SIGNUP', 'PASSWORD_RESET', 'EMAIL_CHANGE', 'FIND_ID') NOT NULL;
