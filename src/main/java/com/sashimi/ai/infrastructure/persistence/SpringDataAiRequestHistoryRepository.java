@@ -1,5 +1,6 @@
 package com.sashimi.ai.infrastructure.persistence;
 
+import com.sashimi.ai.domain.model.AiFeatureType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,5 +37,16 @@ public interface SpringDataAiRequestHistoryRepository
     List<AiRequestCountProjection> countDailyRequestsByFeatureType(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
+    );
+
+    long countByUserIdAndFeatureTypeAndCreatedAtGreaterThanEqual(
+            Long userId,
+            AiFeatureType featureType,
+            LocalDateTime from
+    );
+
+    long countByUserIdAndCreatedAtGreaterThanEqual(
+            Long userId,
+            LocalDateTime from
     );
 }

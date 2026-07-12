@@ -1,5 +1,7 @@
 package com.sashimi.ai.domain.model;
 
+import com.sashimi.ai.metric.AiMetrics;
+
 public enum AiFeatureType {
 
     RESUME_REVIEW("이력서 AI 평가"),
@@ -14,5 +16,21 @@ public enum AiFeatureType {
 
     public String label() {
         return label;
+    }
+
+    public static AiFeatureType fromMetricFeature(String feature) {
+        if (AiMetrics.FEATURE_RESUME_REVIEW.equals(feature)) {
+            return RESUME_REVIEW;
+        }
+
+        if (AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION.equals(feature)) {
+            return JOB_POSTING_ANALYSIS;
+        }
+
+        if ("COVER_LETTER_REVIEW".equals(feature)) {
+            return COVER_LETTER_REVIEW;
+        }
+
+        throw new IllegalArgumentException("지원하지 않는 AI 기능입니다. feature=" + feature);
     }
 }
