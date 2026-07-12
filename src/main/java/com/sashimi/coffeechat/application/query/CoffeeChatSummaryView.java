@@ -8,9 +8,13 @@ public record CoffeeChatSummaryView(
         Long chatId,
         Long studentId,
         Long instructorId,
+        String instructorName,
         Long courseId,
+        String courseTitle,
         CoffeeChatStatus status,
         LocalDateTime createdAt,
         LocalDateTime acceptedAt,
-        boolean hasUnreadMessages
+        boolean hasUnreadMessages,
+        String lastMessagePreview,
+        LocalDateTime lastMessageAt
 ) {}
