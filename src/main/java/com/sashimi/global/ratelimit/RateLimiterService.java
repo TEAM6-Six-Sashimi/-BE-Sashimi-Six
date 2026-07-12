@@ -36,4 +36,16 @@ public class RateLimiterService {
             return true;
         }
     }
+
+    /**
+     * 카운터를 즉시 초기화한다. 예: 로그인 성공 시 실패 카운트를 정상 사용자에게
+     * 불리하게 남겨두지 않기 위해 호출.
+     */
+    public void reset(String key) {
+        try {
+            redisTemplate.delete(PREFIX + key);
+        } catch (Exception e) {
+            log.warn("event=rate_limit_redis_unavailable op=reset key={}", key);
+        }
+    }
 }

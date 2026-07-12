@@ -288,6 +288,10 @@ public class AuthService {
                 throw e;
             }
 
+            // 인증 성공: 실패 카운트를 남겨두면 정상 사용자가 재시도 몇 번만으로도
+            // 위반 처리될 수 있으므로 초기화한다.
+            rateLimiterService.reset("login:" + request.getLoginId());
+
             CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
             User user = userRepository.findById(principal.getId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

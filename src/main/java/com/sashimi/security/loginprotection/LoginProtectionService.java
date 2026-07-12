@@ -80,14 +80,25 @@ public class LoginProtectionService {
                 return AccountLockCheckResult.notLocked();
             }
 
-            // 방금 허용 한도를 처음 넘긴 순간 (크로싱)
+            // 방금 허용 한도를 처음 넘긴 순간 (크로싱) — 동시 요청이 전부 여기 도달할 수
+            // 있으므로, lockKey를 먼저 원자적으로 선점한 요청만 위반 카운터를 건드린다.
+            // (임시 TTL로 선점 후, 실제 위반 단계에 맞는 TTL로 갱신)
+            Boolean claimed = redisTemplate.opsForValue()
+                    .setIfAbsent(lockKey, "1", LOCK_SECONDS_VIOLATION_1, TimeUnit.SECONDS);
+            if (!Boolean.TRUE.equals(claimed)) {
+                // 동시에 들어온 다른 요청이 이미 이 크로싱을 처리 중/처리 완료
+                return new AccountLockCheckResult(true, false, 0, 0);
+            }
+
             String violationKey = ACCOUNT_VIOLATIONS_PREFIX + loginId;
             Long violationCount = redisTemplate.opsForValue().increment(violationKey);
             redisTemplate.expire(violationKey, ACCOUNT_VIOLATION_WINDOW_SECONDS, TimeUnit.SECONDS);
             int violations = violationCount == null ? 1 : violationCount.intValue();
 
             long lockSeconds = resolveLockSeconds(violations);
-            redisTemplate.opsForValue().set(lockKey, "1", lockSeconds, TimeUnit.SECONDS);
+            if (lockSeconds != LOCK_SECONDS_VIOLATION_1) {
+                redisTemplate.expire(lockKey, lockSeconds, TimeUnit.SECONDS);
+            }
 
             boolean justEscalated = violations >= 2;
             log.warn("event=login_account_locked loginId={} violationCount={} lockSeconds={}",
