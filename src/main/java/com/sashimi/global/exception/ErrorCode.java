@@ -121,6 +121,10 @@ public enum ErrorCode {
 
     COFFEE_CHAT_INVALID_STATUS(400, "COFFEECHAT_001", "처리할 수 없는 커피챗 상태입니다."),
     COFFEE_CHAT_MESSAGE_FORBIDDEN(403, "COFFEECHAT_002", "채팅방 참여자만 메시지를 보낼 수 있습니다."),
+    COFFEE_CHAT_NOT_FOUND(404, "COFFEECHAT_003", "커피챗을 찾을 수 없습니다."),
+    COFFEE_CHAT_FORBIDDEN(403, "COFFEECHAT_004", "채팅방 참여자만 접근할 수 있습니다."),
+    COFFEE_CHAT_ALREADY_EXISTS(409, "COFFEECHAT_005", "이미 신청했거나 진행 중인 커피챗입니다."),
+    COFFEE_CHAT_NOT_ENROLLED(403, "COFFEECHAT_006", "수강 중인 강의의 강사에게만 커피챗을 신청할 수 있습니다."),
 
     REVIEW_ALREADY_EXISTS(409, "REVIEW_001", "이미 해당 강의에 리뷰를 작성하셨습니다."),
     REVIEW_NOT_ENROLLED(403, "REVIEW_002", "수강 중인 강의에만 리뷰를 작성할 수 있습니다."),
