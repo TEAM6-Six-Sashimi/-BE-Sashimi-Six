@@ -4,6 +4,7 @@ import com.sashimi.category.domain.model.Category;
 import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.storage.FileStoragePort;
 import com.sashimi.instructorapplication.application.usecase.InstructorApplicationQueryUseCase;
 import com.sashimi.instructorapplication.domain.model.ApprovalStatus;
 import com.sashimi.instructorapplication.domain.model.InstructorApplication;
@@ -11,6 +12,7 @@ import com.sashimi.instructorapplication.domain.model.InstructorCertification;
 import com.sashimi.instructorapplication.domain.repository.InstructorApplicationRepository;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationListResponse;
+import com.sashimi.instructorapplication.presentation.api.response.InstructorProfileResponse;
 import com.sashimi.instructorapplication.presentation.api.response.MyInstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.MyInstructorApplicationListResponse;
 import com.sashimi.instructorapplication.presentation.api.response.RejectedApplicationListResponse;
@@ -20,31 +22,45 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class InstructorApplicationQueryService implements InstructorApplicationQueryUseCase {
 
-    private static final String FILE_DOWNLOAD_BASE = "/files/download?key=";
+    private static final int FILE_URL_EXPIRY_MINUTES = 30;
 
     private final InstructorApplicationRepository instructorApplicationRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final FileStoragePort fileStoragePort;
 
     @Override
     public List<InstructorApplicationListResponse> getPendingInstructorApplications() {
-        return instructorApplicationRepository.findAllByStatus(ApprovalStatus.PENDING)
+        List<InstructorApplication> applications =
+                instructorApplicationRepository.findAllByStatus(ApprovalStatus.PENDING);
+
+        Map<Long, User> userById = userRepository.findAllByIdIn(
+                        applications.stream().map(InstructorApplication::getUserId).distinct().toList())
                 .stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        Map<Long, String> categoryNameById = categoryRepository.findAllByIdIn(
+                        applications.stream().map(InstructorApplication::getCategoryId).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(Category::getId, Category::getName));
+
+        return applications.stream()
                 .map(application -> {
-                    User user = userRepository.findById(application.getUserId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-                    String categoryName = categoryRepository.findById(application.getCategoryId())
-                            .map(Category::getName)
-                            .orElse(null);
+                    User user = userById.get(application.getUserId());
+                    if (user == null) {
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+                    }
+                    String categoryName = categoryNameById.get(application.getCategoryId());
                     return InstructorApplicationListResponse.of(application, user, categoryName);
                 })
                 .toList();
@@ -96,12 +112,32 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
     }
 
     @Override
+    public InstructorProfileResponse getMyInstructorProfile(Long userId) {
+        InstructorApplication application = instructorApplicationRepository.findApprovedByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.APPLICATION_NOT_FOUND));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        String profileImageUrl = toDownloadUrl(application.getProfileImagePath());
+        return InstructorProfileResponse.of(application, user, profileImageUrl);
+    }
+
+    @Override
     public List<RejectedApplicationListResponse> getRejectedInstructorApplications() {
-        return instructorApplicationRepository.findAllByStatus(ApprovalStatus.REJECTED)
+        List<InstructorApplication> applications =
+                instructorApplicationRepository.findAllByStatus(ApprovalStatus.REJECTED);
+
+        Map<Long, User> userById = userRepository.findAllByIdIn(
+                        applications.stream().map(InstructorApplication::getUserId).distinct().toList())
                 .stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return applications.stream()
                 .map(application -> {
-                    User user = userRepository.findById(application.getUserId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    User user = userById.get(application.getUserId());
+                    if (user == null) {
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+                    }
                     return RejectedApplicationListResponse.of(application, user);
                 })
                 .toList();
@@ -109,6 +145,6 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
 
     private String toDownloadUrl(String s3Key) {
         if (s3Key == null) return null;
-        return FILE_DOWNLOAD_BASE + URLEncoder.encode(s3Key, StandardCharsets.UTF_8);
+        return fileStoragePort.generatePresignedDownloadUrl(s3Key, FILE_URL_EXPIRY_MINUTES);
     }
 }

@@ -1,8 +1,12 @@
 package com.sashimi.course.application.service;
 
 import com.sashimi.course.application.command.*;
+import com.sashimi.course.application.event.CourseApprovedEvent;
+import com.sashimi.course.application.event.CourseRejectedEvent;
+import com.sashimi.course.application.event.CourseSubmittedEvent;
 import com.sashimi.course.application.port.CategoryPort;
 import com.sashimi.course.application.port.CourseEnrollmentPort;
+import com.sashimi.course.application.port.InstructorPort;
 import com.sashimi.course.application.usecase.CourseCommandUseCase;
 import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.model.CourseSession;
@@ -12,6 +16,7 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.global.storage.FileStoragePort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +38,8 @@ public class CourseCommandService implements CourseCommandUseCase {
     private final CategoryPort categoryPort;
     private final CourseEnrollmentPort courseEnrollmentPort;
     private final FileStoragePort fileStoragePort;
+    private final InstructorPort instructorPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Long createCourse(CreateCourseCommand command) {
@@ -49,7 +56,13 @@ public class CourseCommandService implements CourseCommandUseCase {
                 command.title(), command.description(), command.price(), command.difficulty(),
                 command.thumbnail(), command.initialStatus(), sessions);
 
-        return courseRepository.save(course).getId();
+        Course saved = courseRepository.save(course);
+
+        if (saved.getStatus() == CourseStatus.PENDING) {
+            publishCourseSubmitted(saved);
+        }
+
+        return saved.getId();
     }
 
     @Override
@@ -65,6 +78,7 @@ public class CourseCommandService implements CourseCommandUseCase {
             throw new BusinessException(ErrorCode.COURSE_NOT_MODIFIABLE);
         }
 
+        CourseStatus originalStatus = course.getStatus();
 
         List<CourseSession> sessions = command.sessions().stream()
                 .map(s -> CourseSession.create(s.title(), s.videoUrl(), s.durationSeconds(),
@@ -76,7 +90,11 @@ public class CourseCommandService implements CourseCommandUseCase {
                 command.title(), command.description(), command.price(), command.difficulty(),
                 command.thumbnail(), command.targetStatus(), sessions);
 
-        courseRepository.save(updated);
+        Course saved = courseRepository.save(updated);
+
+        if (originalStatus != CourseStatus.PENDING && saved.getStatus() == CourseStatus.PENDING) {
+            publishCourseSubmitted(saved);
+        }
     }
 
     @Override
@@ -100,7 +118,15 @@ public class CourseCommandService implements CourseCommandUseCase {
         Course course = courseRepository.findById(command.courseId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
 
-        courseRepository.save(course.approve());
+        Course approved = courseRepository.save(course.approve());
+
+        eventPublisher.publishEvent(new CourseApprovedEvent(
+                approved.getInstructorId(),
+                instructorPort.getInstructorEmail(approved.getInstructorId()),
+                instructorPort.getInstructorName(approved.getInstructorId()),
+                approved.getId(),
+                approved.getTitle()
+        ));
     }
 
     @Override
@@ -108,7 +134,27 @@ public class CourseCommandService implements CourseCommandUseCase {
         Course course = courseRepository.findById(command.courseId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
 
-        courseRepository.save(course.reject(command.category(), command.detail()));
+        Course rejected = courseRepository.save(course.reject(command.category(), command.detail()));
+
+        eventPublisher.publishEvent(new CourseRejectedEvent(
+                rejected.getInstructorId(),
+                instructorPort.getInstructorEmail(rejected.getInstructorId()),
+                instructorPort.getInstructorName(rejected.getInstructorId()),
+                rejected.getId(),
+                rejected.getTitle(),
+                command.category(),
+                rejected.getRejectDetail()
+        ));
+    }
+
+    private void publishCourseSubmitted(Course course) {
+        eventPublisher.publishEvent(new CourseSubmittedEvent(
+                course.getInstructorId(),
+                instructorPort.getInstructorEmail(course.getInstructorId()),
+                instructorPort.getInstructorName(course.getInstructorId()),
+                course.getId(),
+                course.getTitle()
+        ));
     }
 
     @Override

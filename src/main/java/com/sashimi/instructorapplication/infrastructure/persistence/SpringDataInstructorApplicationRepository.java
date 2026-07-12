@@ -11,7 +11,8 @@ import java.util.Optional;
 public interface SpringDataInstructorApplicationRepository
         extends JpaRepository<InstructorApplicationJpaEntity, Long> {
 
-    Optional<InstructorApplicationJpaEntity> findByUserId(Long userId);
+    Optional<InstructorApplicationJpaEntity> findFirstByUserIdAndApprovalStatusOrderByApprovedAtDesc(
+            Long userId, ApprovalStatus approvalStatus);
 
     List<InstructorApplicationJpaEntity> findAllByUserId(Long userId);
 

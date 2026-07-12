@@ -37,6 +37,7 @@ public class OcrAdapter implements OcrPort {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Semaphore semaphore = new Semaphore(5);
+    private final HttpClient httpClient = HttpClient.newHttpClient();
 
     @Override
     public OcrResult extractCertificateInfo(byte[] fileBytes, String fileName) {
@@ -50,7 +51,6 @@ public class OcrAdapter implements OcrPort {
             try {
                 String requestBody = buildRequestBody(fileBytes, fileName);
 
-                HttpClient client = HttpClient.newHttpClient();
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(invokeUrl))
                         .header("Content-Type", "application/json")
@@ -58,7 +58,7 @@ public class OcrAdapter implements OcrPort {
                         .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                         .build();
 
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
                 if (response.statusCode() != 200) {
                     log.error("Clova OCR 호출 실패: status={}, body={}", response.statusCode(), response.body());

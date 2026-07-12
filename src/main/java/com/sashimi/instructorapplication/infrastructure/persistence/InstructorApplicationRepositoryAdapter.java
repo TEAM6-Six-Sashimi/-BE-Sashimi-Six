@@ -29,8 +29,8 @@ public class InstructorApplicationRepositoryAdapter implements InstructorApplica
     }
 
     @Override
-    public Optional<InstructorApplication> findByUserId(Long userId) {
-        return springDataRepository.findByUserId(userId)
+    public Optional<InstructorApplication> findApprovedByUserId(Long userId) {
+        return springDataRepository.findFirstByUserIdAndApprovalStatusOrderByApprovedAtDesc(userId, ApprovalStatus.APPROVED)
                 .map(InstructorApplicationJpaEntity::toDomain);
     }
 

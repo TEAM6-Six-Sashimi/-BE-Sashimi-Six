@@ -1,0 +1,13 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: slack-critical
+    receivers:
+      - uid: slack-critical-receiver
+        type: slack
+        settings:
+          url: __SLACK_WEBHOOK_URL__
+          title: '[Sashimi] {{ .CommonLabels.alertname }}'
+          text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ "\n" }}{{ end }}'
+        disableResolveMessage: false

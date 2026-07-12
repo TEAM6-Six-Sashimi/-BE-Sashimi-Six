@@ -7,6 +7,7 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.payment.application.command.PaymentCheckoutCommand;
 import com.sashimi.payment.application.command.PaymentPurchaseType;
+import com.sashimi.payment.application.logging.PaymentAuditLogger;
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase.PaidSubscription;
 import com.sashimi.payment.application.usecase.PaymentCommandUseCase.PaymentResult;
 import com.sashimi.subscription.domain.model.Subscription;
@@ -15,13 +16,11 @@ import com.sashimi.subscription.domain.model.SubscriptionPlan;
 import com.sashimi.subscription.domain.repository.SubscriptionPaymentRepository;
 import com.sashimi.subscription.domain.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SubscriptionCheckoutProcessor implements PaymentCheckoutProcessor {
@@ -30,6 +29,7 @@ public class SubscriptionCheckoutProcessor implements PaymentCheckoutProcessor {
     private final SubscriptionPaymentRepository subscriptionPaymentRepository;
     private final CreditCommandUseCase creditCommandUseCase;
     private final OrderPaymentWriter orderPaymentWriter;
+    private final PaymentAuditLogger paymentAuditLogger;
 
     @Override
     public PaymentPurchaseType supports() {
@@ -46,7 +46,7 @@ public class SubscriptionCheckoutProcessor implements PaymentCheckoutProcessor {
         SubscriptionPlan plan = command.planCode();
         LocalDateTime now = LocalDateTime.now();
 
-        subscriptionRepository.findActiveByUserIdForUpdate(userId)
+        subscriptionRepository.findActiveByUserIdForUpdate(userId, now)
                 .ifPresent(subscription -> {
                     if (subscription.isActive(now)) {
                         throw new BusinessException(
@@ -95,8 +95,7 @@ public class SubscriptionCheckoutProcessor implements PaymentCheckoutProcessor {
                 )
         );
 
-        log.info(
-                "AI 구독권 결제 완료 - userId={}, subscriptionId={}, orderId={}, paymentId={}, plan={}, amount={}",
+        paymentAuditLogger.subscriptionPaymentCompleted(
                 userId,
                 subscription.getId(),
                 saved.order().getId(),

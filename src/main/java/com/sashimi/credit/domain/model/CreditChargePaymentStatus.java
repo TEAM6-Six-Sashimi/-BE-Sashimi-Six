@@ -3,5 +3,7 @@ package com.sashimi.credit.domain.model;
 public enum CreditChargePaymentStatus {
     READY,
     DONE,
-    FAILED
+    FAILED,
+    NEED_RETRY,
+    MANUAL_REVIEW
 }

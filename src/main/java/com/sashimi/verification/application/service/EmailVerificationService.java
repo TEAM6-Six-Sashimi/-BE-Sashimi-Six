@@ -132,6 +132,7 @@ public class EmailVerificationService implements EmailVerificationUseCase {
         return switch (purpose) {
             case SIGNUP -> "[FitGyeok] 회원가입 이메일 인증 코드";
             case PASSWORD_RESET -> "[FitGyeok] 비밀번호 재설정 인증 코드";
+            case FIND_ID -> "[FitGyeok] 아이디 찾기 인증 코드";
         };
     }
 

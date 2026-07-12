@@ -4,6 +4,7 @@ import java.util.List;
 
 public interface InstructorPort {
     String getInstructorName(Long instructorId);
+    String getInstructorEmail(Long instructorId);
     String getInstructorLoginId(Long instructorId);
     InstructorInfo getInstructorInfo(Long instructorId);
 

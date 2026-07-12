@@ -68,7 +68,7 @@ public class SecurityConfig {
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
-                "Authorization", "Content-Type", "Accept", "X-Requested-With", "Cache-Control"
+                "Authorization", "Content-Type", "Accept", "X-Requested-With", "Cache-Control", "Idempotency-Key"
         ));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
@@ -128,6 +128,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/files/images").permitAll()
                         .requestMatchers(HttpMethod.GET, "/subscriptions/plans").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/files/download").authenticated()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/members/instructor-applications/**").hasAuthority("ROLE_ADMIN")

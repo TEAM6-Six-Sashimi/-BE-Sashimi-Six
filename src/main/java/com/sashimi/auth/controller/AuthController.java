@@ -1,5 +1,9 @@
 package com.sashimi.auth.controller;
 
+import com.sashimi.auth.dto.FindLoginIdConfirmRequestDto;
+import com.sashimi.auth.dto.FindLoginIdConfirmResponseDto;
+import com.sashimi.auth.dto.FindLoginIdRequestDto;
+import com.sashimi.auth.dto.FindLoginIdRequestResponseDto;
 import com.sashimi.auth.dto.LoginRequestDto;
 import com.sashimi.auth.dto.LogoutRequestDto;
 import com.sashimi.auth.dto.ReissueRequestDto;
@@ -146,5 +150,42 @@ public class AuthController {
             @RequestBody @Valid PasswordResetConfirmRequestDto request
     ) {
         return ResponseEntity.ok(authService.resetPassword(request));
+    }
+
+    @Operation(
+            summary = "아이디 찾기 인증 코드 요청",
+            description = "이름과 가입된 이메일이 일치하면 이메일로 인증 코드를 발송합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "아이디 찾기 인증 코드 요청 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @ApiResponse(responseCode = "403", description = "비활성 회원"),
+            @ApiResponse(responseCode = "404", description = "이름과 이메일이 일치하는 회원을 찾을 수 없음"),
+            @ApiResponse(responseCode = "429", description = "이메일 인증 코드 재요청 제한"),
+            @ApiResponse(responseCode = "500", description = "이메일 발송 실패 또는 서버 오류")
+    })
+    @PostMapping("/find-id/request")
+    public ResponseEntity<FindLoginIdRequestResponseDto> requestFindLoginId(
+            @RequestBody @Valid FindLoginIdRequestDto request
+    ) {
+        return ResponseEntity.ok(authService.requestFindLoginId(request));
+    }
+
+    @Operation(
+            summary = "아이디 찾기",
+            description = "이메일 인증 코드를 확인한 뒤 이름·이메일이 일치하는 회원의 아이디를 반환합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "아이디 찾기 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청, 만료된 인증 코드 또는 일치하지 않는 인증 코드"),
+            @ApiResponse(responseCode = "403", description = "비활성 회원"),
+            @ApiResponse(responseCode = "404", description = "이메일 인증 요청 또는 이름·이메일이 일치하는 회원을 찾을 수 없음"),
+            @ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping("/find-id/confirm")
+    public ResponseEntity<FindLoginIdConfirmResponseDto> findLoginId(
+            @RequestBody @Valid FindLoginIdConfirmRequestDto request
+    ) {
+        return ResponseEntity.ok(authService.findLoginId(request));
     }
 }

@@ -22,6 +22,7 @@ public enum ErrorCode {
     EXPIRED_REFRESH_TOKEN(401, "AUTH_005", "만료된 refresh token입니다."),
     LOGIN_FAILED(401, "AUTH_006", "아이디 또는 비밀번호가 올바르지 않습니다."),
     TOO_MANY_REQUESTS(429, "AUTH_007", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
+    CONCURRENT_SESSION_DETECTED(401, "AUTH_008", "다른 기기에서 로그인되어 자동 로그아웃되었습니다."),
 
     DUPLICATE_LOGIN_ID(409, "USER_001", "이미 사용 중인 아이디입니다."),
     DUPLICATE_EMAIL(409, "USER_002", "이미 사용 중인 이메일입니다."),
@@ -117,6 +118,13 @@ public enum ErrorCode {
     RESUME_INVALID_FORMAT(400, "MEMBER_008", "이력서 파일은 .docx 형식만 업로드 가능합니다."),
     ALREADY_INSTRUCTOR(400, "MEMBER_010", "이미 승인된 강사는 재신청할 수 없습니다."),
 
+    COFFEE_CHAT_INVALID_STATUS(400, "COFFEECHAT_001", "처리할 수 없는 커피챗 상태입니다."),
+    COFFEE_CHAT_MESSAGE_FORBIDDEN(403, "COFFEECHAT_002", "채팅방 참여자만 메시지를 보낼 수 있습니다."),
+    COFFEE_CHAT_NOT_FOUND(404, "COFFEECHAT_003", "커피챗을 찾을 수 없습니다."),
+    COFFEE_CHAT_FORBIDDEN(403, "COFFEECHAT_004", "채팅방 참여자만 접근할 수 있습니다."),
+    COFFEE_CHAT_ALREADY_EXISTS(409, "COFFEECHAT_005", "이미 신청했거나 진행 중인 커피챗입니다."),
+    COFFEE_CHAT_NOT_ENROLLED(403, "COFFEECHAT_006", "수강 중인 강의의 강사에게만 커피챗을 신청할 수 있습니다."),
+
     REVIEW_ALREADY_EXISTS(409, "REVIEW_001", "이미 해당 강의에 리뷰를 작성하셨습니다."),
     REVIEW_NOT_ENROLLED(403, "REVIEW_002", "수강 중인 강의에만 리뷰를 작성할 수 있습니다."),
     REVIEW_PROGRESS_REQUIRED(400, "REVIEW_003", "수강 후 리뷰를 작성할 수 있습니다."),
@@ -147,7 +155,12 @@ public enum ErrorCode {
     FILE_INVALID_TYPE(400, "FILE_002", "지원하지 않는 파일 형식입니다. (jpg, png, gif, webp만 허용)"),
     FILE_UPLOAD_FAILED(500, "FILE_003", "파일 업로드에 실패했습니다."),
     FILE_NOT_FOUND(404, "FILE_004", "파일을 찾을 수 없습니다."),
-    CERTIFICATE_FILE_INVALID_TYPE(400, "FILE_005", "지원하지 않는 파일 형식입니다. (jpg, png, pdf만 지원)");
+    CERTIFICATE_FILE_INVALID_TYPE(400, "FILE_005", "지원하지 않는 파일 형식입니다. (jpg, png, pdf만 지원)"),
+
+    NOTICE_NOT_FOUND(404, "NOTICE_001", "공지사항을 찾을 수 없습니다."),
+    NOTICE_TITLE_REQUIRED(400, "NOTICE_002", "공지사항 제목을 입력해 주세요."),
+    NOTICE_CONTENT_REQUIRED(400, "NOTICE_003", "공지사항 내용을 입력해 주세요."),
+    NOTICE_PAGE_SIZE_INVALID(400, "NOTICE_004", "공지사항 조회 조건이 올바르지 않습니다.");
 
 
     private final int status;

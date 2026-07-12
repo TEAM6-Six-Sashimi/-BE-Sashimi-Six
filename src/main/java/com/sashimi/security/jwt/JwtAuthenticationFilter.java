@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,9 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
+    public static final String CONCURRENT_SESSION_ATTRIBUTE = "concurrentSessionDetected";
+    public static final String INACTIVE_USER_ATTRIBUTE = "inactiveUserDetected";
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenBlacklistService tokenBlacklistService;
@@ -40,11 +44,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                     Long userId = jwtTokenProvider.extractUserId(accessToken);
                     Long version = jwtTokenProvider.extractVersion(accessToken);
-                    if (!tokenBlacklistService.isBlacklisted(accessToken)
-                            && tokenVersionService.isValidVersion(userId, version)) {
+                    if (tokenBlacklistService.isBlacklisted(accessToken)) {
+                        // 명시적으로 로그아웃된 토큰: 일반 인증 실패로 처리
+                    } else if (!tokenVersionService.isValidVersion(userId, version)) {
+                        // 다른 기기에서 로그인하여 버전이 갱신됨: 동시 접속으로 구분
+                        request.setAttribute(CONCURRENT_SESSION_ATTRIBUTE, Boolean.TRUE);
+                    } else {
                         Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
+                } catch (DisabledException e) {
+                    // 탈퇴/비활성화된 계정의 토큰: 명확히 구분하여 인증 거부
+                    request.setAttribute(INACTIVE_USER_ATTRIBUTE, Boolean.TRUE);
                 } catch (Exception e) {
                     // Redis 장애 시 fail-closed: 인증 거부
                     logger.warn("event=redis_unavailable msg=인증 거부 (fail-closed)");
