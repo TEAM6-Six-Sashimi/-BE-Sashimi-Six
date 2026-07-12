@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
 
+    private static final int MAX_MESSAGE_PAGE_SIZE = 200;
+
     private final CoffeeChatRepository coffeeChatRepository;
     private final CoffeeChatMessageRepository coffeeChatMessageRepository;
     private final CourseRepository courseRepository;
@@ -54,6 +56,10 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
 
     @Override
     public List<CoffeeChatMessage> getMessages(Long chatId, Long requesterId, int page, int size) {
+        if (page < 0 || size < 1 || size > MAX_MESSAGE_PAGE_SIZE) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
         CoffeeChat chat = coffeeChatRepository.findById(chatId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COFFEE_CHAT_NOT_FOUND));
 
@@ -75,9 +81,9 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
             return List.of();
         }
 
-        return courseRepository.findByInstructorIdAndStatusIn(instructorId, List.of(CourseStatus.values()))
+        return courseRepository.findByStatusAndIdIn(CourseStatus.APPROVED, List.copyOf(enrolledCourseIds))
                 .stream()
-                .filter(course -> enrolledCourseIds.contains(course.getId()))
+                .filter(course -> course.getInstructorId().equals(instructorId))
                 .collect(Collectors.toList());
     }
 

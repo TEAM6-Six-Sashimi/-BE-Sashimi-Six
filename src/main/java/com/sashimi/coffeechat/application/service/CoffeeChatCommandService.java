@@ -13,6 +13,7 @@ import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,8 +48,12 @@ public class CoffeeChatCommandService implements CoffeeChatCommandUseCase {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_ALREADY_EXISTS);
         }
 
-        coffeeChatRepository.save(
-                CoffeeChat.create(command.studentId(), command.instructorId(), command.courseId()));
+        try {
+            coffeeChatRepository.save(
+                    CoffeeChat.create(command.studentId(), command.instructorId(), command.courseId()));
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.COFFEE_CHAT_ALREADY_EXISTS);
+        }
     }
 
     @Override
