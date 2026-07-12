@@ -90,4 +90,11 @@ public class InMemoryUserRepository implements UserRepository {
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<User> findAllByIdIn(List<Long> ids) {
+        return store.values().stream()
+                .filter(u -> ids.contains(u.getId()))
+                .collect(Collectors.toList());
+    }
 }
