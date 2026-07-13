@@ -47,19 +47,30 @@ public class CoffeeChat {
         this.leftAt = LocalDateTime.now();
     }
 
-    public void validateCanReject() {
+    public void reject() {
         if (this.status != CoffeeChatStatus.PENDING) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
         }
+        this.status = CoffeeChatStatus.REJECTED;
     }
 
     public CoffeeChatMessage sendMessage(Long senderId, String content) {
-        if (this.status != CoffeeChatStatus.ACCEPTED) {
-            throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
-        }
         if (!isParticipant(senderId)) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_MESSAGE_FORBIDDEN);
         }
+
+        boolean isStudent = Objects.equals(senderId, this.studentId);
+
+        if (this.status == CoffeeChatStatus.PENDING && !isStudent) {
+            throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
+        }
+        if (this.status == CoffeeChatStatus.LEFT || this.status == CoffeeChatStatus.REJECTED) {
+            if (!isStudent) {
+                throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
+            }
+            this.status = CoffeeChatStatus.PENDING;
+        }
+
         return CoffeeChatMessage.create(this.id, senderId, content);
     }
 

@@ -18,8 +18,5 @@ public interface CoffeeChatRepository {
 
     List<CoffeeChat> findAllByInstructorIdAndStatusOrderByAcceptedAtDesc(Long instructorId, CoffeeChatStatus status);
 
-    boolean existsByStudentIdAndInstructorIdAndCourseIdAndStatusIn(
-            Long studentId, Long instructorId, Long courseId, List<CoffeeChatStatus> statuses);
-
-    void deleteById(Long id);
+    boolean existsByStudentIdAndInstructorIdAndCourseId(Long studentId, Long instructorId, Long courseId);
 }

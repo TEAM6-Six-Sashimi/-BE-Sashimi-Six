@@ -3,6 +3,7 @@ package com.sashimi.coffeechat.domain.repository;
 import com.sashimi.coffeechat.domain.model.CoffeeChatMessage;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface CoffeeChatMessageRepository {
@@ -14,4 +15,6 @@ public interface CoffeeChatMessageRepository {
     Set<Long> findCoffeeChatIdsWithUnreadMessages(List<Long> coffeeChatIds, Long excludeSenderId);
 
     void markAllAsRead(Long coffeeChatId, Long readerId);
+
+    Map<Long, CoffeeChatMessage> findLatestMessagesByCoffeeChatIds(List<Long> coffeeChatIds);
 }

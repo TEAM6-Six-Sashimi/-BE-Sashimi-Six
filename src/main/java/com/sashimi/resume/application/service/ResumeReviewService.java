@@ -1,6 +1,9 @@
 package com.sashimi.resume.application.service;
 
 import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
+import com.sashimi.ai.domain.model.AiFeatureType;
+import com.sashimi.ai.infrastructure.persistence.AiRequestHistoryJpaEntity;
+import com.sashimi.ai.infrastructure.persistence.SpringDataAiRequestHistoryRepository;
 import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -18,15 +21,21 @@ public class ResumeReviewService implements ReviewResumeUseCase {
     private final ResumeRepository resumeRepository;
     private final ResumeReviewProcessor resumeReviewProcessor;
     private final AiFeatureAccessPolicy aiFeatureAccessPolicy;
+    private final SpringDataAiRequestHistoryRepository aiRequestHistoryRepository;
+    private final AiMetrics aiMetrics;
 
     public ResumeReviewService(
             ResumeRepository resumeRepository,
             ResumeReviewProcessor resumeReviewProcessor,
-            AiFeatureAccessPolicy aiFeatureAccessPolicy
+            AiFeatureAccessPolicy aiFeatureAccessPolicy,
+            SpringDataAiRequestHistoryRepository aiRequestHistoryRepository,
+            AiMetrics aiMetrics
     ) {
         this.resumeRepository = resumeRepository;
         this.resumeReviewProcessor = resumeReviewProcessor;
         this.aiFeatureAccessPolicy = aiFeatureAccessPolicy;
+        this.aiRequestHistoryRepository = aiRequestHistoryRepository;
+        this.aiMetrics = aiMetrics;
     }
 
     @Override
@@ -47,8 +56,42 @@ public class ResumeReviewService implements ReviewResumeUseCase {
                         )
                 );
 
-        return resumeReviewProcessor.process(
-                resume
+        aiRequestHistoryRepository.save(
+                AiRequestHistoryJpaEntity.started(
+                        userId,
+                        AiFeatureType.RESUME_REVIEW,
+                        null
+                )
         );
+
+        long startedAt = System.currentTimeMillis();
+        aiMetrics.incrementRequestStarted(AiMetrics.FEATURE_RESUME_REVIEW);
+
+        try {
+            ReviewResumeResult result = resumeReviewProcessor.process(
+                    resume
+            );
+
+            aiMetrics.incrementRequestSuccess(AiMetrics.FEATURE_RESUME_REVIEW);
+            aiMetrics.recordRequestDuration(
+                    AiMetrics.FEATURE_RESUME_REVIEW,
+                    "SUCCESS",
+                    System.currentTimeMillis() - startedAt
+            );
+
+            return result;
+        } catch (RuntimeException e) {
+            aiMetrics.incrementRequestFailed(
+                    AiMetrics.FEATURE_RESUME_REVIEW,
+                    e.getClass().getSimpleName()
+            );
+            aiMetrics.recordRequestDuration(
+                    AiMetrics.FEATURE_RESUME_REVIEW,
+                    "FAILED",
+                    System.currentTimeMillis() - startedAt
+            );
+
+            throw e;
+        }
     }
 }

@@ -8,17 +8,18 @@ import com.sashimi.coffeechat.domain.model.CoffeeChatStatus;
 import com.sashimi.coffeechat.domain.repository.CoffeeChatMessageRepository;
 import com.sashimi.coffeechat.domain.repository.CoffeeChatRepository;
 import com.sashimi.course.domain.model.Course;
-import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
-import com.sashimi.enrollment.application.port.EnrollmentPort;
-import com.sashimi.enrollment.application.port.EnrollmentSummary;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.user.domain.model.User;
+import com.sashimi.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,22 +30,44 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
 
     private static final int MAX_MESSAGE_PAGE_SIZE = 200;
 
+    private static final Comparator<CoffeeChatSummaryView> STUDENT_CHAT_LIST_ORDER = (a, b) -> {
+        boolean aHasMessage = a.lastMessageAt() != null;
+        boolean bHasMessage = b.lastMessageAt() != null;
+        if (aHasMessage != bHasMessage) {
+            return aHasMessage ? -1 : 1;
+        }
+        if (aHasMessage) {
+            return b.lastMessageAt().compareTo(a.lastMessageAt());
+        }
+        return a.instructorName().compareTo(b.instructorName());
+    };
+
     private final CoffeeChatRepository coffeeChatRepository;
     private final CoffeeChatMessageRepository coffeeChatMessageRepository;
     private final CourseRepository courseRepository;
-    private final EnrollmentPort enrollmentPort;
+    private final UserRepository userRepository;
 
     @Override
     public List<CoffeeChatSummaryView> getStudentChats(Long studentId) {
         List<CoffeeChat> chats = coffeeChatRepository.findAllByStudentId(studentId);
-        return toSummaryViews(chats, studentId);
+        return toSummaryViews(chats, studentId).stream()
+                .sorted(STUDENT_CHAT_LIST_ORDER)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<CoffeeChatSummaryView> getInstructorPendingChats(Long instructorId) {
         List<CoffeeChat> chats = coffeeChatRepository
                 .findAllByInstructorIdAndStatusOrderByCreatedAtAsc(instructorId, CoffeeChatStatus.PENDING);
-        return toSummaryViews(chats, instructorId);
+        List<Long> chatIds = chats.stream().map(CoffeeChat::getId).collect(Collectors.toList());
+        Map<Long, CoffeeChatMessage> latestMessages =
+                coffeeChatMessageRepository.findLatestMessagesByCoffeeChatIds(chatIds);
+
+        List<CoffeeChat> chatsWithMessages = chats.stream()
+                .filter(chat -> latestMessages.containsKey(chat.getId()))
+                .collect(Collectors.toList());
+
+        return toSummaryViews(chatsWithMessages, instructorId);
     }
 
     @Override
@@ -70,39 +93,36 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
         return coffeeChatMessageRepository.findAllByCoffeeChatId(chatId, page, size);
     }
 
-    @Override
-    public List<Course> getApplicableCourses(Long studentId, Long instructorId) {
-        Set<Long> enrolledCourseIds = enrollmentPort.getEnrollmentsByUser(studentId)
-                .stream()
-                .map(EnrollmentSummary::courseId)
-                .collect(Collectors.toSet());
-
-        if (enrolledCourseIds.isEmpty()) {
-            return List.of();
-        }
-
-        return courseRepository.findByStatusAndIdIn(CourseStatus.APPROVED, List.copyOf(enrolledCourseIds))
-                .stream()
-                .filter(course -> course.getInstructorId().equals(instructorId))
-                .collect(Collectors.toList());
-    }
-
     private List<CoffeeChatSummaryView> toSummaryViews(List<CoffeeChat> chats, Long excludeSenderId) {
         List<Long> chatIds = chats.stream().map(CoffeeChat::getId).collect(Collectors.toList());
         Set<Long> unreadChatIds =
                 coffeeChatMessageRepository.findCoffeeChatIdsWithUnreadMessages(chatIds, excludeSenderId);
+        Map<Long, CoffeeChatMessage> latestMessages =
+                coffeeChatMessageRepository.findLatestMessagesByCoffeeChatIds(chatIds);
 
         return chats.stream()
-                .map(chat -> new CoffeeChatSummaryView(
-                        chat.getId(),
-                        chat.getStudentId(),
-                        chat.getInstructorId(),
-                        chat.getCourseId(),
-                        chat.getStatus(),
-                        chat.getCreatedAt(),
-                        chat.getAcceptedAt(),
-                        unreadChatIds.contains(chat.getId())
-                ))
+                .map(chat -> {
+                    Course course = courseRepository.findById(chat.getCourseId())
+                            .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+                    User instructor = userRepository.findById(chat.getInstructorId())
+                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    CoffeeChatMessage lastMessage = latestMessages.get(chat.getId());
+
+                    return new CoffeeChatSummaryView(
+                            chat.getId(),
+                            chat.getStudentId(),
+                            chat.getInstructorId(),
+                            instructor.getName(),
+                            chat.getCourseId(),
+                            course.getTitle(),
+                            chat.getStatus(),
+                            chat.getCreatedAt(),
+                            chat.getAcceptedAt(),
+                            unreadChatIds.contains(chat.getId()),
+                            lastMessage != null ? lastMessage.getContent() : null,
+                            lastMessage != null ? lastMessage.getCreatedAt() : null
+                    );
+                })
                 .collect(Collectors.toList());
     }
 }

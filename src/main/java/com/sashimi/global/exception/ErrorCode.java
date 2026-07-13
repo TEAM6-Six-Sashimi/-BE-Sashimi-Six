@@ -123,8 +123,6 @@ public enum ErrorCode {
     COFFEE_CHAT_MESSAGE_FORBIDDEN(403, "COFFEECHAT_002", "채팅방 참여자만 메시지를 보낼 수 있습니다."),
     COFFEE_CHAT_NOT_FOUND(404, "COFFEECHAT_003", "커피챗을 찾을 수 없습니다."),
     COFFEE_CHAT_FORBIDDEN(403, "COFFEECHAT_004", "채팅방 참여자만 접근할 수 있습니다."),
-    COFFEE_CHAT_ALREADY_EXISTS(409, "COFFEECHAT_005", "이미 신청했거나 진행 중인 커피챗입니다."),
-    COFFEE_CHAT_NOT_ENROLLED(403, "COFFEECHAT_006", "수강 중인 강의의 강사에게만 커피챗을 신청할 수 있습니다."),
 
     REVIEW_ALREADY_EXISTS(409, "REVIEW_001", "이미 해당 강의에 리뷰를 작성하셨습니다."),
     REVIEW_NOT_ENROLLED(403, "REVIEW_002", "수강 중인 강의에만 리뷰를 작성할 수 있습니다."),
@@ -142,6 +140,7 @@ public enum ErrorCode {
     AI_RESPONSE_PARSE_FAILED(502, "AI_005", "AI 응답 결과를 파싱할 수 없습니다."),
     AI_PROMPT_NOT_FOUND(404, "AI_006", "활성화된 AI 프롬프트를 찾을 수 없습니다."),
     AI_CONSENT_REQUIRED(403, "AI_007", "AI 기능을 사용하려면 개인정보 AI 활용 동의가 필요합니다."),
+    AI_RATE_LIMIT_EXCEEDED(429, "AI_008", "AI 기능 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
 
     RESUME_NOT_FOUND(404, "RESUME_404", "이력서를 찾을 수 없습니다."),
     RESUME_ALREADY_EXISTS(409, "RESUME_005", "이미 작성된 이력서가 있습니다."),
