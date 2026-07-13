@@ -1,12 +1,14 @@
 package com.sashimi.ai.infrastructure.persistence;
 
 import com.sashimi.ai.domain.model.AiFeatureType;
+import com.sashimi.ai.domain.model.AiRequestStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface SpringDataAiRequestHistoryRepository
         extends JpaRepository<AiRequestHistoryJpaEntity, Long> {
@@ -48,5 +50,17 @@ public interface SpringDataAiRequestHistoryRepository
     long countByUserIdAndCreatedAtGreaterThanEqual(
             Long userId,
             LocalDateTime from
+    );
+
+    Optional<AiRequestHistoryJpaEntity> findFirstByUserIdAndFeatureTypeAndStatusOrderByCreatedAtDesc(
+            Long userId,
+            AiFeatureType featureType,
+            AiRequestStatus status
+    );
+
+    Optional<AiRequestHistoryJpaEntity> findByIdAndUserIdAndFeatureType(
+            Long id,
+            Long userId,
+            AiFeatureType featureType
     );
 }
