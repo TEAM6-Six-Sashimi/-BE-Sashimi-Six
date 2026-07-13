@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -44,15 +45,17 @@ public class PrometheusQueryAdapter implements PrometheusQueryPort {
 
     @Override
     public List<PrometheusPoint> queryRange(String promQuery, Instant start, Instant end, long stepSeconds) {
-        // PromQL의 '{', '}'를 UriBuilder가 URI 템플릿 변수로 오인해 IllegalArgumentException을
-        // 던지는 문제를 피하기 위해, 미리 인코딩을 끝낸 URI 객체를 만들어 그대로 전달한다.
+        // UriComponentsBuilder.encode()는 값 안의 '{', '}'를 URI 템플릿 변수 문법으로 오인해
+        // 인코딩을 건너뛴다. PromQL의 '{job="sashimi"}' 같은 라벨 셀렉터가 그대로 남아
+        // URISyntaxException을 일으키므로, promQuery는 빌더에 넘기기 전에 직접 인코딩해서
+        // 빌더가 '{', '}'를 볼 일이 없게 만든다.
+        String encodedQuery = UriUtils.encodeQueryParam(promQuery, StandardCharsets.UTF_8);
         URI uri = UriComponentsBuilder.fromUriString(baseUrl + "/api/v1/query_range")
-                .queryParam("query", promQuery)
+                .queryParam("query", encodedQuery)
                 .queryParam("start", start.getEpochSecond())
                 .queryParam("end", end.getEpochSecond())
                 .queryParam("step", stepSeconds)
-                .encode(StandardCharsets.UTF_8)
-                .build()
+                .build(true)
                 .toUri();
 
         PrometheusQueryRangeResponse response;
