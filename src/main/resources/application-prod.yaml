@@ -72,6 +72,9 @@ codef:
 grafana:
   url: ${GRAFANA_URL}
 
+prometheus:
+  url: ${PROMETHEUS_URL:http://sashimi-prometheus:9090}
+
 springdoc:
   swagger-ui:
     enabled: true
