@@ -3,6 +3,7 @@ package com.sashimi.recommendation.application.service;
 import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.ai.domain.model.AiPromptType;
 import com.sashimi.ai.domain.repository.AiPromptRepository;
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.event.JobPostingRecommendationAnalyzedEvent;
@@ -34,6 +35,7 @@ public class JobPostingRecommendationAsyncService {
     private final OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter;
     private final CourseRecommendationMatcher courseRecommendationMatcher;
     private final CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder;
+    private final AiMetrics aiMetrics;
 
     public JobPostingRecommendationAsyncService(
             JobPostingRecommendationRepository recommendationRepository,
@@ -44,7 +46,8 @@ public class JobPostingRecommendationAsyncService {
             ResumeRepository resumeRepository,
             OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter,
             CourseRecommendationMatcher courseRecommendationMatcher,
-            CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder
+            CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder,
+            AiMetrics aiMetrics
     ) {
         this.recommendationRepository = recommendationRepository;
         this.analyzePort = analyzePort;
@@ -55,12 +58,16 @@ public class JobPostingRecommendationAsyncService {
         this.ownedCertificateRecommendationFilter = ownedCertificateRecommendationFilter;
         this.courseRecommendationMatcher = courseRecommendationMatcher;
         this.certificateRecommendationFallbackBuilder = certificateRecommendationFallbackBuilder;
+        this.aiMetrics = aiMetrics;
     }
 
     @Async("aiAnalysisExecutor")
     @Transactional
     public void analyze(Long recommendationId, Long userId) {
         log.info("🗃️ 채용공고 추천 비동기 분석 시작: userId={}, recommendationId={}", userId, recommendationId);
+
+        long startedAt = System.currentTimeMillis();
+        aiMetrics.incrementRequestStarted(AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION);
 
         JobPostingRecommendation recommendation = recommendationRepository.findByIdAndUserId(recommendationId, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.JOB_POSTING_RECOMMENDATION_NOT_FOUND));
@@ -126,6 +133,13 @@ public class JobPostingRecommendationAsyncService {
                     savedRecommendation.recommendationId(),
                     savedRecommendation.summary() == null ? null : savedRecommendation.summary().jobRole());
 
+            aiMetrics.incrementRequestSuccess(AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION);
+            aiMetrics.recordRequestDuration(
+                    AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION,
+                    "SUCCESS",
+                    System.currentTimeMillis() - startedAt
+            );
+
             eventPublisher.publishEvent(
                     new JobPostingRecommendationAnalyzedEvent(
                             savedRecommendation.userId(),
@@ -136,7 +150,17 @@ public class JobPostingRecommendationAsyncService {
             );
 
         } catch (Exception e) {
-            log.error("🗃️ 채용공고 AI 분석 실패. recommendationId={}, userId={}", recommendationId, userId, e);
+            log.error("채용공고 AI 분석 실패. recommendationId={}, userId={}", recommendationId, userId, e);
+
+            aiMetrics.incrementRequestFailed(
+                    AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION,
+                    e.getClass().getSimpleName()
+            );
+            aiMetrics.recordRequestDuration(
+                    AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION,
+                    "FAILED",
+                    System.currentTimeMillis() - startedAt
+            );
 
             JobPostingRecommendation failedRecommendation = recommendation.failed();
             recommendationRepository.save(failedRecommendation);
