@@ -39,6 +39,23 @@ public class AdminDashboardQueryService implements AdminDashboardQueryUseCase {
         );
     }
 
+    @Override
+    public AdminDashboardStatistics getStatistics() {
+        long studentCount = adminDashboardQueryPort.countActiveStudents();
+        long instructorCount = adminDashboardQueryPort.countActiveInstructors();
+        long totalCourses = adminDashboardQueryPort.countApprovedCourses();
+
+        // 전체 회원 = 수강생 + 강사 (관리자 제외)
+        long totalMembers = studentCount + instructorCount;
+
+        return new AdminDashboardStatistics(
+                totalMembers,
+                studentCount,
+                instructorCount,
+                totalCourses
+        );
+    }
+
     private long zeroIfNull(Long value) {
         return value == null ? 0L : value;
     }
