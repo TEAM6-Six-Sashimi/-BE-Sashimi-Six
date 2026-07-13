@@ -47,3 +47,6 @@ uploads/
 
 # Local DB data files
 data/
+
+# Claude Code local config
+.claude/

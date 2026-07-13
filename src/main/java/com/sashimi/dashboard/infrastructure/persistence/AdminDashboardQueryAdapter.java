@@ -44,4 +44,42 @@ public class AdminDashboardQueryAdapter implements AdminDashboardQueryPort {
 
         return jdbcTemplate.queryForObject(sql, Long.class);
     }
+
+    @Override
+    public long countActiveStudents() {
+        String sql = """
+                SELECT COUNT(*)
+                FROM users
+                WHERE status = 'ACTIVE'
+                  AND role = 'STUDENT'
+                """;
+
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count == null ? 0L : count;
+    }
+
+    @Override
+    public long countActiveInstructors() {
+        String sql = """
+                SELECT COUNT(*)
+                FROM users
+                WHERE status = 'ACTIVE'
+                  AND role = 'INSTRUCTOR'
+                """;
+
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count == null ? 0L : count;
+    }
+
+    @Override
+    public long countApprovedCourses() {
+        String sql = """
+                SELECT COUNT(*)
+                FROM courses
+                WHERE status = 'APPROVED'
+                """;
+
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+        return count == null ? 0L : count;
+    }
 }
