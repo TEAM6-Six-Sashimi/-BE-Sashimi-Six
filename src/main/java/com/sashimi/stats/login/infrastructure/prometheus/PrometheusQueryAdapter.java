@@ -4,10 +4,13 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.stats.login.application.port.PrometheusQueryPort;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
+import java.net.http.HttpClient;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -15,11 +18,22 @@ import java.util.List;
 @Repository
 public class PrometheusQueryAdapter implements PrometheusQueryPort {
 
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
+
     private final RestClient restClient;
 
     public PrometheusQueryAdapter(PrometheusProperties properties) {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(CONNECT_TIMEOUT)
+                .build();
+
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(READ_TIMEOUT);
+
         this.restClient = RestClient.builder()
                 .baseUrl(properties.url())
+                .requestFactory(requestFactory)
                 .build();
     }
 

@@ -97,7 +97,7 @@ public class AdminLoginStatsQueryService implements AdminLoginStatsQueryUseCase 
                 .collect(Collectors.toMap(
                         point -> point.timestamp().getEpochSecond(),
                         PrometheusQueryPort.PrometheusPoint::value,
-                        (existing, replacement) -> existing
+                        Double::sum
                 ));
     }
 
