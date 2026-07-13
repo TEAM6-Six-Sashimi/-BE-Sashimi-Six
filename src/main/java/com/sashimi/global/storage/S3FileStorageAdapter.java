@@ -118,6 +118,8 @@ public class S3FileStorageAdapter implements FileStoragePort {
                     RequestBody.fromInputStream(inputStream, file.getSize())
             );
         } catch (Exception e) {
+            log.error("[S3] 파일 업로드 실패 - bucket: {}, key: {}, cause: {}",
+                    bucket, key, e.getMessage(), e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }
 

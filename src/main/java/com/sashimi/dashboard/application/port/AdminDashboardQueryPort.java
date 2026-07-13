@@ -7,4 +7,10 @@ public interface AdminDashboardQueryPort {
     Long sumPaidCourseSalesAmount();
 
     Long sumPaidSubscriptionAmount();
+
+    long countActiveStudents();
+
+    long countActiveInstructors();
+
+    long countApprovedCourses();
 }
