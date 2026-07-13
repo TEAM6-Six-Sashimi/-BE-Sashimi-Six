@@ -5,5 +5,5 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties(PrometheusProperties.class)
-public class PrometheusConfig {
+public class PrometheusStatsConfig {
 }
