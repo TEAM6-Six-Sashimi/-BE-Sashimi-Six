@@ -22,17 +22,20 @@ public class ResumeReviewService implements ReviewResumeUseCase {
     private final ResumeReviewProcessor resumeReviewProcessor;
     private final AiFeatureAccessPolicy aiFeatureAccessPolicy;
     private final SpringDataAiRequestHistoryRepository aiRequestHistoryRepository;
+    private final AiMetrics aiMetrics;
 
     public ResumeReviewService(
             ResumeRepository resumeRepository,
             ResumeReviewProcessor resumeReviewProcessor,
             AiFeatureAccessPolicy aiFeatureAccessPolicy,
-            SpringDataAiRequestHistoryRepository aiRequestHistoryRepository
+            SpringDataAiRequestHistoryRepository aiRequestHistoryRepository,
+            AiMetrics aiMetrics
     ) {
         this.resumeRepository = resumeRepository;
         this.resumeReviewProcessor = resumeReviewProcessor;
         this.aiFeatureAccessPolicy = aiFeatureAccessPolicy;
         this.aiRequestHistoryRepository = aiRequestHistoryRepository;
+        this.aiMetrics = aiMetrics;
     }
 
     @Override
@@ -61,8 +64,34 @@ public class ResumeReviewService implements ReviewResumeUseCase {
                 )
         );
 
-        return resumeReviewProcessor.process(
-                resume
-        );
+        long startedAt = System.currentTimeMillis();
+        aiMetrics.incrementRequestStarted(AiMetrics.FEATURE_RESUME_REVIEW);
+
+        try {
+            ReviewResumeResult result = resumeReviewProcessor.process(
+                    resume
+            );
+
+            aiMetrics.incrementRequestSuccess(AiMetrics.FEATURE_RESUME_REVIEW);
+            aiMetrics.recordRequestDuration(
+                    AiMetrics.FEATURE_RESUME_REVIEW,
+                    "SUCCESS",
+                    System.currentTimeMillis() - startedAt
+            );
+
+            return result;
+        } catch (RuntimeException e) {
+            aiMetrics.incrementRequestFailed(
+                    AiMetrics.FEATURE_RESUME_REVIEW,
+                    e.getClass().getSimpleName()
+            );
+            aiMetrics.recordRequestDuration(
+                    AiMetrics.FEATURE_RESUME_REVIEW,
+                    "FAILED",
+                    System.currentTimeMillis() - startedAt
+            );
+
+            throw e;
+        }
     }
 }
