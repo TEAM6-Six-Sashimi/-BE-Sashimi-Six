@@ -160,7 +160,10 @@ public enum ErrorCode {
     NOTICE_NOT_FOUND(404, "NOTICE_001", "공지사항을 찾을 수 없습니다."),
     NOTICE_TITLE_REQUIRED(400, "NOTICE_002", "공지사항 제목을 입력해 주세요."),
     NOTICE_CONTENT_REQUIRED(400, "NOTICE_003", "공지사항 내용을 입력해 주세요."),
-    NOTICE_PAGE_SIZE_INVALID(400, "NOTICE_004", "공지사항 조회 조건이 올바르지 않습니다.");
+    NOTICE_PAGE_SIZE_INVALID(400, "NOTICE_004", "공지사항 조회 조건이 올바르지 않습니다."),
+
+    STATS_INVALID_PERIOD(400, "STATS_001", "period는 hourly 또는 daily만 가능합니다."),
+    STATS_SOURCE_UNAVAILABLE(503, "STATS_002", "통계 데이터를 조회할 수 없습니다.");
 
 
     private final int status;
