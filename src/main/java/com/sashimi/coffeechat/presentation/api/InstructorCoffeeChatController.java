@@ -55,17 +55,17 @@ public class InstructorCoffeeChatController {
             @PathVariable Long chatId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        List<CoffeeChatMessageResponse> response = coffeeChatQueryUseCase
-                .getMessages(chatId, principal.getId(), page, size)
-                .stream()
-                .map(CoffeeChatMessageResponse::from)
-                .toList();
-
         try {
             coffeeChatCommandUseCase.markMessagesAsRead(chatId, principal.getId());
         } catch (RuntimeException e) {
             log.warn("메시지 읽음처리 실패 - chatId={}, readerId={}", chatId, principal.getId(), e);
         }
+
+        List<CoffeeChatMessageResponse> response = coffeeChatQueryUseCase
+                .getMessages(chatId, principal.getId(), page, size)
+                .stream()
+                .map(CoffeeChatMessageResponse::from)
+                .toList();
 
         return ResponseEntity.ok(response);
     }
