@@ -27,7 +27,7 @@ public enum AiFeatureType {
             return JOB_POSTING_ANALYSIS;
         }
 
-        if ("COVER_LETTER_REVIEW".equals(feature)) {
+        if (AiMetrics.FEATURE_COVER_LETTER_REVIEW.equals(feature)) {
             return COVER_LETTER_REVIEW;
         }
 

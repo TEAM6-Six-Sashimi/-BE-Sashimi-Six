@@ -149,6 +149,11 @@ public enum ErrorCode {
     RESUME_INVALID_REVIEW_SCORE(400, "RESUME_003", "이력서 평가 점수가 올바르지 않습니다."),
     RESUME_INVALID_REVIEW_FEEDBACK(400, "RESUME_004", "이력서 평가 피드백이 올바르지 않습니다."),
 
+    COVER_LETTER_INVALID_QUESTION(400, "COVER_LETTER_001", "잘못된 자기소개서 문항입니다."),
+    COVER_LETTER_CONTENT_TOO_LONG(400, "COVER_LETTER_002", "자기소개서 문항 글자 수를 초과했습니다."),
+    COVER_LETTER_EMPTY(400, "COVER_LETTER_003", "AI 첨삭을 위해 최소 1개 이상의 자기소개서 문항을 작성해 주세요."),
+    COVER_LETTER_REVIEW_NOT_FOUND(404, "COVER_LETTER_404", "자기소개서 첨삭 결과를 찾을 수 없습니다."),
+
     JOB_POSTING_RECOMMENDATION_NOT_FOUND(404, "RECOMMENDATION_404", "채용공고 추천 결과를 찾을 수 없습니다."),
 
     FILE_EMPTY(400, "FILE_001", "업로드할 파일이 없습니다."),
