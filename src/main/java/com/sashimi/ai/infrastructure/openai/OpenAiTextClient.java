@@ -10,7 +10,6 @@ import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -33,30 +32,30 @@ public class OpenAiTextClient {
     }
 
     public String generate(String prompt) {
-        validateOpenAiApiKey();
+        validateOpenAiSettings();
 
         if (prompt == null || prompt.isBlank()) {
             throw new BusinessException(
-                ErrorCode.AI_API_CALL_FAILED
+                    ErrorCode.AI_API_CALL_FAILED
             );
         }
-        
+
         long startedAt = System.currentTimeMillis();
 
         log.info(
                 "OpenAI API 호출: model={}, promptLength={}",
                 openAiProperties.model(),
-                prompt == null ? 0 : prompt.length()
-        );
-
-        Map<String, Object> requestBody = Map.of(
-                "model",
-                openAiProperties.model(),
-                "input",
-                prompt
+                prompt.length()
         );
 
         try {
+            Map<String, Object> requestBody = Map.of(
+                    "model",
+                    openAiProperties.model(),
+                    "input",
+                    prompt
+            );
+
             String responseBody = restClient.post()
                     .uri("/responses")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -138,15 +137,13 @@ public class OpenAiTextClient {
                         continue;
                     }
 
-                    for (JsonNode contentItem
-                            : contentNode) {
+                    for (JsonNode contentItem : contentNode) {
                         JsonNode textNode =
                                 contentItem.get("text");
 
                         if (textNode != null
                                 && textNode.isTextual()
-                                && !textNode.asText()
-                                .isBlank()) {
+                                && !textNode.asText().isBlank()) {
                             return textNode.asText();
                         }
                     }
@@ -165,8 +162,10 @@ public class OpenAiTextClient {
         }
     }
 
-    private void validateOpenAiApiKey() {
+    private void validateOpenAiSettings() {
         String apiKey = openAiProperties.apiKey();
+        String model = openAiProperties.model();
+        String baseUrl = openAiProperties.baseUrl();
 
         if (apiKey == null || apiKey.isBlank()) {
             throw new BusinessException(
@@ -177,6 +176,18 @@ public class OpenAiTextClient {
         if (apiKey.contains("${")) {
             throw new BusinessException(
                     ErrorCode.AI_API_KEY_NOT_RESOLVED
+            );
+        }
+
+        if (model == null || model.isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.AI_API_CALL_FAILED
+            );
+        }
+
+        if (baseUrl == null || baseUrl.isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.AI_API_CALL_FAILED
             );
         }
     }
