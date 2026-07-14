@@ -36,12 +36,11 @@ spring:
 jwt:
   secret: this-is-sashimi-lms-jwt-secret-key-for-hs256-authentication
 
-openai:
-  api-key: ${OPENAI_API_KEY:}
-  model: ${OPENAI_MODEL:gpt-4o-mini}
-  base-url: https://api.openai.com/v1
+gemini:
+  base-url: https://generativelanguage.googleapis.com/v1beta
+  api-key: ${GEMINI_API_KEY}
+  model: ${GEMINI_MODEL:gemini-3.5-flash}
   timeout-seconds: 30
-
 clova:
   ocr:
     secret-key: ${CLOVA_OCR_SECRET_KEY}

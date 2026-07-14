@@ -1,9 +1,10 @@
 package com.sashimi.recommendation.infrastructure.ai;
 
 import com.sashimi.ai.domain.model.AiPrompt;
-import com.sashimi.ai.infrastructure.openai.AiResponseCleaner;
-import com.sashimi.ai.infrastructure.openai.OpenAiTextClient;
+import com.sashimi.ai.infrastructure.gemini.GeminiTextClient;
+import com.sashimi.ai.infrastructure.common.AiResponseCleaner;
 import com.sashimi.ai.infrastructure.prompt.JobPostingRecommendationPromptBuilder;
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
@@ -24,25 +25,26 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Slf4j
 @Component
-@Profile("openai")
+@Profile("gemini")
 public class OpenAiJobPostingRecommendationAnalyzeAdapter
         implements JobPostingRecommendationAnalyzePort {
 
     private final ObjectMapper objectMapper;
     private final JobPostingRecommendationPromptBuilder promptBuilder;
-    private final OpenAiTextClient openAiTextClient;
+    private final GeminiTextClient geminiTextClient;
 
     public OpenAiJobPostingRecommendationAnalyzeAdapter(
             ObjectMapper objectMapper,
             JobPostingRecommendationPromptBuilder promptBuilder,
-            OpenAiTextClient openAiTextClient
+            GeminiTextClient geminiTextClient
     ) {
         this.objectMapper = objectMapper;
         this.promptBuilder = promptBuilder;
-        this.openAiTextClient = openAiTextClient;
+        this.geminiTextClient = geminiTextClient;
     }
 
     @Override
@@ -63,8 +65,9 @@ public class OpenAiJobPostingRecommendationAnalyzeAdapter
                 prompt == null ? 0 : prompt.length()
         );
 
-        String generatedText = openAiTextClient.generate(
-                prompt
+        String generatedText = geminiTextClient.generate(
+                prompt,
+                AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION
         );
 
         JobPostingRecommendationAnalyzeResult result =
@@ -198,7 +201,7 @@ public class OpenAiJobPostingRecommendationAnalyzeAdapter
         try {
             return FitStatus.valueOf(
                     value.trim()
-                            .toUpperCase(java.util.Locale.ROOT)
+                            .toUpperCase(Locale.ROOT)
             );
         } catch (IllegalArgumentException exception) {
             return FitStatus.UNKNOWN;

@@ -132,6 +132,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/subscriptions/plans").permitAll()
                         .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/maintenance/status").permitAll()
+                        .requestMatchers("/ws-coffeechat/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/files/download").authenticated()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/members/instructor-applications/**").hasAuthority("ROLE_ADMIN")
