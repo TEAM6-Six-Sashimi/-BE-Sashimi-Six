@@ -40,11 +40,6 @@ dependencies {
 // Flyway
     implementation 'org.flywaydb:flyway-mysql'
 
-// OpenAI
-    implementation('com.openai:openai-java:4.35.0') {
-        exclude group: 'io.swagger.core.v3', module: 'swagger-annotations'
-    }
-
 // Swagger
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
 

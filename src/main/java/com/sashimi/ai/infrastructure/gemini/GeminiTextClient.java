@@ -1,8 +1,10 @@
-package com.sashimi.ai.infrastructure.openai;
+package com.sashimi.ai.infrastructure.gemini;
 
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -14,25 +16,32 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class OpenAiTextClient {
+@Profile("gemini")
+public class GeminiTextClient {
 
-    private final OpenAiProperties openAiProperties;
+    private final GeminiProperties geminiProperties;
     private final ObjectMapper objectMapper;
     private final RestClient restClient;
+    private final AiMetrics aiMetrics;
 
-    public OpenAiTextClient(
-            OpenAiProperties openAiProperties,
-            ObjectMapper objectMapper
+    public GeminiTextClient(
+            GeminiProperties geminiProperties,
+            ObjectMapper objectMapper,
+            AiMetrics aiMetrics
     ) {
-        this.openAiProperties = openAiProperties;
+        this.geminiProperties = geminiProperties;
         this.objectMapper = objectMapper;
+        this.aiMetrics = aiMetrics;
         this.restClient = RestClient.create(
-                openAiProperties.baseUrl()
+                geminiProperties.baseUrl()
         );
     }
 
-    public String generate(String prompt) {
-        validateOpenAiSettings();
+    public String generate(
+            String prompt,
+            String feature
+    ) {
+        validateGeminiSettings();
 
         if (prompt == null || prompt.isBlank()) {
             throw new BusinessException(
@@ -40,28 +49,31 @@ public class OpenAiTextClient {
             );
         }
 
+        String metricFeature = normalizeFeature(feature);
+
         long startedAt = System.currentTimeMillis();
 
         log.info(
-                "OpenAI API 호출: model={}, promptLength={}",
-                openAiProperties.model(),
+                "Gemini API 호출: feature={}, model={}, promptLength={}",
+                metricFeature,
+                geminiProperties.model(),
                 prompt.length()
         );
 
         try {
             Map<String, Object> requestBody = Map.of(
                     "model",
-                    openAiProperties.model(),
+                    geminiProperties.model(),
                     "input",
                     prompt
             );
 
             String responseBody = restClient.post()
-                    .uri("/responses")
+                    .uri("/interactions")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header(
-                            "Authorization",
-                            "Bearer " + openAiProperties.apiKey()
+                            "x-goog-api-key",
+                            geminiProperties.apiKey()
                     )
                     .body(requestBody)
                     .retrieve()
@@ -71,35 +83,57 @@ public class OpenAiTextClient {
                     responseBody
             );
 
+            aiMetrics.incrementProviderCallSuccess(
+                    metricFeature,
+                    AiMetrics.PROVIDER_GEMINI
+            );
+
             log.info(
-                    "OpenAI API 호출 성공: model={}, elapsedMs={}, responseLength={}",
-                    openAiProperties.model(),
+                    "Gemini API 호출 성공: feature={}, model={}, elapsedMs={}, responseLength={}",
+                    metricFeature,
+                    geminiProperties.model(),
                     System.currentTimeMillis() - startedAt,
                     generatedText == null ? 0 : generatedText.length()
             );
 
             return generatedText;
         } catch (RestClientResponseException exception) {
+            aiMetrics.incrementProviderCallFailed(
+                    metricFeature,
+                    AiMetrics.PROVIDER_GEMINI,
+                    exception.getStatusCode().toString()
+            );
+
             log.error(
-                    "OpenAI API 호출 실패: model={}, statusCode={}, responseBody={}, elapsedMs={}",
-                    openAiProperties.model(),
+                    "Gemini API 호출 실패: feature={}, model={}, statusCode={}, responseBody={}, elapsedMs={}",
+                    metricFeature,
+                    geminiProperties.model(),
                     exception.getStatusCode(),
                     exception.getResponseBodyAsString(),
                     System.currentTimeMillis() - startedAt,
                     exception
             );
+
             throw new BusinessException(
                     ErrorCode.AI_API_CALL_FAILED
             );
         } catch (BusinessException exception) {
             throw exception;
         } catch (Exception exception) {
+            aiMetrics.incrementProviderCallFailed(
+                    metricFeature,
+                    AiMetrics.PROVIDER_GEMINI,
+                    exception.getClass().getSimpleName()
+            );
+
             log.error(
-                    "OpenAI API 호출 실패: model={}, elapsedMs={}",
-                    openAiProperties.model(),
+                    "Gemini API 호출 실패: feature={}, model={}, elapsedMs={}",
+                    metricFeature,
+                    geminiProperties.model(),
                     System.currentTimeMillis() - startedAt,
                     exception
             );
+
             throw new BusinessException(
                     ErrorCode.AI_API_CALL_FAILED
             );
@@ -114,40 +148,13 @@ public class OpenAiTextClient {
                     responseBody
             );
 
-            JsonNode outputTextNode = root.get(
-                    "output_text"
-            );
+            JsonNode outputTextNode =
+                    root.get("output_text");
 
             if (outputTextNode != null
                     && outputTextNode.isTextual()
                     && !outputTextNode.asText().isBlank()) {
                 return outputTextNode.asText();
-            }
-
-            JsonNode outputNode = root.get("output");
-
-            if (outputNode != null
-                    && outputNode.isArray()) {
-                for (JsonNode itemNode : outputNode) {
-                    JsonNode contentNode =
-                            itemNode.get("content");
-
-                    if (contentNode == null
-                            || !contentNode.isArray()) {
-                        continue;
-                    }
-
-                    for (JsonNode contentItem : contentNode) {
-                        JsonNode textNode =
-                                contentItem.get("text");
-
-                        if (textNode != null
-                                && textNode.isTextual()
-                                && !textNode.asText().isBlank()) {
-                            return textNode.asText();
-                        }
-                    }
-                }
             }
 
             throw new BusinessException(
@@ -162,10 +169,18 @@ public class OpenAiTextClient {
         }
     }
 
-    private void validateOpenAiSettings() {
-        String apiKey = openAiProperties.apiKey();
-        String model = openAiProperties.model();
-        String baseUrl = openAiProperties.baseUrl();
+    private String normalizeFeature(String feature) {
+        if (feature == null || feature.isBlank()) {
+            return "UNKNOWN";
+        }
+
+        return feature;
+    }
+
+    private void validateGeminiSettings() {
+        String apiKey = geminiProperties.apiKey();
+        String model = geminiProperties.model();
+        String baseUrl = geminiProperties.baseUrl();
 
         if (apiKey == null || apiKey.isBlank()) {
             throw new BusinessException(

@@ -1,9 +1,10 @@
 package com.sashimi.resume.infrastructure.ai;
 
 import com.sashimi.ai.domain.model.AiPrompt;
-import com.sashimi.ai.infrastructure.openai.AiResponseCleaner;
-import com.sashimi.ai.infrastructure.openai.OpenAiTextClient;
+import com.sashimi.ai.infrastructure.gemini.GeminiTextClient;
+import com.sashimi.ai.infrastructure.common.AiResponseCleaner;
 import com.sashimi.ai.infrastructure.prompt.CareerContinuityPromptBuilder;
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.resume.application.port.CareerContinuityAiPort;
@@ -17,22 +18,22 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.List;
 
 @Component
-@Profile("openai")
+@Profile("gemini")
 public class OpenAiCareerContinuityAdapter
         implements CareerContinuityAiPort {
 
     private final ObjectMapper objectMapper;
     private final CareerContinuityPromptBuilder promptBuilder;
-    private final OpenAiTextClient openAiTextClient;
+    private final GeminiTextClient geminiTextClient;
 
     public OpenAiCareerContinuityAdapter(
             ObjectMapper objectMapper,
             CareerContinuityPromptBuilder promptBuilder,
-            OpenAiTextClient openAiTextClient
+            GeminiTextClient geminiTextClient
     ) {
         this.objectMapper = objectMapper;
         this.promptBuilder = promptBuilder;
-        this.openAiTextClient = openAiTextClient;
+        this.geminiTextClient = geminiTextClient;
     }
 
     @Override
@@ -46,7 +47,10 @@ public class OpenAiCareerContinuityAdapter
         );
 
         String generatedText =
-                openAiTextClient.generate(input);
+                geminiTextClient.generate(
+                        input,
+                        AiMetrics.FEATURE_RESUME_REVIEW
+                );
 
         return parseResult(generatedText);
     }
