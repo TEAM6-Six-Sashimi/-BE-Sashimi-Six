@@ -5,6 +5,9 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  flyway:
+    enabled: false
+
   jpa:
     show-sql: false
 
@@ -71,6 +74,9 @@ codef:
 
 grafana:
   url: ${GRAFANA_URL}
+
+prometheus:
+  url: ${PROMETHEUS_URL:http://sashimi-prometheus:9090}
 
 springdoc:
   swagger-ui:

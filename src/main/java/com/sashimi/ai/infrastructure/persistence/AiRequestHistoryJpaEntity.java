@@ -74,7 +74,31 @@ public class AiRequestHistoryJpaEntity {
         return id;
     }
 
-    public AiFeatureType getFeatureType() {
-        return featureType;
+    public Long getUserId() {
+        return userId;
+    }
+
+    public AiRequestStatus getStatus() {
+        return status;
+    }
+
+    public String getRequestSnapshotJson() {
+        return requestSnapshotJson;
+    }
+
+    public String getResultJson() {
+        return resultJson;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
     }
 }
