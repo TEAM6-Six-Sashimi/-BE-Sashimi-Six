@@ -57,7 +57,9 @@ public class MaintenanceModeFilter extends OncePerRequestFilter {
     }
 
     private boolean isAlwaysAllowed(String uri) {
-        return ALWAYS_ALLOWED_PREFIXES.stream().anyMatch(uri::startsWith);
+        return ALWAYS_ALLOWED_PREFIXES.stream().anyMatch(prefix ->
+                uri.equals(prefix) || uri.startsWith(prefix + "/")
+        );
     }
 
     private boolean hasAdminRole() {

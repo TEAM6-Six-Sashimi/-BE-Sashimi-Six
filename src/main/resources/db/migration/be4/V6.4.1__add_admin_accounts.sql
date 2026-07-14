@@ -12,7 +12,11 @@ VALUES
     ('admin06', 'admin06@test.com', '$2a$10$HFStfIJEmYPf7MIpzQ4aSeqGSN.IWC4ZCUKHxKy7E/m4/xxWD1f4C', '관리자06', '1985-01-01', '010-0000-0006', 'ADMIN', 'ACTIVE', TRUE, 'ADMIN006'),
     ('admin07', 'admin07@test.com', '$2a$10$HFStfIJEmYPf7MIpzQ4aSeqGSN.IWC4ZCUKHxKy7E/m4/xxWD1f4C', '관리자07', '1985-01-01', '010-0000-0007', 'ADMIN', 'ACTIVE', TRUE, 'ADMIN007');
 
--- 이미 존재하는데 비밀번호가 다르게 세팅된 경우를 대비해 admin02~07은 강제로 admin01과 동일한 해시로 맞춤
+-- 이미 존재하는데(예: login_id 충돌로 INSERT IGNORE가 스킵된 경우) 비밀번호/권한/상태가
+-- 다르게 세팅돼 있을 수 있으므로 admin02~07은 강제로 ADMIN/ACTIVE/인증완료 + 동일 해시로 맞춤
 UPDATE users
-SET password = '$2a$10$HFStfIJEmYPf7MIpzQ4aSeqGSN.IWC4ZCUKHxKy7E/m4/xxWD1f4C'
+SET password = '$2a$10$HFStfIJEmYPf7MIpzQ4aSeqGSN.IWC4ZCUKHxKy7E/m4/xxWD1f4C',
+    role = 'ADMIN',
+    status = 'ACTIVE',
+    email_verified = TRUE
 WHERE login_id IN ('admin02', 'admin03', 'admin04', 'admin05', 'admin06', 'admin07');
