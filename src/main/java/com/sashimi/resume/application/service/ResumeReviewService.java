@@ -38,6 +38,7 @@ public class ResumeReviewService implements ReviewResumeUseCase {
         this.aiMetrics = aiMetrics;
     }
 
+    @Transactional
     @Override
     public ReviewResumeResult review(
             Long resumeId,
@@ -56,7 +57,7 @@ public class ResumeReviewService implements ReviewResumeUseCase {
                         )
                 );
 
-        aiRequestHistoryRepository.save(
+        AiRequestHistoryJpaEntity history = aiRequestHistoryRepository.save(
                 AiRequestHistoryJpaEntity.started(
                         userId,
                         AiFeatureType.RESUME_REVIEW,
@@ -65,14 +66,20 @@ public class ResumeReviewService implements ReviewResumeUseCase {
         );
 
         long startedAt = System.currentTimeMillis();
-        aiMetrics.incrementRequestStarted(AiMetrics.FEATURE_RESUME_REVIEW);
+        aiMetrics.incrementRequestStarted(
+                AiMetrics.FEATURE_RESUME_REVIEW
+        );
 
         try {
             ReviewResumeResult result = resumeReviewProcessor.process(
                     resume
             );
 
-            aiMetrics.incrementRequestSuccess(AiMetrics.FEATURE_RESUME_REVIEW);
+            history.complete(null);
+
+            aiMetrics.incrementRequestSuccess(
+                    AiMetrics.FEATURE_RESUME_REVIEW
+            );
             aiMetrics.recordRequestDuration(
                     AiMetrics.FEATURE_RESUME_REVIEW,
                     "SUCCESS",
@@ -81,6 +88,10 @@ public class ResumeReviewService implements ReviewResumeUseCase {
 
             return result;
         } catch (RuntimeException e) {
+            history.fail(
+                    e.getClass().getSimpleName()
+            );
+
             aiMetrics.incrementRequestFailed(
                     AiMetrics.FEATURE_RESUME_REVIEW,
                     e.getClass().getSimpleName()
