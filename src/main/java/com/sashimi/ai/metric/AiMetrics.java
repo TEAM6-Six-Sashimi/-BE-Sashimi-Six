@@ -18,7 +18,7 @@ public class AiMetrics {
     public static final String REASON_AI_CONSENT_REQUIRED = "AI_CONSENT_REQUIRED";
     public static final String REASON_RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED";
 
-    public static final String PROVIDER_OPENAI = "OPENAI";
+    public static final String PROVIDER_GEMINI = "GEMINI";
 
     private final MeterRegistry meterRegistry;
 

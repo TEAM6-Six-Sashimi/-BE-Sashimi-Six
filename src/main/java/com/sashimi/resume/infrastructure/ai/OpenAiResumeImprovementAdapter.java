@@ -1,9 +1,10 @@
 package com.sashimi.resume.infrastructure.ai;
 
 import com.sashimi.ai.domain.model.AiPrompt;
-import com.sashimi.ai.infrastructure.openai.AiResponseCleaner;
-import com.sashimi.ai.infrastructure.openai.OpenAiTextClient;
+import com.sashimi.ai.infrastructure.gemini.GeminiTextClient;
+import com.sashimi.ai.infrastructure.common.AiResponseCleaner;
 import com.sashimi.ai.infrastructure.prompt.ResumeImprovementPromptBuilder;
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.resume.application.port.ResumeImprovementAiPort;
@@ -21,22 +22,22 @@ import java.util.Locale;
 import java.util.Map;
 
 @Component
-@Profile("openai")
+@Profile("gemini")
 public class OpenAiResumeImprovementAdapter
         implements ResumeImprovementAiPort {
 
     private final ObjectMapper objectMapper;
     private final ResumeImprovementPromptBuilder promptBuilder;
-    private final OpenAiTextClient openAiTextClient;
+    private final GeminiTextClient geminiTextClient;
 
     public OpenAiResumeImprovementAdapter(
             ObjectMapper objectMapper,
             ResumeImprovementPromptBuilder promptBuilder,
-            OpenAiTextClient openAiTextClient
+            GeminiTextClient geminiTextClient
     ) {
         this.objectMapper = objectMapper;
         this.promptBuilder = promptBuilder;
-        this.openAiTextClient = openAiTextClient;
+        this.geminiTextClient = geminiTextClient;
     }
 
     @Override
@@ -50,7 +51,10 @@ public class OpenAiResumeImprovementAdapter
         );
 
         String generatedText =
-                openAiTextClient.generate(input);
+                geminiTextClient.generate(
+                        input,
+                        AiMetrics.FEATURE_RESUME_REVIEW
+                );
 
         return parseResult(
                 generatedText,
