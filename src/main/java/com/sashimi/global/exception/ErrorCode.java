@@ -13,6 +13,7 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(405, "COMMON_005", "지원하지 않는 HTTP 메서드입니다."),
 
     RESOURCE_NOT_FOUND(404, "COMMON_404", "요청한 대상을 찾을 수 없습니다."),
+    SERVICE_UNDER_MAINTENANCE(503, "COMMON_900", "현재 서비스 점검 중입니다."),
     INTERNAL_SERVER_ERROR(500, "COMMON_999", "서버 오류가 발생했습니다."),
 
     UNAUTHORIZED(401, "AUTH_001", "인증이 필요합니다."),
