@@ -1,0 +1,143 @@
+name: Rollback Backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: '롤백할 이미지 태그 (커밋 short SHA, 예: a1b2c3d). Actions 로그의 "Backend health check passed. Image tag: ..." 에서 확인 가능'
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Rollback EC2 to previous image
+    runs-on: ubuntu-latest
+
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_ENV_FILE: /home/ubuntu/sashimi.env
+      DOCKER_NETWORK: sashimi-net
+      DOCKER_IMAGE_REPO: sashimi-six
+      DOCKER_CONTAINER: sashimi
+      ROLLBACK_TAG: ${{ inputs.image_tag }}
+
+    steps:
+      - name: Configure SSH key
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          test -n "$EC2_HOST"
+          test -n "$EC2_USER"
+          test -n "$EC2_SSH_KEY"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/sashimi-ec2.pem
+          chmod 600 ~/.ssh/sashimi-ec2.pem
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Enable maintenance mode before rollback
+        continue-on-error: true
+        env:
+          MAINTENANCE_ADMIN_LOGIN_ID: ${{ secrets.MAINTENANCE_ADMIN_LOGIN_ID }}
+          MAINTENANCE_ADMIN_PASSWORD: ${{ secrets.MAINTENANCE_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$MAINTENANCE_ADMIN_LOGIN_ID" ] || [ -z "$MAINTENANCE_ADMIN_PASSWORD" ]; then
+            echo "MAINTENANCE_ADMIN_LOGIN_ID/PASSWORD secret이 없어 점검모드 자동 전환을 건너뜁니다."
+            exit 0
+          fi
+
+          TOKEN=$(curl -s -X POST https://api.sixsashimi.com.market-app.org/auth/login \
+            -H "Content-Type: application/json" \
+            -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
+            | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
+
+          if [ -z "$TOKEN" ]; then
+            echo "점검모드용 관리자 로그인 실패 — 점검모드 없이 롤백을 계속 진행합니다."
+            exit 0
+          fi
+
+          echo "::add-mask::$TOKEN"
+          curl -s -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/enable \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"message":"이전 버전으로 롤백하고 있습니다. 잠시 후 다시 이용해주세요."}'
+
+      - name: Rollback to tagged image
+        run: |
+          ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$EC2_HOST" \
+            "ENV_FILE='$EC2_ENV_FILE' DOCKER_NETWORK='$DOCKER_NETWORK' DOCKER_IMAGE_REPO='$DOCKER_IMAGE_REPO' DOCKER_CONTAINER='$DOCKER_CONTAINER' ROLLBACK_TAG='$ROLLBACK_TAG' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          IMAGE_TARGET="$DOCKER_IMAGE_REPO:$ROLLBACK_TAG"
+
+          if ! sudo docker image inspect "$IMAGE_TARGET" >/dev/null 2>&1; then
+            echo "롤백 실패: 로컬에 $IMAGE_TARGET 이미지가 없습니다." >&2
+            echo "사용 가능한 태그 목록:" >&2
+            sudo docker images "$DOCKER_IMAGE_REPO" --format '{{.Tag}}\t{{.CreatedAt}}' >&2
+            exit 1
+          fi
+
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "Missing env file: $ENV_FILE" >&2
+            exit 1
+          fi
+
+          sudo docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1 \
+            || sudo docker network create "$DOCKER_NETWORK"
+
+          sudo docker volume inspect sashimi-logs >/dev/null 2>&1 \
+            || sudo docker volume create sashimi-logs
+
+          # 재빌드 없이, 이미 로컬에 있는 태그된 이미지로 컨테이너만 교체
+          sudo docker tag "$IMAGE_TARGET" "$DOCKER_IMAGE_REPO:latest"
+          sudo docker rm -f "$DOCKER_CONTAINER" >/dev/null 2>&1 || true
+          sudo docker run -d \
+            --name "$DOCKER_CONTAINER" \
+            --network "$DOCKER_NETWORK" \
+            --restart unless-stopped \
+            --env-file "$ENV_FILE" \
+            -p 8080:8080 \
+            -v sashimi-logs:/app/logs \
+            "$DOCKER_IMAGE_REPO:latest"
+
+          for attempt in $(seq 1 30); do
+            if sudo docker exec "$DOCKER_CONTAINER" wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
+              echo "Rollback health check passed. Now running: $ROLLBACK_TAG"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Rollback health check failed." >&2
+          sudo docker logs --tail 200 "$DOCKER_CONTAINER" >&2
+          exit 1
+          REMOTE
+
+      - name: Disable maintenance mode after rollback
+        if: always()
+        continue-on-error: true
+        env:
+          MAINTENANCE_ADMIN_LOGIN_ID: ${{ secrets.MAINTENANCE_ADMIN_LOGIN_ID }}
+          MAINTENANCE_ADMIN_PASSWORD: ${{ secrets.MAINTENANCE_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$MAINTENANCE_ADMIN_LOGIN_ID" ] || [ -z "$MAINTENANCE_ADMIN_PASSWORD" ]; then
+            exit 0
+          fi
+
+          TOKEN=$(curl -s -X POST https://api.sixsashimi.com.market-app.org/auth/login \
+            -H "Content-Type: application/json" \
+            -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
+            | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
+
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::점검모드 해제용 관리자 로그인 실패 — 점검모드가 켜진 채로 남아있을 수 있습니다. 수동으로 /admin/maintenance/disable 호출 필요."
+            exit 0
+          fi
+
+          echo "::add-mask::$TOKEN"
+          curl -s -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/disable \
+            -H "Authorization: Bearer $TOKEN"
