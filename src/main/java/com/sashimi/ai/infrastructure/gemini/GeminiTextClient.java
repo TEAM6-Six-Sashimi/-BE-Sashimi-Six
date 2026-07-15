@@ -148,18 +148,38 @@ public class GeminiTextClient {
                     responseBody
             );
 
-            JsonNode outputTextNode =
-                    root.get("output_text");
+            // Interactions API의 raw REST 응답엔 output_text 필드가 없다
+            // (공식 SDK가 편의상 계산해서 붙여주는 값). steps[].content[]에서
+            // type=="text"인 항목들의 text를 직접 이어붙여야 한다.
+            JsonNode steps = root.get("steps");
+            StringBuilder generatedText = new StringBuilder();
 
-            if (outputTextNode != null
-                    && outputTextNode.isTextual()
-                    && !outputTextNode.asText().isBlank()) {
-                return outputTextNode.asText();
+            if (steps != null && steps.isArray()) {
+                for (JsonNode step : steps) {
+                    JsonNode contents = step.get("content");
+                    if (contents == null || !contents.isArray()) {
+                        continue;
+                    }
+                    for (JsonNode content : contents) {
+                        JsonNode typeNode = content.get("type");
+                        JsonNode textNode = content.get("text");
+                        if (typeNode != null
+                                && "text".equals(typeNode.asText())
+                                && textNode != null
+                                && textNode.isTextual()) {
+                            generatedText.append(textNode.asText());
+                        }
+                    }
+                }
             }
 
-            throw new BusinessException(
-                    ErrorCode.AI_RESPONSE_EMPTY
-            );
+            if (generatedText.isEmpty()) {
+                throw new BusinessException(
+                        ErrorCode.AI_RESPONSE_EMPTY
+                );
+            }
+
+            return generatedText.toString();
         } catch (BusinessException exception) {
             throw exception;
         } catch (Exception exception) {

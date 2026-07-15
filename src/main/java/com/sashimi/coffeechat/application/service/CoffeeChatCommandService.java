@@ -1,5 +1,6 @@
 package com.sashimi.coffeechat.application.service;
 
+import com.sashimi.coffeechat.application.result.CoffeeChatMessageResult;
 import com.sashimi.coffeechat.application.usecase.CoffeeChatCommandUseCase;
 import com.sashimi.coffeechat.domain.model.CoffeeChat;
 import com.sashimi.coffeechat.domain.model.CoffeeChatMessage;
@@ -41,13 +42,15 @@ public class CoffeeChatCommandService implements CoffeeChatCommandUseCase {
     }
 
     @Override
-    public void sendMessage(Long chatId, Long senderId, String content) {
+    public CoffeeChatMessageResult sendMessage(Long chatId, Long senderId, String content) {
         CoffeeChat chat = coffeeChatRepository.findById(chatId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COFFEE_CHAT_NOT_FOUND));
 
         CoffeeChatMessage message = chat.sendMessage(senderId, content);
-        coffeeChatMessageRepository.save(message);
+        CoffeeChatMessage savedMessage = coffeeChatMessageRepository.save(message);
         coffeeChatRepository.save(chat);
+
+        return new CoffeeChatMessageResult(savedMessage, chat.getStudentId(), chat.getInstructorId());
     }
 
     @Override
