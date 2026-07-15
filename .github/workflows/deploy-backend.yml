@@ -42,9 +42,10 @@ jobs:
       EC2_APP_DIR: /home/ubuntu/-BE-Sashimi-Six
       EC2_ENV_FILE: /home/ubuntu/sashimi.env
       DOCKER_NETWORK: sashimi-net
-      DOCKER_IMAGE: sashimi-six:latest
+      DOCKER_IMAGE_REPO: sashimi-six
       DOCKER_CONTAINER: sashimi
       DEPLOY_BRANCH: ${{ github.ref_name }}
+      IMAGE_KEEP_COUNT: 5
 
     steps:
       - name: Configure SSH key
@@ -59,10 +60,40 @@ jobs:
           chmod 600 ~/.ssh/sashimi-ec2.pem
           ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy application
+      - name: Enable maintenance mode before deploy
+        continue-on-error: true
+        env:
+          MAINTENANCE_ADMIN_LOGIN_ID: ${{ secrets.MAINTENANCE_ADMIN_LOGIN_ID }}
+          MAINTENANCE_ADMIN_PASSWORD: ${{ secrets.MAINTENANCE_ADMIN_PASSWORD }}
         run: |
+          if [ -z "$MAINTENANCE_ADMIN_LOGIN_ID" ] || [ -z "$MAINTENANCE_ADMIN_PASSWORD" ]; then
+            echo "MAINTENANCE_ADMIN_LOGIN_ID/PASSWORD secret이 없어 점검모드 자동 전환을 건너뜁니다."
+            exit 0
+          fi
+
+          TOKEN=$(curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/auth/login \
+            -H "Content-Type: application/json" \
+            -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
+            | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
+
+          if [ -z "$TOKEN" ]; then
+            echo "점검모드용 관리자 로그인 실패 — 점검모드 없이 배포를 계속 진행합니다."
+            exit 0
+          fi
+
+          echo "::add-mask::$TOKEN"
+          curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/enable \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"message":"새 버전을 배포하고 있습니다. 잠시 후 다시 이용해주세요."}'
+
+      - name: Deploy application
+        env:
+          IMAGE_SHA: ${{ github.sha }}
+        run: |
+          SHORT_SHA=$(echo "$IMAGE_SHA" | cut -c1-7)
           ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$EC2_HOST" \
-            "APP_DIR='$EC2_APP_DIR' ENV_FILE='$EC2_ENV_FILE' DOCKER_NETWORK='$DOCKER_NETWORK' DOCKER_IMAGE='$DOCKER_IMAGE' DOCKER_CONTAINER='$DOCKER_CONTAINER' DEPLOY_BRANCH='$DEPLOY_BRANCH' bash -s" <<'REMOTE'
+            "APP_DIR='$EC2_APP_DIR' ENV_FILE='$EC2_ENV_FILE' DOCKER_NETWORK='$DOCKER_NETWORK' DOCKER_IMAGE_REPO='$DOCKER_IMAGE_REPO' IMAGE_TAG='$SHORT_SHA' DOCKER_CONTAINER='$DOCKER_CONTAINER' DEPLOY_BRANCH='$DEPLOY_BRANCH' IMAGE_KEEP_COUNT='$IMAGE_KEEP_COUNT' bash -s" <<'REMOTE'
           set -euo pipefail
 
           if [ ! -f "$ENV_FILE" ]; then
@@ -90,10 +121,11 @@ jobs:
           sudo docker volume inspect sashimi-logs >/dev/null 2>&1 \
             || sudo docker volume create sashimi-logs
 
-          # 이전 빌드의 dangling 이미지 정리 (실행 중인 이미지는 보존)
-          sudo docker image prune -f
+          IMAGE_LATEST="$DOCKER_IMAGE_REPO:latest"
+          IMAGE_VERSIONED="$DOCKER_IMAGE_REPO:$IMAGE_TAG"
 
-          sudo docker build -t "$DOCKER_IMAGE" .
+          # latest + 커밋 SHA 태그를 같이 붙여서 빌드 (롤백용 버전 보존)
+          sudo docker build -t "$IMAGE_LATEST" -t "$IMAGE_VERSIONED" .
           sudo docker rm -f "$DOCKER_CONTAINER" >/dev/null 2>&1 || true
           sudo docker run -d \
             --name "$DOCKER_CONTAINER" \
@@ -102,13 +134,29 @@ jobs:
             --env-file "$ENV_FILE" \
             -p 8080:8080 \
             -v sashimi-logs:/app/logs \
-            "$DOCKER_IMAGE"
+            "$IMAGE_LATEST"
 
           for attempt in $(seq 1 30); do
             if sudo docker exec "$DOCKER_CONTAINER" wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"'; then
-              echo "Backend health check passed."
+              echo "Backend health check passed. Image tag: $IMAGE_TAG"
+
               # 빌드 캐시 정리 (레이어 캐시는 유지, 미사용 캐시만 제거)
               sudo docker builder prune -f
+
+              # 버전 태그된 이미지는 dangling이 아니라서 prune으로 안 지워짐.
+              # 최근 N개(IMAGE_KEEP_COUNT)만 남기고 오래된 버전 태그 정리 (latest는 항상 보존).
+              sudo docker images "$DOCKER_IMAGE_REPO" --format '{{.CreatedAt}}\t{{.Tag}}' \
+                | awk -F'\t' '$2 != "latest"' \
+                | sort -r \
+                | tail -n +$((IMAGE_KEEP_COUNT + 1)) \
+                | awk -F'\t' '{print $2}' \
+                | while read -r old_tag; do
+                    if [ -n "$old_tag" ]; then
+                      echo "오래된 이미지 태그 정리: $DOCKER_IMAGE_REPO:$old_tag"
+                      sudo docker rmi "$DOCKER_IMAGE_REPO:$old_tag" >/dev/null 2>&1 || true
+                    fi
+                  done
+
               exit 0
             fi
             sleep 5
@@ -118,6 +166,31 @@ jobs:
           sudo docker logs --tail 200 "$DOCKER_CONTAINER" >&2
           exit 1
           REMOTE
+
+      - name: Disable maintenance mode after deploy
+        if: always()
+        continue-on-error: true
+        env:
+          MAINTENANCE_ADMIN_LOGIN_ID: ${{ secrets.MAINTENANCE_ADMIN_LOGIN_ID }}
+          MAINTENANCE_ADMIN_PASSWORD: ${{ secrets.MAINTENANCE_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$MAINTENANCE_ADMIN_LOGIN_ID" ] || [ -z "$MAINTENANCE_ADMIN_PASSWORD" ]; then
+            exit 0
+          fi
+
+          TOKEN=$(curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/auth/login \
+            -H "Content-Type: application/json" \
+            -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
+            | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
+
+          if [ -z "$TOKEN" ]; then
+            echo "::error::점검모드 해제용 관리자 로그인 실패 — 점검모드가 켜진 채로 남아있을 수 있습니다. 수동으로 /admin/maintenance/disable 호출 필요."
+            exit 1
+          fi
+
+          echo "::add-mask::$TOKEN"
+          curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/disable \
+            -H "Authorization: Bearer $TOKEN"
 
       - name: Create Grafana deploy annotation
         if: success()
