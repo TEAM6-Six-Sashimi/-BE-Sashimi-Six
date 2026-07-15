@@ -13,7 +13,7 @@ public record InstructorCoffeeChatSummaryResponse(
         CoffeeChatStatus status,
         LocalDateTime createdAt,
         LocalDateTime acceptedAt,
-        boolean hasUnreadMessages,
+        long unreadMessageCount,
         String lastMessagePreview,
         LocalDateTime lastMessageAt
 ) {
@@ -26,7 +26,7 @@ public record InstructorCoffeeChatSummaryResponse(
                 view.status(),
                 view.createdAt(),
                 view.acceptedAt(),
-                view.hasUnreadMessages(),
+                view.unreadMessageCount(),
                 view.lastMessagePreview(),
                 view.lastMessageAt()
         );

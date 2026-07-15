@@ -4,7 +4,6 @@ import com.sashimi.coffeechat.domain.model.CoffeeChatMessage;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public interface CoffeeChatMessageRepository {
 
@@ -12,7 +11,7 @@ public interface CoffeeChatMessageRepository {
 
     List<CoffeeChatMessage> findAllByCoffeeChatId(Long coffeeChatId, int page, int size);
 
-    Set<Long> findCoffeeChatIdsWithUnreadMessages(List<Long> coffeeChatIds, Long excludeSenderId);
+    Map<Long, Long> countUnreadMessagesByCoffeeChatIds(List<Long> coffeeChatIds, Long excludeSenderId);
 
     void markAllAsRead(Long coffeeChatId, Long readerId);
 

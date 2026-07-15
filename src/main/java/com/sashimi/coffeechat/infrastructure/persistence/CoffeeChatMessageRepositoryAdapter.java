@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,11 +34,15 @@ public class CoffeeChatMessageRepositoryAdapter implements CoffeeChatMessageRepo
     }
 
     @Override
-    public Set<Long> findCoffeeChatIdsWithUnreadMessages(List<Long> coffeeChatIds, Long excludeSenderId) {
+    public Map<Long, Long> countUnreadMessagesByCoffeeChatIds(List<Long> coffeeChatIds, Long excludeSenderId) {
         if (coffeeChatIds.isEmpty()) {
-            return Set.of();
+            return Map.of();
         }
-        return Set.copyOf(springDataRepository.findCoffeeChatIdsWithUnreadMessages(coffeeChatIds, excludeSenderId));
+        return springDataRepository.countUnreadMessagesByCoffeeChatIds(coffeeChatIds, excludeSenderId)
+                .stream()
+                .collect(Collectors.toMap(
+                        CoffeeChatUnreadCountProjection::getCoffeeChatId,
+                        CoffeeChatUnreadCountProjection::getUnreadCount));
     }
 
     @Override
