@@ -19,14 +19,14 @@ import java.util.List;
 
 @Component
 @Profile("gemini")
-public class OpenAiCareerContinuityAdapter
+public class GeminiCareerContinuityAdapter
         implements CareerContinuityAiPort {
 
     private final ObjectMapper objectMapper;
     private final CareerContinuityPromptBuilder promptBuilder;
     private final GeminiTextClient geminiTextClient;
 
-    public OpenAiCareerContinuityAdapter(
+    public GeminiCareerContinuityAdapter(
             ObjectMapper objectMapper,
             CareerContinuityPromptBuilder promptBuilder,
             GeminiTextClient geminiTextClient
