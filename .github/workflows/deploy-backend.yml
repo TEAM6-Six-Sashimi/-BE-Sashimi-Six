@@ -71,7 +71,7 @@ jobs:
             exit 0
           fi
 
-          TOKEN=$(curl -s -X POST https://api.sixsashimi.com.market-app.org/auth/login \
+          TOKEN=$(curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/auth/login \
             -H "Content-Type: application/json" \
             -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
             | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
@@ -82,7 +82,7 @@ jobs:
           fi
 
           echo "::add-mask::$TOKEN"
-          curl -s -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/enable \
+          curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/enable \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
             -d '{"message":"새 버전을 배포하고 있습니다. 잠시 후 다시 이용해주세요."}'
@@ -178,18 +178,18 @@ jobs:
             exit 0
           fi
 
-          TOKEN=$(curl -s -X POST https://api.sixsashimi.com.market-app.org/auth/login \
+          TOKEN=$(curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/auth/login \
             -H "Content-Type: application/json" \
             -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
             | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
 
           if [ -z "$TOKEN" ]; then
-            echo "::warning::점검모드 해제용 관리자 로그인 실패 — 점검모드가 켜진 채로 남아있을 수 있습니다. 수동으로 /admin/maintenance/disable 호출 필요."
-            exit 0
+            echo "::error::점검모드 해제용 관리자 로그인 실패 — 점검모드가 켜진 채로 남아있을 수 있습니다. 수동으로 /admin/maintenance/disable 호출 필요."
+            exit 1
           fi
 
           echo "::add-mask::$TOKEN"
-          curl -s -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/disable \
+          curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/disable \
             -H "Authorization: Bearer $TOKEN"
 
       - name: Create Grafana deploy annotation

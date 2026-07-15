@@ -27,6 +27,16 @@ jobs:
       ROLLBACK_TAG: ${{ inputs.image_tag }}
 
     steps:
+      - name: Validate rollback tag
+        run: |
+          # 커맨드 인젝션 방지 — SSH로 넘기기 전에, 그리고 점검모드를 켜기도 전에 러너에서
+          # 형식부터 검증. 우리 태그는 항상 git short/full SHA(7~40자리 hex)만 쓰므로
+          # 이 형식만 허용.
+          if [[ ! "$ROLLBACK_TAG" =~ ^[a-f0-9]{7,40}$ ]]; then
+            echo "::error::유효하지 않은 image_tag 형식입니다: '$ROLLBACK_TAG' (git short/full SHA만 허용, 예: a1b2c3d)"
+            exit 1
+          fi
+
       - name: Configure SSH key
         env:
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -50,7 +60,7 @@ jobs:
             exit 0
           fi
 
-          TOKEN=$(curl -s -X POST https://api.sixsashimi.com.market-app.org/auth/login \
+          TOKEN=$(curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/auth/login \
             -H "Content-Type: application/json" \
             -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
             | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
@@ -61,7 +71,7 @@ jobs:
           fi
 
           echo "::add-mask::$TOKEN"
-          curl -s -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/enable \
+          curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/enable \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
             -d '{"message":"이전 버전으로 롤백하고 있습니다. 잠시 후 다시 이용해주세요."}'
@@ -128,16 +138,16 @@ jobs:
             exit 0
           fi
 
-          TOKEN=$(curl -s -X POST https://api.sixsashimi.com.market-app.org/auth/login \
+          TOKEN=$(curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/auth/login \
             -H "Content-Type: application/json" \
             -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
             | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
 
           if [ -z "$TOKEN" ]; then
-            echo "::warning::점검모드 해제용 관리자 로그인 실패 — 점검모드가 켜진 채로 남아있을 수 있습니다. 수동으로 /admin/maintenance/disable 호출 필요."
-            exit 0
+            echo "::error::점검모드 해제용 관리자 로그인 실패 — 점검모드가 켜진 채로 남아있을 수 있습니다. 수동으로 /admin/maintenance/disable 호출 필요."
+            exit 1
           fi
 
           echo "::add-mask::$TOKEN"
-          curl -s -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/disable \
+          curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/disable \
             -H "Authorization: Bearer $TOKEN"
