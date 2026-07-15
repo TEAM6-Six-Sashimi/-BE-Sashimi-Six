@@ -30,14 +30,14 @@ import java.util.Locale;
 @Slf4j
 @Component
 @Profile("gemini")
-public class OpenAiJobPostingRecommendationAnalyzeAdapter
+public class GeminiJobPostingRecommendationAnalyzeAdapter
         implements JobPostingRecommendationAnalyzePort {
 
     private final ObjectMapper objectMapper;
     private final JobPostingRecommendationPromptBuilder promptBuilder;
     private final GeminiTextClient geminiTextClient;
 
-    public OpenAiJobPostingRecommendationAnalyzeAdapter(
+    public GeminiJobPostingRecommendationAnalyzeAdapter(
             ObjectMapper objectMapper,
             JobPostingRecommendationPromptBuilder promptBuilder,
             GeminiTextClient geminiTextClient
