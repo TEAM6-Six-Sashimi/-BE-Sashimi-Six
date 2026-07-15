@@ -13,9 +13,10 @@ public interface SpringDataCoffeeChatMessageRepository extends JpaRepository<Cof
 
     Page<CoffeeChatMessageJpaEntity> findAllByCoffeeChatIdOrderByCreatedAtAsc(Long coffeeChatId, Pageable pageable);
 
-    @Query("SELECT DISTINCT m.coffeeChatId FROM CoffeeChatMessageJpaEntity m "
-            + "WHERE m.coffeeChatId IN :coffeeChatIds AND m.isRead = false AND m.senderId <> :excludeSenderId")
-    List<Long> findCoffeeChatIdsWithUnreadMessages(
+    @Query("SELECT m.coffeeChatId AS coffeeChatId, COUNT(m) AS unreadCount FROM CoffeeChatMessageJpaEntity m "
+            + "WHERE m.coffeeChatId IN :coffeeChatIds AND m.isRead = false AND m.senderId <> :excludeSenderId "
+            + "GROUP BY m.coffeeChatId")
+    List<CoffeeChatUnreadCountProjection> countUnreadMessagesByCoffeeChatIds(
             @Param("coffeeChatIds") List<Long> coffeeChatIds, @Param("excludeSenderId") Long excludeSenderId);
 
     @Modifying(clearAutomatically = true)

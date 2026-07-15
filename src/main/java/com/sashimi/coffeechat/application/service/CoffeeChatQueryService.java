@@ -7,6 +7,7 @@ import com.sashimi.coffeechat.domain.model.CoffeeChatMessage;
 import com.sashimi.coffeechat.domain.model.CoffeeChatStatus;
 import com.sashimi.coffeechat.domain.repository.CoffeeChatMessageRepository;
 import com.sashimi.coffeechat.domain.repository.CoffeeChatRepository;
+import com.sashimi.course.application.port.InstructorPort;
 import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.global.exception.BusinessException;
@@ -20,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,6 +46,7 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
     private final CoffeeChatMessageRepository coffeeChatMessageRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final InstructorPort instructorPort;
 
     @Override
     public List<CoffeeChatSummaryView> getStudentChats(Long studentId) {
@@ -95,8 +96,8 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
 
     private List<CoffeeChatSummaryView> toSummaryViews(List<CoffeeChat> chats, Long excludeSenderId) {
         List<Long> chatIds = chats.stream().map(CoffeeChat::getId).collect(Collectors.toList());
-        Set<Long> unreadChatIds =
-                coffeeChatMessageRepository.findCoffeeChatIdsWithUnreadMessages(chatIds, excludeSenderId);
+        Map<Long, Long> unreadCounts =
+                coffeeChatMessageRepository.countUnreadMessagesByCoffeeChatIds(chatIds, excludeSenderId);
         Map<Long, CoffeeChatMessage> latestMessages =
                 coffeeChatMessageRepository.findLatestMessagesByCoffeeChatIds(chatIds);
 
@@ -106,6 +107,8 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
                             .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
                     User instructor = userRepository.findById(chat.getInstructorId())
                             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    String instructorProfileImagePath =
+                            instructorPort.getInstructorInfo(chat.getInstructorId()).profileImagePath();
                     CoffeeChatMessage lastMessage = latestMessages.get(chat.getId());
 
                     return new CoffeeChatSummaryView(
@@ -118,7 +121,8 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
                             chat.getStatus(),
                             chat.getCreatedAt(),
                             chat.getAcceptedAt(),
-                            unreadChatIds.contains(chat.getId()),
+                            unreadCounts.getOrDefault(chat.getId(), 0L),
+                            instructorProfileImagePath,
                             lastMessage != null ? lastMessage.getContent() : null,
                             lastMessage != null ? lastMessage.getCreatedAt() : null
                     );

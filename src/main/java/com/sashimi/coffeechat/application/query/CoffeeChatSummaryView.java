@@ -14,7 +14,8 @@ public record CoffeeChatSummaryView(
         CoffeeChatStatus status,
         LocalDateTime createdAt,
         LocalDateTime acceptedAt,
-        boolean hasUnreadMessages,
+        long unreadMessageCount,
+        String instructorProfileImagePath,
         String lastMessagePreview,
         LocalDateTime lastMessageAt
 ) {}

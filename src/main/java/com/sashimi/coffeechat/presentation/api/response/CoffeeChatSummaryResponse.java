@@ -14,7 +14,8 @@ public record CoffeeChatSummaryResponse(
         CoffeeChatStatus status,
         LocalDateTime createdAt,
         LocalDateTime acceptedAt,
-        boolean hasUnreadMessages,
+        long unreadMessageCount,
+        String profileImagePath,
         String lastMessagePreview,
         LocalDateTime lastMessageAt
 ) {
@@ -28,7 +29,8 @@ public record CoffeeChatSummaryResponse(
                 view.status(),
                 view.createdAt(),
                 view.acceptedAt(),
-                view.hasUnreadMessages(),
+                view.unreadMessageCount(),
+                view.instructorProfileImagePath(),
                 view.lastMessagePreview(),
                 view.lastMessageAt()
         );
