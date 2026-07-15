@@ -17,6 +17,13 @@ import { Rate, Trend } from 'k6/metrics';
  *   k6 run k6/concurrent-users-capacity-test.js
  *   k6 run -e BASE_URL=https://api.sixsashimi.com k6/concurrent-users-capacity-test.js
  *
+ * 점검모드(POST /admin/maintenance/enable)를 켜놓고 이 테스트를 돌릴 경우
+ * 아래 ADMIN_LOGIN_ID/ADMIN_LOGIN_PASSWORD로 로그인해서 받은 토큰을 모든
+ * 요청에 실어 보낸다. 그래야 점검모드 필터가 이 부하테스트 트래픽은 통과시키고
+ * (진짜 컨트롤러/DB까지 도달해서 의미있는 측정이 되고), 실제 일반 방문자만
+ * 막아서 테스트 도중 실사용자에게 영향이 가는 걸 방지한다.
+ *   k6 run -e BASE_URL=... -e ADMIN_LOGIN_ID=admin01 -e ADMIN_LOGIN_PASSWORD=admin k6/concurrent-users-capacity-test.js
+ *
  * Grafana/Prometheus에서 같이 볼 지표
  * - hikaricp_connections_pending{job="sashimi"} (풀 대기 발생 여부)
  * - http_server_requests_seconds (엔드포인트별 응답시간)
@@ -24,6 +31,8 @@ import { Rate, Trend } from 'k6/metrics';
  */
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+const ADMIN_LOGIN_ID = __ENV.ADMIN_LOGIN_ID || '';
+const ADMIN_LOGIN_PASSWORD = __ENV.ADMIN_LOGIN_PASSWORD || '';
 
 const errorRate = new Rate('k6_browse_error_rate');
 const courseListDuration = new Trend('k6_course_list_duration', true);
@@ -55,8 +64,35 @@ export const options = {
     },
 };
 
-export default function () {
-    const listRes = http.get(`${BASE_URL}/api/courses`);
+// 점검모드가 켜져있을 때, 이 부하테스트 트래픽만 통과시키기 위한 관리자 로그인.
+// ADMIN_LOGIN_ID를 안 넘기면(점검모드 안 쓰는 평소 테스트) 그냥 빈 토큰으로
+// 익명 요청을 보낸다 — 어차피 /api/courses는 원래 인증 없이도 열려있는 API라
+// 토큰이 있든 없든 응답 자체는 동일하다.
+export function setup() {
+    if (!ADMIN_LOGIN_ID || !ADMIN_LOGIN_PASSWORD) {
+        return { token: null };
+    }
+
+    const loginRes = http.post(
+        `${BASE_URL}/auth/login`,
+        JSON.stringify({ loginId: ADMIN_LOGIN_ID, password: ADMIN_LOGIN_PASSWORD }),
+        { headers: { 'Content-Type': 'application/json' } }
+    );
+
+    const token = loginRes.json('accessToken');
+    if (!token) {
+        throw new Error(`관리자 로그인 실패: status=${loginRes.status} body=${loginRes.body}`);
+    }
+
+    return { token };
+}
+
+export default function (data) {
+    const params = data && data.token
+        ? { headers: { Authorization: `Bearer ${data.token}` } }
+        : {};
+
+    const listRes = http.get(`${BASE_URL}/api/courses`, params);
     const listOk = check(listRes, {
         'course list status 200': (r) => r.status === 200,
     });
@@ -76,7 +112,7 @@ export default function () {
             const courseId = picked.courseId;
 
             if (courseId) {
-                const detailRes = http.get(`${BASE_URL}/api/courses/${courseId}`);
+                const detailRes = http.get(`${BASE_URL}/api/courses/${courseId}`, params);
                 const detailOk = check(detailRes, {
                     'course detail status 200': (r) => r.status === 200,
                 });
