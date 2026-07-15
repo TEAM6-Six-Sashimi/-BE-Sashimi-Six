@@ -35,6 +35,7 @@ groups:
         title: "[CRITICAL] 5xx 에러율 급증"
         condition: C
         for: 2m
+        noDataState: OK
         labels:
           severity: critical
         annotations:
@@ -44,7 +45,7 @@ groups:
             relativeTimeRange: { from: 300, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: 'sum(rate(http_server_requests_seconds_count{job="sashimi", outcome="SERVER_ERROR"}[5m])) / sum(rate(http_server_requests_seconds_count{job="sashimi"}[5m])) * 100'
+              expr: '(sum(rate(http_server_requests_seconds_count{job="sashimi", outcome="SERVER_ERROR"}[5m])) or vector(0)) / (sum(rate(http_server_requests_seconds_count{job="sashimi"}[5m])) or vector(1)) * 100'
               instant: true
               refId: A
           - refId: C
@@ -60,6 +61,7 @@ groups:
         title: "[CRITICAL] DB 커넥션 풀 고갈"
         condition: C
         for: 1m
+        noDataState: OK
         labels:
           severity: critical
         annotations:
@@ -85,6 +87,7 @@ groups:
         title: "[CRITICAL] DB 커넥션 타임아웃"
         condition: C
         for: 1m
+        noDataState: OK
         labels:
           severity: critical
         annotations:
@@ -94,7 +97,7 @@ groups:
             relativeTimeRange: { from: 300, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: 'sum(increase(hikaricp_connections_timeout_total{job="sashimi"}[5m]))'
+              expr: 'sum(increase(hikaricp_connections_timeout_total{job="sashimi"}[5m])) or vector(0)'
               instant: true
               refId: A
           - refId: C
@@ -115,6 +118,7 @@ groups:
         title: "[WARNING] 로그인 실패율 급증 (스프레이 공격 의심)"
         condition: D
         for: 2m
+        noDataState: OK
         labels:
           severity: warning
         annotations:
@@ -124,14 +128,14 @@ groups:
             relativeTimeRange: { from: 3900, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: 'sum(increase(auth_login_failed_total{job="sashimi"}[5m]))'
+              expr: 'sum(increase(auth_login_failed_total{job="sashimi"}[5m])) or vector(0)'
               instant: true
               refId: A
           - refId: B
             relativeTimeRange: { from: 3900, to: 0 }
             datasourceUid: prometheus
             model:
-              expr: 'sum(increase(auth_login_failed_total{job="sashimi"}[1h] offset 5m)) / 12'
+              expr: '(sum(increase(auth_login_failed_total{job="sashimi"}[1h] offset 5m)) or vector(0)) / 12'
               instant: true
               refId: B
           - refId: C
