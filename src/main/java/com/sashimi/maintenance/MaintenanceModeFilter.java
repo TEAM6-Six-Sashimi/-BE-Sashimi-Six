@@ -33,6 +33,7 @@ public class MaintenanceModeFilter extends OncePerRequestFilter {
             "/auth/login",
             "/auth/reissue",
             "/actuator/health",
+            "/actuator/prometheus",
             "/maintenance/status"
     );
 
