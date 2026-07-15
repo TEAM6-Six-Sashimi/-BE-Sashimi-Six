@@ -23,14 +23,14 @@ import java.util.Map;
 
 @Component
 @Profile("gemini")
-public class OpenAiResumeImprovementAdapter
+public class GeminiResumeImprovementAdapter
         implements ResumeImprovementAiPort {
 
     private final ObjectMapper objectMapper;
     private final ResumeImprovementPromptBuilder promptBuilder;
     private final GeminiTextClient geminiTextClient;
 
-    public OpenAiResumeImprovementAdapter(
+    public GeminiResumeImprovementAdapter(
             ObjectMapper objectMapper,
             ResumeImprovementPromptBuilder promptBuilder,
             GeminiTextClient geminiTextClient

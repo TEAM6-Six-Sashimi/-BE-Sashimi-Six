@@ -131,6 +131,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/files/images").permitAll()
                         .requestMatchers(HttpMethod.GET, "/subscriptions/plans").permitAll()
                         .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/chatbot/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/maintenance/status").permitAll()
                         .requestMatchers("/ws-coffeechat/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/files/download").authenticated()
