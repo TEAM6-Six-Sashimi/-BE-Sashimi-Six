@@ -46,7 +46,7 @@ public class OcrAdapter implements OcrPort {
             if (!semaphore.tryAcquire(30, TimeUnit.SECONDS)) {
                 log.warn("OCR 요청 대기 시간 초과: semaphore 획득 실패");
                 meterRegistry.counter("ocr.result.total", "status", "failure").increment();
-                return new OcrResult(null, null, null, false);
+                return new OcrResult(null, null, null, false, null);
             }
             try {
                 String requestBody = buildRequestBody(fileBytes, fileName);
@@ -63,7 +63,7 @@ public class OcrAdapter implements OcrPort {
                 if (response.statusCode() != 200) {
                     log.error("Clova OCR 호출 실패: status={}, body={}", response.statusCode(), response.body());
                     meterRegistry.counter("ocr.result.total", "status", "failure").increment();
-                    return new OcrResult(null, null, null, false);
+                    return new OcrResult(null, null, null, false, null);
                 }
 
                 OcrResult result = parseOcrResponse(response.body());
@@ -77,11 +77,11 @@ public class OcrAdapter implements OcrPort {
             Thread.currentThread().interrupt();
             log.error("OCR 요청 중 인터럽트 발생", e);
             meterRegistry.counter("ocr.result.total", "status", "failure").increment();
-            return new OcrResult(null, null, null, false);
+            return new OcrResult(null, null, null, false, null);
         } catch (Exception e) {
             log.error("Clova OCR 호출 중 예외 발생", e);
             meterRegistry.counter("ocr.result.total", "status", "failure").increment();
-            return new OcrResult(null, null, null, false);
+            return new OcrResult(null, null, null, false, null);
         } finally {
             sample.stop(Timer.builder("ocr.request.duration")
                     .description("Clova OCR 처리 시간")
@@ -130,8 +130,18 @@ public class OcrAdapter implements OcrPort {
         String issuer = extractIssuer(text);
         LocalDate issueDate = extractIssueDate(text);
         boolean success = certName != null && issueDate != null;
+        String certificationNumber = extractCertificationNumber(text);
 
-        return new OcrResult(certName, issuer, issueDate, success);
+        return new OcrResult(certName, issuer, issueDate, success, certificationNumber);
+    }
+
+    private String extractCertificationNumber(String text) {
+        Pattern pattern = Pattern.compile(
+                "자\\s*격\\s*증?\\s*번\\s*호\\s*:?\\s*" +
+                        "(BAE-\\d{9}|\\d{2}-[A-Z]\\d-\\d{6}|\\d{9,12}[A-Z]{1,2}|\\d{10})"
+        );
+        Matcher matcher = pattern.matcher(text);
+        return matcher.find() ? matcher.group(1) : null;
     }
 
     private String extractCertName(String text) {

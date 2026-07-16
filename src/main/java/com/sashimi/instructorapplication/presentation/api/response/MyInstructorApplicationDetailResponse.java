@@ -29,7 +29,7 @@ public record MyInstructorApplicationDetailResponse(
         List<String> mainCareers,
         List<CertificationInfo> certifications
 ) {
-    public record CertificationInfo(String certificationName, String issuedBy, String fileUrl) {}
+    public record CertificationInfo(String fileUrl) {}
 
     public static MyInstructorApplicationDetailResponse of(
             InstructorApplication application,
@@ -42,9 +42,8 @@ public record MyInstructorApplicationDetailResponse(
         List<InstructorCertification> certs =
                 application.getCertifications() == null ? List.of() : application.getCertifications();
         for (int i = 0; i < certs.size(); i++) {
-            var c = certs.get(i);
             String fileUrl = (certFileUrls != null && i < certFileUrls.size()) ? certFileUrls.get(i) : null;
-            certInfos.add(new CertificationInfo(c.getCertificationName(), c.getIssuedBy(), fileUrl));
+            certInfos.add(new CertificationInfo(fileUrl));
         }
 
         return new MyInstructorApplicationDetailResponse(
