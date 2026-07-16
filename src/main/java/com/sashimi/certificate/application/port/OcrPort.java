@@ -10,6 +10,7 @@ public interface OcrPort {
             String certificationName,
             String issuedBy,
             LocalDate issuedDate,
-            boolean success
+            boolean success,
+            String certificationNumber
     ) {}
 }

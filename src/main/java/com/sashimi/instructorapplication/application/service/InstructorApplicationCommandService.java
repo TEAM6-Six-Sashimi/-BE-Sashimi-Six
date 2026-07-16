@@ -123,7 +123,7 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 List<CertCandidate> candidates = new ArrayList<>();
                 for (ApplyInstructorCommand.FileEntry certFile : command.certificateFiles()) {
                     OcrPort.OcrResult ocrResult = ocrPort.extractCertificateInfo(certFile.fileBytes(), certFile.fileName());
-                    if (ocrResult.success()) {
+                    if (ocrResult.certificationNumber() != null) {
                         candidates.add(new CertCandidate(ocrResult, certFile));
                     }
                 }
@@ -199,7 +199,8 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 certifications.add(InstructorCertification.of(
                         certCandidates.get(i).ocr().certificationName(),
                         certCandidates.get(i).ocr().issuedBy(),
-                        certFileKeys.get(i)
+                        certFileKeys.get(i),
+                        certCandidates.get(i).ocr().certificationNumber()
                 ));
             }
 
