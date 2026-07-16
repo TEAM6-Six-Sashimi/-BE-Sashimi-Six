@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
 import com.sashimi.ai.domain.model.AiFeatureType;
 import com.sashimi.ai.domain.model.AiRequestStatus;
+import com.sashimi.ai.infrastructure.fastapi.coverletter.FastApiCoverLetterClient;
+import com.sashimi.ai.infrastructure.fastapi.coverletter.FastApiCoverLetterReviewRequest;
+import com.sashimi.ai.infrastructure.fastapi.coverletter.FastApiCoverLetterReviewResponse;
 import com.sashimi.ai.infrastructure.persistence.AiRequestHistoryJpaEntity;
 import com.sashimi.ai.infrastructure.persistence.SpringDataAiRequestHistoryRepository;
 import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.coverletter.domain.model.CoverLetterQuestion;
-import com.sashimi.coverletter.infrastructure.persistence.CoverLetterJpaEntity;
 import com.sashimi.coverletter.infrastructure.persistence.SpringDataCoverLetterRepository;
 import com.sashimi.coverletter.presentation.api.response.CoverLetterReviewCreateResponse;
 import com.sashimi.coverletter.presentation.api.response.CoverLetterReviewQuestionResponse;
@@ -27,6 +29,8 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class CoverLetterReviewService {
@@ -36,17 +40,20 @@ public class CoverLetterReviewService {
     private final SpringDataCoverLetterRepository coverLetterRepository;
     private final SpringDataAiRequestHistoryRepository aiRequestHistoryRepository;
     private final AiFeatureAccessPolicy aiFeatureAccessPolicy;
+    private final FastApiCoverLetterClient fastApiCoverLetterClient;
     private final ObjectMapper objectMapper;
 
     public CoverLetterReviewService(
             SpringDataCoverLetterRepository coverLetterRepository,
             SpringDataAiRequestHistoryRepository aiRequestHistoryRepository,
             AiFeatureAccessPolicy aiFeatureAccessPolicy,
+            FastApiCoverLetterClient fastApiCoverLetterClient,
             ObjectMapper objectMapper
     ) {
         this.coverLetterRepository = coverLetterRepository;
         this.aiRequestHistoryRepository = aiRequestHistoryRepository;
         this.aiFeatureAccessPolicy = aiFeatureAccessPolicy;
+        this.fastApiCoverLetterClient = fastApiCoverLetterClient;
         this.objectMapper = objectMapper;
     }
 
@@ -63,7 +70,10 @@ public class CoverLetterReviewService {
                 AiMetrics.FEATURE_COVER_LETTER_REVIEW
         );
 
-        String requestSnapshotJson = writeJson(contentMap);
+        FastApiCoverLetterReviewRequest request =
+                createFastApiRequest(contentMap);
+
+        String requestSnapshotJson = writeJson(request);
 
         AiRequestHistoryJpaEntity history = aiRequestHistoryRepository.save(
                 AiRequestHistoryJpaEntity.started(
@@ -73,10 +83,14 @@ public class CoverLetterReviewService {
                 )
         );
 
-        CoverLetterReviewResultResponse result = createStubResult(
+        FastApiCoverLetterReviewResponse fastApiResponse =
+                fastApiCoverLetterClient.review(request);
+
+        CoverLetterReviewResultResponse result = toReviewResult(
                 history.getId(),
                 history.getCreatedAt(),
-                contentMap
+                contentMap,
+                fastApiResponse
         );
 
         history.complete(writeJson(result));
@@ -127,6 +141,198 @@ public class CoverLetterReviewService {
         return readResult(history.getResultJson());
     }
 
+    private FastApiCoverLetterReviewRequest createFastApiRequest(
+            Map<CoverLetterQuestion, String> contentMap
+    ) {
+        List<FastApiCoverLetterReviewRequest.Question> questions =
+                Arrays.stream(CoverLetterQuestion.values())
+                        .sorted(java.util.Comparator.comparingInt(
+                                CoverLetterQuestion::displayOrder
+                        ))
+                        .map(question -> toFastApiQuestion(
+                                question,
+                                contentMap.getOrDefault(question, "")
+                        ))
+                        .filter(question -> !question.content().isBlank())
+                        .toList();
+
+        return new FastApiCoverLetterReviewRequest(
+                questions,
+                null,
+                null
+        );
+    }
+
+    private FastApiCoverLetterReviewRequest.Question toFastApiQuestion(
+            CoverLetterQuestion question,
+            String content
+    ) {
+        return new FastApiCoverLetterReviewRequest.Question(
+                question.name(),
+                question.title(),
+                normalize(content)
+        );
+    }
+
+    private CoverLetterReviewResultResponse toReviewResult(
+            Long reviewId,
+            LocalDateTime createdAt,
+            Map<CoverLetterQuestion, String> contentMap,
+            FastApiCoverLetterReviewResponse fastApiResponse
+    ) {
+        Map<String, FastApiCoverLetterReviewResponse.QuestionReview> reviewMap =
+                safeList(fastApiResponse.questions()).stream()
+                        .collect(Collectors.toMap(
+                                FastApiCoverLetterReviewResponse.QuestionReview::questionKey,
+                                Function.identity(),
+                                (first, second) -> first
+                        ));
+
+        List<CoverLetterReviewQuestionResponse> questions =
+                Arrays.stream(CoverLetterQuestion.values())
+                        .sorted(java.util.Comparator.comparingInt(
+                                CoverLetterQuestion::displayOrder
+                        ))
+                        .map(question -> toQuestionResponse(
+                                question,
+                                contentMap.getOrDefault(question, ""),
+                                reviewMap.get(question.name())
+                        ))
+                        .toList();
+
+        CoverLetterReviewSummaryResponse summary =
+                createSummaryResponse(
+                        questions,
+                        fastApiResponse
+                );
+
+        return new CoverLetterReviewResultResponse(
+                reviewId,
+                createdAt,
+                summary,
+                questions
+        );
+    }
+
+    private CoverLetterReviewQuestionResponse toQuestionResponse(
+            CoverLetterQuestion question,
+            String content,
+            FastApiCoverLetterReviewResponse.QuestionReview review
+    ) {
+        String normalizedContent = normalize(content);
+
+        if (normalizedContent.isBlank()) {
+            return createEmptyQuestionResponse(question);
+        }
+
+        if (review == null) {
+            return createMissingReviewQuestionResponse(
+                    question,
+                    normalizedContent
+            );
+        }
+
+        List<CoverLetterSpellingCorrectionResponse> corrections =
+                safeList(review.spellingCorrections()).stream()
+                        .map(correction -> new CoverLetterSpellingCorrectionResponse(
+                                correction.original(),
+                                correction.corrected()
+                        ))
+                        .toList();
+
+        return new CoverLetterReviewQuestionResponse(
+                question.displayOrder(),
+                question.name(),
+                question.title(),
+                question.maxLength(),
+                defaultText(review.status(), "RECOMMENDED"),
+                defaultText(review.summaryFeedback(), ""),
+                corrections.size(),
+                review.expressionImprovementCount(),
+                review.flowImprovementCount(),
+                normalizedContent,
+                corrections,
+                defaultText(review.feedback(), ""),
+                defaultText(review.improvedExample(), "")
+        );
+    }
+
+    private CoverLetterReviewQuestionResponse createEmptyQuestionResponse(
+            CoverLetterQuestion question
+    ) {
+        return new CoverLetterReviewQuestionResponse(
+                question.displayOrder(),
+                question.name(),
+                question.title(),
+                question.maxLength(),
+                "EMPTY",
+                "작성된 내용이 없습니다.",
+                0,
+                0,
+                0,
+                "",
+                List.of(),
+                "자기소개서 문항을 작성하면 AI 첨삭을 받을 수 있습니다.",
+                ""
+        );
+    }
+
+    private CoverLetterReviewQuestionResponse createMissingReviewQuestionResponse(
+            CoverLetterQuestion question,
+            String content
+    ) {
+        return new CoverLetterReviewQuestionResponse(
+                question.displayOrder(),
+                question.name(),
+                question.title(),
+                question.maxLength(),
+                "NEEDS_REVISION",
+                "AI 첨삭 결과를 확인하지 못했습니다.",
+                0,
+                0,
+                0,
+                content,
+                List.of(),
+                "해당 문항의 AI 첨삭 결과를 확인하지 못했습니다. 다시 평가를 요청해 주세요.",
+                ""
+        );
+    }
+
+    private CoverLetterReviewSummaryResponse createSummaryResponse(
+            List<CoverLetterReviewQuestionResponse> questions,
+            FastApiCoverLetterReviewResponse fastApiResponse
+    ) {
+        int completedCount = (int) questions.stream()
+                .filter(question -> !"EMPTY".equals(question.status()))
+                .count();
+
+        int needRevisionCount = (int) questions.stream()
+                .filter(question -> "NEEDS_REVISION".equals(question.status()))
+                .count();
+
+        int recommendedCount = (int) questions.stream()
+                .filter(question -> "RECOMMENDED".equals(question.status()))
+                .count();
+
+        int spellingCorrectionCount = questions.stream()
+                .mapToInt(CoverLetterReviewQuestionResponse::spellingCorrectionCount)
+                .sum();
+
+        return new CoverLetterReviewSummaryResponse(
+                completedCount,
+                TOTAL_QUESTION_COUNT,
+                needRevisionCount,
+                recommendedCount,
+                spellingCorrectionCount,
+                fastApiResponse.repeatedExpressionCount(),
+                fastApiResponse.averageSentenceLength(),
+                defaultText(
+                        fastApiResponse.overallComment(),
+                        "자기소개서 첨삭이 완료되었습니다."
+                )
+        );
+    }
+
     private Map<CoverLetterQuestion, String> getContentMap(Long userId) {
         Map<CoverLetterQuestion, String> contentMap =
                 new EnumMap<>(CoverLetterQuestion.class);
@@ -146,147 +352,6 @@ public class CoverLetterReviewService {
                 .allMatch(String::isBlank);
     }
 
-    private CoverLetterReviewResultResponse createStubResult(
-            Long reviewId,
-            LocalDateTime createdAt,
-            Map<CoverLetterQuestion, String> contentMap
-    ) {
-        List<CoverLetterReviewQuestionResponse> questions =
-                Arrays.stream(CoverLetterQuestion.values())
-                        .sorted(java.util.Comparator.comparingInt(
-                                CoverLetterQuestion::displayOrder
-                        ))
-                        .map(question -> createStubQuestionResult(
-                                question,
-                                contentMap.getOrDefault(question, "")
-                        ))
-                        .toList();
-
-        int completedCount = (int) questions.stream()
-                .filter(question -> !"EMPTY".equals(question.status()))
-                .count();
-
-        int needRevisionCount = (int) questions.stream()
-                .filter(question -> "NEEDS_REVISION".equals(question.status()))
-                .count();
-
-        int recommendedCount = (int) questions.stream()
-                .filter(question -> "RECOMMENDED".equals(question.status()))
-                .count();
-
-        int spellingCorrectionCount = questions.stream()
-                .mapToInt(CoverLetterReviewQuestionResponse::spellingCorrectionCount)
-                .sum();
-
-        CoverLetterReviewSummaryResponse summary =
-                new CoverLetterReviewSummaryResponse(
-                        completedCount,
-                        TOTAL_QUESTION_COUNT,
-                        needRevisionCount,
-                        recommendedCount,
-                        spellingCorrectionCount,
-                        0,
-                        calculateAverageSentenceLength(contentMap),
-                        "전체적으로 작성 방향은 좋습니다. 다만 일부 문항은 경험, 행동, 결과를 더 구체적으로 작성하면 전달력이 좋아집니다."
-                );
-
-        return new CoverLetterReviewResultResponse(
-                reviewId,
-                createdAt,
-                summary,
-                questions
-        );
-    }
-
-    private CoverLetterReviewQuestionResponse createStubQuestionResult(
-            CoverLetterQuestion question,
-            String content
-    ) {
-        String normalizedContent = normalize(content);
-
-        if (normalizedContent.isBlank()) {
-            return new CoverLetterReviewQuestionResponse(
-                    question.displayOrder(),
-                    question.name(),
-                    question.title(),
-                    question.maxLength(),
-                    "EMPTY",
-                    "작성된 내용이 없습니다.",
-                    0,
-                    0,
-                    0,
-                    "",
-                    List.of(),
-                    "자기소개서를 작성해주세요.",
-                    ""
-            );
-        }
-
-        String status = normalizedContent.length() < 80
-                ? "NEEDS_REVISION"
-                : "RECOMMENDED";
-
-        List<CoverLetterSpellingCorrectionResponse> corrections =
-                createStubCorrections(normalizedContent);
-
-        return new CoverLetterReviewQuestionResponse(
-                question.displayOrder(),
-                question.name(),
-                question.title(),
-                question.maxLength(),
-                status,
-                createSummaryFeedback(status),
-                corrections.size(),
-                1,
-                1,
-                normalizedContent,
-                corrections,
-                "현재 답변은 핵심 내용은 드러나지만, 구체적인 행동 과정과 결과가 조금 더 보완되면 좋습니다.",
-                "문제 상황을 설명한 뒤 원인 분석, 본인의 행동, 결과, 배운 점 순서로 정리하면 더 설득력 있는 답변이 됩니다."
-        );
-    }
-
-    private List<CoverLetterSpellingCorrectionResponse> createStubCorrections(
-            String content
-    ) {
-        if (content.contains("할수")) {
-            return List.of(
-                    new CoverLetterSpellingCorrectionResponse(
-                            "할수",
-                            "할 수"
-                    )
-            );
-        }
-
-        return List.of();
-    }
-
-    private String createSummaryFeedback(String status) {
-        if ("NEEDS_REVISION".equals(status)) {
-            return "내용의 구체성과 지원 직무와의 연결성을 보완해주세요.";
-        }
-
-        return "작성 방향은 좋으며, 경험과 결과를 조금 더 구체화하면 좋습니다.";
-    }
-
-    private int calculateAverageSentenceLength(
-            Map<CoverLetterQuestion, String> contentMap
-    ) {
-        String joinedContent = String.join(
-                " ",
-                contentMap.values()
-        ).trim();
-
-        if (joinedContent.isBlank()) {
-            return 0;
-        }
-
-        String[] sentences = joinedContent.split("[.!?。！？]");
-        int sentenceCount = Math.max(sentences.length, 1);
-
-        return joinedContent.length() / sentenceCount;
-    }
-
     private String normalize(String content) {
         if (content == null) {
             return "";
@@ -295,11 +360,33 @@ public class CoverLetterReviewService {
         return content.trim();
     }
 
+    private String defaultText(
+            String value,
+            String defaultValue
+    ) {
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+
+        return value;
+    }
+
+    private <T> List<T> safeList(List<T> values) {
+        if (values == null) {
+            return List.of();
+        }
+
+        return values;
+    }
+
     private String writeJson(Object value) {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("자기소개서 첨삭 결과 JSON 변환에 실패했습니다.", e);
+            throw new IllegalStateException(
+                    "자기소개서 첨삭 결과 JSON 변환에 실패했습니다.",
+                    e
+            );
         }
     }
 
@@ -310,7 +397,10 @@ public class CoverLetterReviewService {
                     CoverLetterReviewResultResponse.class
             );
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("자기소개서 첨삭 결과 JSON 파싱에 실패했습니다.", e);
+            throw new IllegalStateException(
+                    "자기소개서 첨삭 결과 JSON 파싱에 실패했습니다.",
+                    e
+            );
         }
     }
 }
