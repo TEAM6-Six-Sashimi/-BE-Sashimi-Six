@@ -29,6 +29,7 @@ public class EnrollmentCreatedCoffeeChatHandler {
         createIfNotExists(event.userId(), event.courseId());
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean createIfNotExists(Long studentId, Long courseId) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));

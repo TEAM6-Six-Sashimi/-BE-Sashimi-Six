@@ -2,6 +2,7 @@ package com.sashimi.enrollment.application.port;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public interface EnrollmentPort {
 
@@ -13,5 +14,5 @@ public interface EnrollmentPort {
 
     Optional<EnrollmentSummary> getEnrollmentByCourse(Long userId, Long courseId);
 
-    List<PaidEnrollment> getAllPaidEnrollments();
+    void forEachPaidEnrollment(Consumer<PaidEnrollment> consumer);
 }

@@ -12,11 +12,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @Slf4j
 @Component
@@ -145,16 +147,15 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
     }
 
     @Override
-    public List<PaidEnrollment> getAllPaidEnrollments() {
+    public void forEachPaidEnrollment(Consumer<PaidEnrollment> consumer) {
         String sql = """
                 SELECT user_id, course_id
                 FROM enrollments
                 WHERE enrollment_type = ?
                 """;
 
-        return jdbcTemplate.query(sql, (rs, rowNum) -> new PaidEnrollment(
-                rs.getLong("user_id"),
-                rs.getLong("course_id")
+        jdbcTemplate.query(sql, (RowCallbackHandler) rs -> consumer.accept(
+                new PaidEnrollment(rs.getLong("user_id"), rs.getLong("course_id"))
         ), EnrollmentType.PAID.name());
     }
 }
