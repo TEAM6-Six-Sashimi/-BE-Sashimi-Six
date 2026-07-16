@@ -60,6 +60,7 @@ management:
 jwt:
   access-token-validity-in-milliseconds: 10800000
   refresh-token-validity-in-milliseconds: 1209600000
+  ws-ticket-validity-in-milliseconds: 60000
 
 swagger:
   username: ${SWAGGER_USERNAME:swagger}
