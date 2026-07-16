@@ -2,11 +2,13 @@ package com.sashimi.ncs.presentation.api;
 
 import com.sashimi.ncs.application.service.NcsSyncService;
 import com.sashimi.ncs.infrastructure.publicdata.NcsApiClient;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin/ncs")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminNcsController {
 
     private final NcsApiClient ncsApiClient;

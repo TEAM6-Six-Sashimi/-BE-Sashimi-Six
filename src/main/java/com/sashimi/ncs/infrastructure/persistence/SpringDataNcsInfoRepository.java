@@ -15,4 +15,8 @@ public interface SpringDataNcsInfoRepository extends JpaRepository<NcsInfoJpaEnt
     );
 
     List<NcsInfoJpaEntity> findByJobNameOrderByAbilityUnitCodeAsc(String jobName);
+
+    boolean existsByJobName(String jobName);
+
+    Optional<NcsInfoJpaEntity> findFirstByJobNameOrderByIdAsc(String jobName);
 }
