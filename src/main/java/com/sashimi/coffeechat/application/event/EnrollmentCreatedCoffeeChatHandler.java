@@ -26,18 +26,23 @@ public class EnrollmentCreatedCoffeeChatHandler {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handle(EnrollmentCreatedEvent event) {
-        Course course = courseRepository.findById(event.courseId())
+        createIfNotExists(event.userId(), event.courseId());
+    }
+
+    public boolean createIfNotExists(Long studentId, Long courseId) {
+        Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
 
         if (coffeeChatRepository.existsByStudentIdAndInstructorIdAndCourseId(
-                event.userId(), course.getInstructorId(), event.courseId())) {
-            return;
+                studentId, course.getInstructorId(), courseId)) {
+            return false;
         }
 
         coffeeChatRepository.save(
-                CoffeeChat.create(event.userId(), course.getInstructorId(), event.courseId()));
+                CoffeeChat.create(studentId, course.getInstructorId(), courseId));
 
         log.info("커피챗 방 자동생성 - studentId={}, instructorId={}, courseId={}",
-                event.userId(), course.getInstructorId(), event.courseId());
+                studentId, course.getInstructorId(), courseId);
+        return true;
     }
 }

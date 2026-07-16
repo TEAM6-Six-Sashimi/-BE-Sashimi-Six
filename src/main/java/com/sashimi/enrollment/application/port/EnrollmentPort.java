@@ -12,4 +12,6 @@ public interface EnrollmentPort {
     List<EnrollmentSummary> getEnrollmentsByUser(Long userId);
 
     Optional<EnrollmentSummary> getEnrollmentByCourse(Long userId, Long courseId);
+
+    List<PaidEnrollment> getAllPaidEnrollments();
 }

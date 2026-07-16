@@ -3,6 +3,7 @@ package com.sashimi.enrollment.infrastructure.persistence;
 import com.sashimi.enrollment.application.event.EnrollmentCreatedEvent;
 import com.sashimi.enrollment.application.port.EnrollmentPort;
 import com.sashimi.enrollment.application.port.EnrollmentSummary;
+import com.sashimi.enrollment.application.port.PaidEnrollment;
 import com.sashimi.enrollment.domain.model.EnrollmentType;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -141,5 +142,19 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
                 rs.getObject("enrolled_at", LocalDateTime.class)
         ), userId, courseId);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
+    }
+
+    @Override
+    public List<PaidEnrollment> getAllPaidEnrollments() {
+        String sql = """
+                SELECT user_id, course_id
+                FROM enrollments
+                WHERE enrollment_type = ?
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new PaidEnrollment(
+                rs.getLong("user_id"),
+                rs.getLong("course_id")
+        ), EnrollmentType.PAID.name());
     }
 }
