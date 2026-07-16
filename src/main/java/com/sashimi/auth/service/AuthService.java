@@ -15,6 +15,8 @@ import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
 import com.sashimi.auth.dto.PasswordResetRequestDto;
 import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
 import com.sashimi.auth.dto.TokenResponseDto;
+import com.sashimi.auth.dto.WsTicketResponseDto;
+import io.jsonwebtoken.JwtException;
 import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.credit.application.command.CreateInitialCreditCommand;
 import com.sashimi.credit.application.command.GrantReferralSignupRewardCommand;
@@ -350,6 +352,35 @@ public class AuthService {
         refreshService.saveOrUpdate(user, tokenResponse.getRefreshToken(), refreshExpiryDate);
 
         return tokenResponse.withName(user.getName());
+    }
+
+    public WsTicketResponseDto issueWsTicket(String bearerToken) {
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ") || bearerToken.length() <= 7) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        String accessToken = bearerToken.substring(7);
+
+        try {
+            if (!jwtTokenProvider.validateToken(accessToken)) {
+                throw new BusinessException(ErrorCode.INVALID_TOKEN);
+            }
+        } catch (JwtException e) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        if (JwtTokenProvider.WS_TICKET_PURPOSE.equals(jwtTokenProvider.extractPurpose(accessToken))) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        Long userId = jwtTokenProvider.extractUserId(accessToken);
+        Long version = jwtTokenProvider.extractVersion(accessToken);
+
+        if (tokenBlacklistService.isBlacklisted(accessToken) || !tokenVersionService.isValidVersion(userId, version)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        return jwtTokenProvider.generateWsTicket(userId, version);
     }
 
     public void logout(String accessToken, String refreshTokenValue) {

@@ -1,6 +1,7 @@
 package com.sashimi.security.jwt;
 
 import com.sashimi.auth.dto.TokenResponseDto;
+import com.sashimi.auth.dto.WsTicketResponseDto;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -32,6 +33,8 @@ public class JwtTokenProvider {
     private static final String ROLE_KEY = "role";
     private static final String USER_ID_KEY = "uid";
     private static final String VERSION_KEY = "ver";
+    private static final String PURPOSE_KEY = "purpose";
+    public static final String WS_TICKET_PURPOSE = "ws";
 
     private final UserDetailsService userDetailsService;
 
@@ -43,6 +46,9 @@ public class JwtTokenProvider {
 
     @Value("${jwt.refresh-token-validity-in-milliseconds}")
     private long refreshTokenValidityInMilliseconds;
+
+    @Value("${jwt.ws-ticket-validity-in-milliseconds}")
+    private long wsTicketValidityInMilliseconds;
 
     private SecretKey key;
 
@@ -90,6 +96,27 @@ public class JwtTokenProvider {
                 .refreshToken(refreshToken)
                 .accessTokenExpiresIn(accessTokenExpiresIn.getTime())
                 .build();
+    }
+
+    public WsTicketResponseDto generateWsTicket(Long userId, long version) {
+        long now = new Date().getTime();
+        Date expiresIn = new Date(now + wsTicketValidityInMilliseconds);
+
+        String wsTicket = Jwts.builder()
+                .claim(USER_ID_KEY, userId)
+                .claim(VERSION_KEY, version)
+                .claim(PURPOSE_KEY, WS_TICKET_PURPOSE)
+                .issuedAt(new Date(now))
+                .expiration(expiresIn)
+                .signWith(key)
+                .compact();
+
+        return new WsTicketResponseDto(wsTicket, wsTicketValidityInMilliseconds / 1000);
+    }
+
+    public String extractPurpose(String token) {
+        Object purpose = parseClaims(token).get(PURPOSE_KEY);
+        return purpose == null ? null : purpose.toString();
     }
 
     public Authentication getAuthentication(String accessToken) {

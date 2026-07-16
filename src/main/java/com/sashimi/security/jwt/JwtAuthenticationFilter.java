@@ -40,7 +40,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String accessToken = jwtTokenProvider.resolveToken(request);
 
         try {
-            if (accessToken != null && jwtTokenProvider.validateToken(accessToken)) {
+            if (accessToken != null && jwtTokenProvider.validateToken(accessToken)
+                    && !JwtTokenProvider.WS_TICKET_PURPOSE.equals(jwtTokenProvider.extractPurpose(accessToken))) {
                 try {
                     Long userId = jwtTokenProvider.extractUserId(accessToken);
                     Long version = jwtTokenProvider.extractVersion(accessToken);

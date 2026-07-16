@@ -13,4 +13,6 @@ public interface CoffeeChatCommandUseCase {
     CoffeeChatMessageResult sendMessage(Long chatId, Long senderId, String content);
 
     void markMessagesAsRead(Long chatId, Long readerId);
+
+    int backfillMissingChatRooms();
 }
