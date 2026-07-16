@@ -2,7 +2,9 @@ package com.sashimi.instructorapplication.infrastructure.persistence;
 
 import com.sashimi.instructorapplication.domain.model.ApprovalStatus;
 import com.sashimi.instructorapplication.domain.model.InstructorApplication;
+import com.sashimi.instructorapplication.domain.model.VerificationStatus;
 import com.sashimi.instructorapplication.domain.repository.InstructorApplicationRepository;
+import com.sashimi.instructorapplication.domain.repository.PendingCertification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class InstructorApplicationRepositoryAdapter implements InstructorApplicationRepository {
 
     private final SpringDataInstructorApplicationRepository springDataRepository;
+    private final SpringDataInstructorCertificationRepository certificationRepository;
 
     @Override
     public InstructorApplication save(InstructorApplication instructorApplication) {
@@ -58,5 +61,19 @@ public class InstructorApplicationRepositoryAdapter implements InstructorApplica
     @Override
     public Optional<Long> findUserIdByFileKey(String fileKey) {
         return springDataRepository.findUserIdByFileKey(fileKey);
+    }
+
+    @Override
+    public List<PendingCertification> findAllPendingCertificationsWithNumber() {
+        return certificationRepository
+                .findAllByVerificationStatusAndCertificationNumberIsNotNull(VerificationStatus.PENDING)
+                .stream()
+                .map(c -> new PendingCertification(c.getId(), c.getApplication().getUserId(), c.getCertificationNumber()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void markCertificationsSubmitted(List<Long> certificationIds) {
+        certificationRepository.updateVerificationStatus(certificationIds, VerificationStatus.SUBMITTED);
     }
 }
