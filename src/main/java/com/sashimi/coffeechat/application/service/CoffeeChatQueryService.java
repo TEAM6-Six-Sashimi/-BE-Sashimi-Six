@@ -107,6 +107,8 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
                             .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
                     User instructor = userRepository.findById(chat.getInstructorId())
                             .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    User student = userRepository.findById(chat.getStudentId())
+                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
                     String instructorProfileImagePath =
                             instructorPort.getInstructorInfo(chat.getInstructorId()).profileImagePath();
                     CoffeeChatMessage lastMessage = latestMessages.get(chat.getId());
@@ -114,6 +116,7 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
                     return new CoffeeChatSummaryView(
                             chat.getId(),
                             chat.getStudentId(),
+                            student.getLoginId(),
                             chat.getInstructorId(),
                             instructor.getName(),
                             chat.getCourseId(),

@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public record InstructorCoffeeChatSummaryResponse(
         Long chatId,
         Long studentId,
+        String studentLoginId,
         Long courseId,
         String courseTitle,
         CoffeeChatStatus status,
@@ -21,6 +22,7 @@ public record InstructorCoffeeChatSummaryResponse(
         return new InstructorCoffeeChatSummaryResponse(
                 view.chatId(),
                 view.studentId(),
+                view.studentLoginId(),
                 view.courseId(),
                 view.courseTitle(),
                 view.status(),
