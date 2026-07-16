@@ -369,6 +369,10 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
 
+        if (JwtTokenProvider.WS_TICKET_PURPOSE.equals(jwtTokenProvider.extractPurpose(accessToken))) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
         Long userId = jwtTokenProvider.extractUserId(accessToken);
         Long version = jwtTokenProvider.extractVersion(accessToken);
 
