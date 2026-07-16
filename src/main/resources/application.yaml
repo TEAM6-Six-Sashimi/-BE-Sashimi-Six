@@ -95,8 +95,7 @@ external:
     service-key: ${QUALIFICATION_CODE_SERVICE_KEY}
 
   ai-server:
-    # 배포 시 배포 주소로 변경
-    base-url: http://127.0.0.1:8000
+    base-url: http://172.31.33.226:8001
     timeout-seconds: 30
 
 # 배포 시 환경 변수를 정상적으로 사용하는 방법
