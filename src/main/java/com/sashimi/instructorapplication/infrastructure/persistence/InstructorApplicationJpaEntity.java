@@ -127,6 +127,8 @@ public class InstructorApplicationJpaEntity {
                             .certificationName(cert.getCertificationName())
                             .issuedBy(cert.getIssuedBy())
                             .filePath(cert.getFilePath())
+                            .certificationNumber(cert.getCertificationNumber())
+                            .verificationStatus(cert.getVerificationStatus())
                             .application(entity)
                             .build())
             );

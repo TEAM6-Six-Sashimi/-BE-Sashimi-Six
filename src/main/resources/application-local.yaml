@@ -84,6 +84,9 @@ external:
     service-key: ${QUALIFICATION_EXAM_SERVICE_KEY:}
   qualification-code:
     service-key: ${QUALIFICATION_CODE_SERVICE_KEY:}
+  ai-server:
+    base-url: http://172.31.33.226:8001
+    timeout-seconds: 30
 
 codef:
   client-id: ${CODEF_CLIENT_ID:}

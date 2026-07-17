@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public record CoffeeChatSummaryView(
         Long chatId,
         Long studentId,
+        String studentLoginId,
         Long instructorId,
         String instructorName,
         Long courseId,
