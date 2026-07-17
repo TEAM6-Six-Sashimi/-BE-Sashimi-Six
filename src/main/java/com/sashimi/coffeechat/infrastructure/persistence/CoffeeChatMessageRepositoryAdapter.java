@@ -51,6 +51,11 @@ public class CoffeeChatMessageRepositoryAdapter implements CoffeeChatMessageRepo
     }
 
     @Override
+    public Long findMaxUnreadMessageId(Long coffeeChatId, Long readerId) {
+        return springDataRepository.findMaxUnreadMessageId(coffeeChatId, readerId);
+    }
+
+    @Override
     public Map<Long, CoffeeChatMessage> findLatestMessagesByCoffeeChatIds(List<Long> coffeeChatIds) {
         if (coffeeChatIds.isEmpty()) {
             return Map.of();
