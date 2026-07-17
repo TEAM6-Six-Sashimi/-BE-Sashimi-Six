@@ -21,4 +21,8 @@ public interface InstructorApplicationRepository {
     boolean existsByUserIdAndApprovalStatus(Long userId, ApprovalStatus status);
 
     Optional<Long> findUserIdByFileKey(String fileKey);
+
+    List<PendingCertification> findAllPendingCertificationsWithNumber();
+
+    void markCertificationsSubmitted(List<Long> certificationIds);
 }
