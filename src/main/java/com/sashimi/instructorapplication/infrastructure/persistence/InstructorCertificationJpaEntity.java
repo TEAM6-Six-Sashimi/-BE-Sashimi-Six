@@ -19,7 +19,7 @@ public class InstructorCertificationJpaEntity {
     @Column(name = "certification_id")
     private Long id;
 
-    @Column(name = "certification_name", nullable = false)
+    @Column(name = "certification_name")
     private String certificationName;
 
     @Column(name = "issued_by")
