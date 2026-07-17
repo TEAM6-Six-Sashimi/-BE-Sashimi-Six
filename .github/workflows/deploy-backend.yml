@@ -132,6 +132,8 @@ jobs:
             --network "$DOCKER_NETWORK" \
             --restart unless-stopped \
             --env-file "$ENV_FILE" \
+            --memory="450m" \
+            --memory-swap="450m" \
             -p 8080:8080 \
             -v sashimi-logs:/app/logs \
             "$IMAGE_LATEST"

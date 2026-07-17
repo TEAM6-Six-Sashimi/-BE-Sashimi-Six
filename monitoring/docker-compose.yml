@@ -3,6 +3,7 @@ services:
     image: prom/prometheus:v2.52.0
     container_name: sashimi-prometheus
     restart: unless-stopped
+    mem_limit: 150m
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -13,12 +14,14 @@ services:
       - '--web.enable-lifecycle'
     networks:
       - monitoring-net
-      - sashimi-net
 
   loki:
     image: grafana/loki:2.9.8
     container_name: sashimi-loki
     restart: unless-stopped
+    mem_limit: 120m
+    ports:
+      - "3100:3100"
     volumes:
       - ./loki-config.yml:/etc/loki/loki-config.yml:ro
       - loki-data:/loki
@@ -26,23 +29,11 @@ services:
     networks:
       - monitoring-net
 
-  promtail:
-    image: grafana/promtail:2.9.8
-    container_name: sashimi-promtail
-    restart: unless-stopped
-    volumes:
-      - ./promtail-config.yml:/etc/promtail/promtail-config.yml:ro
-      - sashimi-logs:/logs:ro
-    command: -config.file=/etc/promtail/promtail-config.yml
-    networks:
-      - monitoring-net
-    depends_on:
-      - loki
-
   grafana:
     image: grafana/grafana:10.4.3
     container_name: sashimi-grafana
     restart: unless-stopped
+    mem_limit: 100m
     ports:
       - "3000:3000"
     environment:
@@ -62,13 +53,8 @@ services:
 networks:
   monitoring-net:
     name: monitoring-net
-  sashimi-net:
-    external: true
-    name: sashimi-net
 
 volumes:
   prometheus-data:
   loki-data:
   grafana-data:
-  sashimi-logs:
-    external: true
