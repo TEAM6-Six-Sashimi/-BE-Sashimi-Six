@@ -17,8 +17,6 @@ import java.security.Principal;
 @RequiredArgsConstructor
 public class CoffeeChatMessageController {
 
-    private static final String USER_QUEUE_DESTINATION = "/queue/coffee-chats/";
-
     private final CoffeeChatCommandUseCase coffeeChatCommandUseCase;
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -34,8 +32,8 @@ public class CoffeeChatMessageController {
         CoffeeChatMessageResponse response = CoffeeChatMessageResponse.from(result.message());
 
         messagingTemplate.convertAndSendToUser(
-                String.valueOf(result.studentId()), USER_QUEUE_DESTINATION + chatId, response);
+                String.valueOf(result.studentId()), CoffeeChatDestinations.CHAT_QUEUE_PREFIX + chatId, response);
         messagingTemplate.convertAndSendToUser(
-                String.valueOf(result.instructorId()), USER_QUEUE_DESTINATION + chatId, response);
+                String.valueOf(result.instructorId()), CoffeeChatDestinations.CHAT_QUEUE_PREFIX + chatId, response);
     }
 }

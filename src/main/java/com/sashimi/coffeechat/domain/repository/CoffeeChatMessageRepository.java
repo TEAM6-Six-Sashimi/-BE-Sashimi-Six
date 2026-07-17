@@ -15,5 +15,7 @@ public interface CoffeeChatMessageRepository {
 
     void markAllAsRead(Long coffeeChatId, Long readerId);
 
+    Long findMaxUnreadMessageId(Long coffeeChatId, Long readerId);
+
     Map<Long, CoffeeChatMessage> findLatestMessagesByCoffeeChatIds(List<Long> coffeeChatIds);
 }

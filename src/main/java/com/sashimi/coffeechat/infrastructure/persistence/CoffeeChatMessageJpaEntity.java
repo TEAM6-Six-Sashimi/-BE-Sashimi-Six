@@ -1,8 +1,11 @@
 package com.sashimi.coffeechat.infrastructure.persistence;
 
 import com.sashimi.coffeechat.domain.model.CoffeeChatMessage;
+import com.sashimi.coffeechat.domain.model.CoffeeChatMessageType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,6 +37,10 @@ public class CoffeeChatMessageJpaEntity {
     @Column(name = "content", columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type", nullable = false, length = 20)
+    private CoffeeChatMessageType messageType;
+
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
 
@@ -42,11 +49,12 @@ public class CoffeeChatMessageJpaEntity {
 
     @Builder
     public CoffeeChatMessageJpaEntity(Long id, Long coffeeChatId, Long senderId, String content,
-                                       boolean isRead, LocalDateTime createdAt) {
+                                       CoffeeChatMessageType messageType, boolean isRead, LocalDateTime createdAt) {
         this.id = id;
         this.coffeeChatId = coffeeChatId;
         this.senderId = senderId;
         this.content = content;
+        this.messageType = messageType;
         this.isRead = isRead;
         this.createdAt = createdAt;
     }
@@ -57,6 +65,7 @@ public class CoffeeChatMessageJpaEntity {
                 .coffeeChatId(domain.getCoffeeChatId())
                 .senderId(domain.getSenderId())
                 .content(domain.getContent())
+                .messageType(domain.getMessageType())
                 .isRead(domain.isRead())
                 .createdAt(domain.getCreatedAt())
                 .build();
@@ -68,6 +77,7 @@ public class CoffeeChatMessageJpaEntity {
                 .coffeeChatId(coffeeChatId)
                 .senderId(senderId)
                 .content(content)
+                .messageType(messageType)
                 .isRead(isRead)
                 .createdAt(createdAt)
                 .build();
