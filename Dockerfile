@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM eclipse-temurin:17-jdk-alpine AS builder
 
 WORKDIR /workspace
@@ -7,7 +8,8 @@ COPY gradle ./gradle
 RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
 
 COPY src ./src
-RUN ./gradlew clean bootJar --no-daemon -x test
+RUN --mount=type=cache,target=/root/.gradle \
+    ./gradlew clean bootJar --no-daemon -x test
 
 FROM eclipse-temurin:17-jre-alpine
 

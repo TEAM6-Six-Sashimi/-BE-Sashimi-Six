@@ -10,4 +10,6 @@ public interface InstructorApplicationCommandUseCase {
     void approveInstructor(Long applicationId);
 
     void rejectInstructor(Long applicationId, RejectionCategory rejectionCategory, String rejectionReason);
+
+    byte[] generateVerificationExcel();
 }

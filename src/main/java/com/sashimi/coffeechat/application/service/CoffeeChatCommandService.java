@@ -2,6 +2,7 @@ package com.sashimi.coffeechat.application.service;
 
 import com.sashimi.coffeechat.application.event.EnrollmentCreatedCoffeeChatHandler;
 import com.sashimi.coffeechat.application.result.CoffeeChatMessageResult;
+import com.sashimi.coffeechat.application.result.MarkAsReadResult;
 import com.sashimi.coffeechat.application.usecase.CoffeeChatCommandUseCase;
 import com.sashimi.coffeechat.domain.model.CoffeeChat;
 import com.sashimi.coffeechat.domain.model.CoffeeChatMessage;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
@@ -32,22 +34,25 @@ public class CoffeeChatCommandService implements CoffeeChatCommandUseCase {
     @Override
     public void accept(Long chatId, Long instructorId) {
         CoffeeChat chat = getChatForInstructor(chatId, instructorId);
-        chat.accept();
+        CoffeeChatMessage systemMessage = chat.accept();
         coffeeChatRepository.save(chat);
+        coffeeChatMessageRepository.save(systemMessage);
     }
 
     @Override
     public void reject(Long chatId, Long instructorId) {
         CoffeeChat chat = getChatForInstructor(chatId, instructorId);
-        chat.reject();
+        CoffeeChatMessage systemMessage = chat.reject();
         coffeeChatRepository.save(chat);
+        coffeeChatMessageRepository.save(systemMessage);
     }
 
     @Override
     public void leave(Long chatId, Long instructorId) {
         CoffeeChat chat = getChatForInstructor(chatId, instructorId);
-        chat.leave();
+        CoffeeChatMessage systemMessage = chat.leave();
         coffeeChatRepository.save(chat);
+        coffeeChatMessageRepository.save(systemMessage);
     }
 
     @Override
@@ -63,7 +68,7 @@ public class CoffeeChatCommandService implements CoffeeChatCommandUseCase {
     }
 
     @Override
-    public void markMessagesAsRead(Long chatId, Long readerId) {
+    public MarkAsReadResult markMessagesAsRead(Long chatId, Long readerId) {
         CoffeeChat chat = coffeeChatRepository.findById(chatId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COFFEE_CHAT_NOT_FOUND));
 
@@ -71,7 +76,18 @@ public class CoffeeChatCommandService implements CoffeeChatCommandUseCase {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_FORBIDDEN);
         }
 
+        Long lastUnreadMessageId = coffeeChatMessageRepository.findMaxUnreadMessageId(chatId, readerId);
+        if (lastUnreadMessageId == null) {
+            return null;
+        }
+
         coffeeChatMessageRepository.markAllAsRead(chatId, readerId);
+
+        Long notifyUserId = Objects.equals(readerId, chat.getStudentId())
+                ? chat.getInstructorId()
+                : chat.getStudentId();
+
+        return new MarkAsReadResult(lastUnreadMessageId, notifyUserId);
     }
 
     @Override

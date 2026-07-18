@@ -16,23 +16,33 @@ import com.sashimi.instructorapplication.domain.model.InstructorApplication;
 import com.sashimi.instructorapplication.domain.model.InstructorCertification;
 import com.sashimi.instructorapplication.domain.model.RejectionCategory;
 import com.sashimi.instructorapplication.domain.repository.InstructorApplicationRepository;
+import com.sashimi.instructorapplication.domain.repository.PendingCertification;
 import com.sashimi.certificate.application.port.OcrPort;
 import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -317,5 +327,48 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 rejectionCategory,
                 rejectionReason
         ));
+    }
+
+    @Override
+    public byte[] generateVerificationExcel() {
+        List<PendingCertification> pending = instructorApplicationRepository.findAllPendingCertificationsWithNumber();
+
+        List<Long> userIds = pending.stream()
+                .map(PendingCertification::userId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<Long, String> namesByUserId = userRepository.findAllByIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getName));
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+            Sheet sheet = workbook.createSheet("Sheet1");
+
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("성명");
+            header.createCell(1).setCellValue("자격증번호");
+
+            List<Long> includedCertificationIds = new ArrayList<>();
+            int rowIndex = 1;
+            for (PendingCertification p : pending) {
+                String name = namesByUserId.get(p.userId());
+                if (name == null) {
+                    continue;
+                }
+                Row row = sheet.createRow(rowIndex++);
+                row.createCell(0).setCellValue(name);
+                row.createCell(1).setCellValue(p.certificationNumber());
+                includedCertificationIds.add(p.certificationId());
+            }
+
+            if (!includedCertificationIds.isEmpty()) {
+                instructorApplicationRepository.markCertificationsSubmitted(includedCertificationIds);
+            }
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new UncheckedIOException("검증 엑셀 생성에 실패했습니다.", e);
+        }
     }
 }
