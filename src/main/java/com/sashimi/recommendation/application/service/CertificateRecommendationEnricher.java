@@ -1,5 +1,7 @@
 package com.sashimi.recommendation.application.service;
 
+import com.sashimi.qualification.application.service.QualificationCodeSyncService;
+import com.sashimi.qualification.application.service.QualificationExamScheduleSyncService;
 import com.sashimi.qualification.infrastructure.persistence.QualificationCodeJpaEntity;
 import com.sashimi.qualification.infrastructure.persistence.QualificationExamScheduleJpaEntity;
 import com.sashimi.qualification.infrastructure.persistence.SpringDataQualificationCodeRepository;
@@ -16,13 +18,19 @@ public class CertificateRecommendationEnricher {
 
     private final SpringDataQualificationExamScheduleRepository scheduleRepository;
     private final SpringDataQualificationCodeRepository qualificationCodeRepository;
+    private final QualificationCodeSyncService qualificationCodeSyncService;
+    private final QualificationExamScheduleSyncService scheduleSyncService;
 
     public CertificateRecommendationEnricher(
             SpringDataQualificationExamScheduleRepository scheduleRepository,
-            SpringDataQualificationCodeRepository qualificationCodeRepository
+            SpringDataQualificationCodeRepository qualificationCodeRepository,
+            QualificationCodeSyncService qualificationCodeSyncService,
+            QualificationExamScheduleSyncService scheduleSyncService
     ) {
         this.scheduleRepository = scheduleRepository;
         this.qualificationCodeRepository = qualificationCodeRepository;
+        this.qualificationCodeSyncService = qualificationCodeSyncService;
+        this.scheduleSyncService = scheduleSyncService;
     }
 
     public List<CertificateRecommendation> enrich(
@@ -33,8 +41,18 @@ public class CertificateRecommendationEnricher {
         }
 
         return certificates.stream()
-                .map(this::enrichOne)
+                .map(this::enrichOneSafely)
                 .toList();
+    }
+
+    private CertificateRecommendation enrichOneSafely(
+            CertificateRecommendation certificate
+    ) {
+        try {
+            return enrichOne(certificate);
+        } catch (Exception e) {
+            return certificate;
+        }
     }
 
     private CertificateRecommendation enrichOne(
@@ -47,14 +65,12 @@ public class CertificateRecommendationEnricher {
         String lookupName = certificate.name().trim();
 
         Optional<QualificationCodeJpaEntity> qualificationCode =
-                qualificationCodeRepository.findFirstByQualificationNameOrderByJmCdAsc(
-                        lookupName
-                ).or(() ->
-                        qualificationCodeRepository
-                                .findFirstByQualificationNameContainingOrderByQualificationNameAsc(
-                                        lookupName
-                                )
-                );
+                findQualificationCode(lookupName);
+
+        if (qualificationCode.isEmpty()) {
+            syncQualificationCodesSafely();
+            qualificationCode = findQualificationCode(lookupName);
+        }
 
         if (qualificationCode.isEmpty()) {
             return certificate;
@@ -62,13 +78,62 @@ public class CertificateRecommendationEnricher {
 
         QualificationCodeJpaEntity code = qualificationCode.get();
 
+        Optional<QualificationExamScheduleJpaEntity> schedule =
+                findNextSchedule(code.getJmCd());
+
+        if (schedule.isEmpty()) {
+            syncScheduleSafely(lookupName);
+            schedule = findNextSchedule(code.getJmCd());
+        }
+
+        return schedule
+                .map(foundSchedule -> withCodeAndSchedule(certificate, code, foundSchedule))
+                .orElseGet(() -> withCodeOnly(certificate, code));
+    }
+
+    private Optional<QualificationCodeJpaEntity> findQualificationCode(
+            String lookupName
+    ) {
+        return qualificationCodeRepository.findFirstByQualificationNameOrderByJmCdAsc(
+                lookupName
+        ).or(() ->
+                qualificationCodeRepository
+                        .findFirstByQualificationNameContainingOrderByQualificationNameAsc(
+                                lookupName
+                        )
+        );
+    }
+
+    private Optional<QualificationExamScheduleJpaEntity> findNextSchedule(
+            String jmCd
+    ) {
         return scheduleRepository
                 .findFirstByJmCdAndDocExamStartDateGreaterThanEqualOrderByDocExamStartDateAsc(
-                        code.getJmCd(),
+                        jmCd,
                         LocalDate.now()
-                )
-                .map(schedule -> withCodeAndSchedule(certificate, code, schedule))
-                .orElseGet(() -> withCodeOnly(certificate, code));
+                );
+    }
+
+    private void syncQualificationCodesSafely() {
+        try {
+            qualificationCodeSyncService.sync();
+        } catch (Exception e) {
+            // 외부 API 실패해도 추천 전체는 실패시키지 않음
+        }
+    }
+
+    private void syncScheduleSafely(
+            String qualificationName
+    ) {
+        try {
+            int currentYear = LocalDate.now().getYear();
+            scheduleSyncService.syncByQualificationName(
+                    qualificationName,
+                    currentYear
+            );
+        } catch (Exception e) {
+            // 외부 API 실패해도 추천 전체는 실패시키지 않음
+        }
     }
 
     private CertificateRecommendation withCodeAndSchedule(
