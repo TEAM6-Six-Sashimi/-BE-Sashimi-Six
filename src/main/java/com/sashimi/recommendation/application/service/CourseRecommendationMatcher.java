@@ -5,6 +5,7 @@ import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
 import com.sashimi.recommendation.domain.model.CertificateRecommendation;
 import com.sashimi.recommendation.domain.model.CourseRecommendation;
+import com.sashimi.recommendation.domain.model.CourseSearchCriterion;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
@@ -23,12 +24,9 @@ public class CourseRecommendationMatcher {
     }
 
     public List<CourseRecommendation> match(
-            List<CertificateRecommendation> certificates
+            List<CertificateRecommendation> certificates,
+            List<CourseSearchCriterion> courseSearchCriteria
     ) {
-        if (certificates == null || certificates.isEmpty()) {
-            return List.of();
-        }
-
         List<Course> approvedCourses =
                 courseRepository.findByStatus(CourseStatus.APPROVED);
 
@@ -39,13 +37,44 @@ public class CourseRecommendationMatcher {
         Map<Long, CourseRecommendation> matchedCourses =
                 new LinkedHashMap<>();
 
+        matchByCertificates(
+                certificates,
+                approvedCourses,
+                matchedCourses
+        );
+
+        if (matchedCourses.size() >= MAX_RECOMMENDATION_COUNT) {
+            return matchedCourses.values().stream().toList();
+        }
+
+        matchByCourseSearchCriteria(
+                courseSearchCriteria,
+                approvedCourses,
+                matchedCourses
+        );
+
+        return matchedCourses.values().stream().toList();
+    }
+
+    private void matchByCertificates(
+            List<CertificateRecommendation> certificates,
+            List<Course> approvedCourses,
+            Map<Long, CourseRecommendation> matchedCourses
+    ) {
+        if (certificates == null || certificates.isEmpty()) {
+            return;
+        }
+
         for (CertificateRecommendation certificate : certificates) {
             for (Course course : approvedCourses) {
                 if (matchedCourses.size() >= MAX_RECOMMENDATION_COUNT) {
-                    return matchedCourses.values().stream().toList();
+                    return;
                 }
 
-                MatchResult matchResult = matchCourse(certificate, course);
+                MatchResult matchResult = matchCourseByCertificate(
+                        certificate,
+                        course
+                );
 
                 if (!matchResult.matched()) {
                     continue;
@@ -63,11 +92,47 @@ public class CourseRecommendationMatcher {
                 );
             }
         }
-
-        return matchedCourses.values().stream().toList();
     }
 
-    private MatchResult matchCourse(
+    private void matchByCourseSearchCriteria(
+            List<CourseSearchCriterion> courseSearchCriteria,
+            List<Course> approvedCourses,
+            Map<Long, CourseRecommendation> matchedCourses
+    ) {
+        if (courseSearchCriteria == null || courseSearchCriteria.isEmpty()) {
+            return;
+        }
+
+        for (CourseSearchCriterion criterion : courseSearchCriteria) {
+            for (Course course : approvedCourses) {
+                if (matchedCourses.size() >= MAX_RECOMMENDATION_COUNT) {
+                    return;
+                }
+
+                MatchResult matchResult = matchCourseByCriterion(
+                        criterion,
+                        course
+                );
+
+                if (!matchResult.matched()) {
+                    continue;
+                }
+
+                matchedCourses.putIfAbsent(
+                        course.getId(),
+                        new CourseRecommendation(
+                                course.getId(),
+                                course.getTitle(),
+                                null,
+                                matchResult.matchedKeyword(),
+                                matchResult.reason()
+                        )
+                );
+            }
+        }
+    }
+
+    private MatchResult matchCourseByCertificate(
             CertificateRecommendation certificate,
             Course course
     ) {
@@ -96,6 +161,42 @@ public class CourseRecommendationMatcher {
                         true,
                         skill,
                         "추천 자격증의 관련 역량을 보완할 수 있는 강의입니다."
+                );
+            }
+        }
+
+        return new MatchResult(false, null, null);
+    }
+
+    private MatchResult matchCourseByCriterion(
+            CourseSearchCriterion criterion,
+            Course course
+    ) {
+        String courseText = normalize(
+                course.getTitle() + " " + safe(course.getDescription())
+        );
+
+        String keyword = safe(criterion.keyword());
+
+        if (!keyword.isBlank()
+                && courseText.contains(normalize(keyword))) {
+            return new MatchResult(
+                    true,
+                    keyword,
+                    criterion.reason()
+            );
+        }
+
+        for (String skill : criterion.relatedSkills()) {
+            if (skill == null || skill.isBlank()) {
+                continue;
+            }
+
+            if (courseText.contains(normalize(skill))) {
+                return new MatchResult(
+                        true,
+                        skill,
+                        criterion.reason()
                 );
             }
         }

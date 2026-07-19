@@ -114,7 +114,8 @@ public class JobPostingRecommendationAsyncService {
                             .toList());
 
             var matchedCourses = courseRecommendationMatcher.match(
-                    enrichedCertificates
+                    enrichedCertificates,
+                    analyzeResult.courseSearchCriteria()
             );
 
             JobPostingRecommendation analyzedRecommendation = recommendation.analyzed(

@@ -92,6 +92,7 @@ public class StubJobPostingRecommendationAnalyzeAdapter
                                 "보통"
                         )
                 ),
+                List.of(),
                 List.of()
         );
     }

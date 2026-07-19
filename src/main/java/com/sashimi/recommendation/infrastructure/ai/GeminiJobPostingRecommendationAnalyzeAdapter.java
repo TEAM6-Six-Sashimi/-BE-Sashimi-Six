@@ -120,7 +120,8 @@ public class GeminiJobPostingRecommendationAnalyzeAdapter
                     summary,
                     fitAnalysis,
                     certificates,
-                    courses
+                    courses,
+                    List.of()
             );
         } catch (Exception exception) {
             log.error(
