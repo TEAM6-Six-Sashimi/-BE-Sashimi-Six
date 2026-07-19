@@ -89,6 +89,11 @@ grafana:
 prometheus:
   url: ${PROMETHEUS_URL:http://sashimi-prometheus:9090}
 
+external:
+  ai-server:
+    base-url: ${AI_SERVER_BASE_URL:http://172.31.33.226:8001}
+    timeout-seconds: 30
+
 springdoc:
   swagger-ui:
     enabled: true
