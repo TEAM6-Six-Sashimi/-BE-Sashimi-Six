@@ -4,6 +4,8 @@ services:
     container_name: sashimi-prometheus
     restart: unless-stopped
     mem_limit: 150m
+    ports:
+      - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
