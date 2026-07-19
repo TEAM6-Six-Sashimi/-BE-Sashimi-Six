@@ -10,7 +10,7 @@ import com.sashimi.recommendation.application.port.JobPostingContentExtractor;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzeResult;
 import com.sashimi.recommendation.domain.model.CertificateRecommendation;
-import com.sashimi.recommendation.domain.model.CourseRecommendation;
+import com.sashimi.recommendation.domain.model.CourseSearchCriterion;
 import com.sashimi.recommendation.domain.model.FitAnalysisCategory;
 import com.sashimi.recommendation.domain.model.FitAnalysisItem;
 import com.sashimi.recommendation.domain.model.FitStatus;
@@ -84,7 +84,8 @@ public class FastApiJobPostingRecommendationAnalyzeAdapter
                 toSummary(response.summary()),
                 toFitAnalysis(response.fitAnalysis()),
                 toCertificates(response.certificates()),
-                List.of()
+                List.of(),
+                toCourseSearchCriteria(response.courseSearchCriteria())
         );
     }
 
@@ -160,6 +161,20 @@ public class FastApiJobPostingRecommendationAnalyzeAdapter
                         certificate.reason(),
                         nullToEmpty(certificate.relatedSkills()),
                         certificate.difficulty()
+                ))
+                .toList();
+    }
+
+    private List<CourseSearchCriterion> toCourseSearchCriteria(
+            List<FastApiJobPostingAnalyzeResponse.CourseSearchCriterion> criteria
+    ) {
+        return nullToEmpty(criteria)
+                .stream()
+                .map(criterion -> new CourseSearchCriterion(
+                        criterion.recommendationType(),
+                        criterion.keyword(),
+                        criterion.reason(),
+                        nullToEmpty(criterion.relatedSkills())
                 ))
                 .toList();
     }

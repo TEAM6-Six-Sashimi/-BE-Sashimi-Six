@@ -6,7 +6,7 @@ public record FastApiJobPostingAnalyzeResponse(
         Summary summary,
         FitAnalysis fitAnalysis,
         List<Certificate> certificates,
-        List<Course> courses
+        List<CourseSearchCriterion> courseSearchCriteria
 ) {
     public record Summary(
             String jobRole,
@@ -43,12 +43,11 @@ public record FastApiJobPostingAnalyzeResponse(
     ) {
     }
 
-    public record Course(
-            Long courseId,
-            String title,
-            String instructor,
-            String matchedSkill,
-            String reason
+    public record CourseSearchCriterion(
+            String recommendationType,
+            String keyword,
+            String reason,
+            List<String> relatedSkills
     ) {
     }
 }
