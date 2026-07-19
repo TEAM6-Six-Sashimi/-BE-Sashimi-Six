@@ -1,6 +1,7 @@
 package com.sashimi.coffeechat.application.usecase;
 
 import com.sashimi.coffeechat.application.result.CoffeeChatMessageResult;
+import com.sashimi.coffeechat.application.result.MarkAsReadResult;
 
 public interface CoffeeChatCommandUseCase {
 
@@ -12,7 +13,7 @@ public interface CoffeeChatCommandUseCase {
 
     CoffeeChatMessageResult sendMessage(Long chatId, Long senderId, String content);
 
-    void markMessagesAsRead(Long chatId, Long readerId);
+    MarkAsReadResult markMessagesAsRead(Long chatId, Long readerId);
 
     int backfillMissingChatRooms();
 }

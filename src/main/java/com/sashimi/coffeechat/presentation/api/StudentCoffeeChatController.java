@@ -1,13 +1,16 @@
 package com.sashimi.coffeechat.presentation.api;
 
+import com.sashimi.coffeechat.application.result.MarkAsReadResult;
 import com.sashimi.coffeechat.application.usecase.CoffeeChatCommandUseCase;
 import com.sashimi.coffeechat.application.usecase.CoffeeChatQueryUseCase;
 import com.sashimi.coffeechat.presentation.api.response.CoffeeChatMessageResponse;
 import com.sashimi.coffeechat.presentation.api.response.CoffeeChatSummaryResponse;
+import com.sashimi.coffeechat.presentation.websocket.CoffeeChatDestinations;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +28,7 @@ public class StudentCoffeeChatController {
 
     private final CoffeeChatQueryUseCase coffeeChatQueryUseCase;
     private final CoffeeChatCommandUseCase coffeeChatCommandUseCase;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @GetMapping
     public ResponseEntity<List<CoffeeChatSummaryResponse>> getMyChats(
@@ -43,7 +47,13 @@ public class StudentCoffeeChatController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         try {
-            coffeeChatCommandUseCase.markMessagesAsRead(chatId, principal.getId());
+            MarkAsReadResult result = coffeeChatCommandUseCase.markMessagesAsRead(chatId, principal.getId());
+            if (result != null) {
+                messagingTemplate.convertAndSendToUser(
+                        String.valueOf(result.notifyUserId()),
+                        CoffeeChatDestinations.CHAT_QUEUE_PREFIX + chatId,
+                        CoffeeChatMessageResponse.ofRead(result.lastReadMessageId()));
+            }
         } catch (RuntimeException e) {
             log.warn("메시지 읽음처리 실패 - chatId={}, readerId={}", chatId, principal.getId(), e);
         }

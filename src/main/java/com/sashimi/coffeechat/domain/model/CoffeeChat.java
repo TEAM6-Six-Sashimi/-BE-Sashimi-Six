@@ -31,27 +31,30 @@ public class CoffeeChat {
                 .build();
     }
 
-    public void accept() {
+    public CoffeeChatMessage accept() {
         if (this.status != CoffeeChatStatus.PENDING) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
         }
         this.status = CoffeeChatStatus.ACCEPTED;
         this.acceptedAt = LocalDateTime.now();
+        return CoffeeChatMessage.createSystemMessage(this.id, this.instructorId, CoffeeChatMessageType.SYSTEM_ACCEPT);
     }
 
-    public void leave() {
+    public CoffeeChatMessage leave() {
         if (this.status != CoffeeChatStatus.ACCEPTED) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
         }
         this.status = CoffeeChatStatus.LEFT;
         this.leftAt = LocalDateTime.now();
+        return CoffeeChatMessage.createSystemMessage(this.id, this.instructorId, CoffeeChatMessageType.SYSTEM_LEAVE);
     }
 
-    public void reject() {
+    public CoffeeChatMessage reject() {
         if (this.status != CoffeeChatStatus.PENDING) {
             throw new BusinessException(ErrorCode.COFFEE_CHAT_INVALID_STATUS);
         }
         this.status = CoffeeChatStatus.REJECTED;
+        return CoffeeChatMessage.createSystemMessage(this.id, this.instructorId, CoffeeChatMessageType.SYSTEM_REJECT);
     }
 
     public CoffeeChatMessage sendMessage(Long senderId, String content) {

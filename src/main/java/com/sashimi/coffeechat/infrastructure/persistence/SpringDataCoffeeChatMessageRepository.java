@@ -24,6 +24,10 @@ public interface SpringDataCoffeeChatMessageRepository extends JpaRepository<Cof
             + "WHERE m.coffeeChatId = :coffeeChatId AND m.senderId <> :readerId AND m.isRead = false")
     void markAllAsRead(@Param("coffeeChatId") Long coffeeChatId, @Param("readerId") Long readerId);
 
+    @Query("SELECT MAX(m.id) FROM CoffeeChatMessageJpaEntity m "
+            + "WHERE m.coffeeChatId = :coffeeChatId AND m.senderId <> :readerId AND m.isRead = false")
+    Long findMaxUnreadMessageId(@Param("coffeeChatId") Long coffeeChatId, @Param("readerId") Long readerId);
+
     @Query("SELECT m FROM CoffeeChatMessageJpaEntity m WHERE m.coffeeChatId IN :coffeeChatIds "
             + "AND m.createdAt = (SELECT MAX(m2.createdAt) FROM CoffeeChatMessageJpaEntity m2 "
             + "WHERE m2.coffeeChatId = m.coffeeChatId)")

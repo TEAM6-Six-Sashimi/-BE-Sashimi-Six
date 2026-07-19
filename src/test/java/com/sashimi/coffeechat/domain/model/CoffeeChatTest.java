@@ -37,6 +37,17 @@ class CoffeeChatTest {
     }
 
     @Test
+    void 수락하면_SYSTEM_ACCEPT_시스템메시지가_강사id로_읽음처리된채_생성된다() {
+        CoffeeChat coffeeChat = CoffeeChat.create(STUDENT_ID, INSTRUCTOR_ID, COURSE_ID);
+
+        CoffeeChatMessage systemMessage = coffeeChat.accept();
+
+        assertThat(systemMessage.getMessageType()).isEqualTo(CoffeeChatMessageType.SYSTEM_ACCEPT);
+        assertThat(systemMessage.getSenderId()).isEqualTo(INSTRUCTOR_ID);
+        assertThat(systemMessage.isRead()).isTrue();
+    }
+
+    @Test
     void PENDING이_아니면_수락할_수_없다() {
         CoffeeChat coffeeChat = alreadyAccepted();
 
@@ -59,6 +70,17 @@ class CoffeeChatTest {
     }
 
     @Test
+    void 나가면_SYSTEM_LEAVE_시스템메시지가_강사id로_읽음처리된채_생성된다() {
+        CoffeeChat coffeeChat = alreadyAccepted();
+
+        CoffeeChatMessage systemMessage = coffeeChat.leave();
+
+        assertThat(systemMessage.getMessageType()).isEqualTo(CoffeeChatMessageType.SYSTEM_LEAVE);
+        assertThat(systemMessage.getSenderId()).isEqualTo(INSTRUCTOR_ID);
+        assertThat(systemMessage.isRead()).isTrue();
+    }
+
+    @Test
     void ACCEPTED가_아니면_나갈_수_없다() {
         CoffeeChat coffeeChat = CoffeeChat.create(STUDENT_ID, INSTRUCTOR_ID, COURSE_ID);
 
@@ -77,6 +99,17 @@ class CoffeeChatTest {
         coffeeChat.reject();
 
         assertThat(coffeeChat.getStatus()).isEqualTo(CoffeeChatStatus.REJECTED);
+    }
+
+    @Test
+    void 거절하면_SYSTEM_REJECT_시스템메시지가_강사id로_읽음처리된채_생성된다() {
+        CoffeeChat coffeeChat = CoffeeChat.create(STUDENT_ID, INSTRUCTOR_ID, COURSE_ID);
+
+        CoffeeChatMessage systemMessage = coffeeChat.reject();
+
+        assertThat(systemMessage.getMessageType()).isEqualTo(CoffeeChatMessageType.SYSTEM_REJECT);
+        assertThat(systemMessage.getSenderId()).isEqualTo(INSTRUCTOR_ID);
+        assertThat(systemMessage.isRead()).isTrue();
     }
 
     @Test

@@ -22,8 +22,21 @@ class CoffeeChatMessageTest {
         assertThat(message.getCoffeeChatId()).isEqualTo(COFFEE_CHAT_ID);
         assertThat(message.getSenderId()).isEqualTo(SENDER_ID);
         assertThat(message.getContent()).isEqualTo("안녕하세요");
+        assertThat(message.getMessageType()).isEqualTo(CoffeeChatMessageType.TEXT);
         assertThat(message.isRead()).isFalse();
         assertThat(message.getCreatedAt()).isNotNull();
+    }
+
+    @Test
+    void createSystemMessage로_생성하면_읽음처리된_시스템메시지가_생성된다() {
+        CoffeeChatMessage message = CoffeeChatMessage.createSystemMessage(
+                COFFEE_CHAT_ID, SENDER_ID, CoffeeChatMessageType.SYSTEM_LEAVE);
+
+        assertThat(message.getCoffeeChatId()).isEqualTo(COFFEE_CHAT_ID);
+        assertThat(message.getSenderId()).isEqualTo(SENDER_ID);
+        assertThat(message.getMessageType()).isEqualTo(CoffeeChatMessageType.SYSTEM_LEAVE);
+        assertThat(message.getContent()).isNotBlank();
+        assertThat(message.isRead()).isTrue();
     }
 
     @ParameterizedTest

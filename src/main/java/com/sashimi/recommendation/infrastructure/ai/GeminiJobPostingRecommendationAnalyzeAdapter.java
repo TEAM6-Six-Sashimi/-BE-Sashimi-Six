@@ -29,7 +29,7 @@ import java.util.Locale;
 
 @Slf4j
 @Component
-@Profile("gemini")
+@Profile("gemini-job-posting")
 public class GeminiJobPostingRecommendationAnalyzeAdapter
         implements JobPostingRecommendationAnalyzePort {
 

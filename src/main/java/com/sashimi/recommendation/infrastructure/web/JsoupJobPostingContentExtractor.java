@@ -4,6 +4,7 @@ import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.port.JobPostingContentExtractor;
 import com.sashimi.recommendation.domain.model.RecommendationInputType;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,7 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
 
     private static final int TIMEOUT_MILLIS = 5000;
     private static final int MAX_TEXT_LENGTH = 12000;
+    private static final int MAX_REDIRECT_COUNT = 3;
 
     @Override
     public String extract(
@@ -47,14 +49,11 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
-        validatePublicHttpUrl(sourceUrl);
+        String normalizedUrl = normalizeUrl(sourceUrl);
+        validatePublicHttpUrl(normalizedUrl);
 
         try {
-            Document document = Jsoup.connect(sourceUrl)
-                    .userAgent("Mozilla/5.0")
-                    .timeout(TIMEOUT_MILLIS)
-                    .followRedirects(false)
-                    .get();
+            Document document = fetchDocument(normalizedUrl);
 
             document.select("script, style, noscript").remove();
 
@@ -72,6 +71,81 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
+    }
+
+    private Document fetchDocument(String url) {
+        String currentUrl = url;
+
+        for (int redirectCount = 0; redirectCount <= MAX_REDIRECT_COUNT; redirectCount++) {
+            try {
+                validatePublicHttpUrl(currentUrl);
+
+                Connection.Response response = Jsoup.connect(currentUrl)
+                        .userAgent("Mozilla/5.0")
+                        .timeout(TIMEOUT_MILLIS)
+                        .followRedirects(false)
+                        .execute();
+
+                int statusCode = response.statusCode();
+
+                if (isRedirect(statusCode)) {
+                    String location = response.header("Location");
+
+                    if (location == null || location.isBlank()) {
+                        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                    }
+
+                    currentUrl = resolveRedirectUrl(currentUrl, location);
+                    continue;
+                }
+
+                return response.parse();
+            } catch (BusinessException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            }
+        }
+
+        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+    }
+
+    private String normalizeUrl(String sourceUrl) {
+        String trimmedUrl = sourceUrl.trim();
+
+        if (trimmedUrl.startsWith("//")) {
+            return "https:" + trimmedUrl;
+        }
+
+        if (!trimmedUrl.contains("://")) {
+            return "https://" + trimmedUrl;
+        }
+
+        return trimmedUrl;
+    }
+
+    private String resolveRedirectUrl(String currentUrl, String location) {
+        try {
+            URI currentUri = URI.create(currentUrl);
+            URI redirectedUri = currentUri.resolve(location);
+
+            String redirectedUrl = redirectedUri.toString();
+            validatePublicHttpUrl(redirectedUrl);
+
+            return redirectedUrl;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+    }
+
+    private boolean isRedirect(int statusCode) {
+        return statusCode == 301
+                || statusCode == 302
+                || statusCode == 303
+                || statusCode == 307
+                || statusCode == 308;
     }
 
     private String limit(String text) {

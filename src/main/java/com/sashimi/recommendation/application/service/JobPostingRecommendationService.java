@@ -17,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 public class JobPostingRecommendationService implements
@@ -135,5 +137,13 @@ public class JobPostingRecommendationService implements
                 recommendation.analysisStatus());
 
         return recommendation;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<JobPostingRecommendation> getLatest(Long userId) {
+        log.debug("최근 채용공고 추천 결과 조회 요청: userId={}", userId);
+
+        return recommendationRepository.findLatestByUserId(userId);
     }
 }
