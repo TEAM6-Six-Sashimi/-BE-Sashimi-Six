@@ -4,6 +4,14 @@ on:
   push:
     branches:
       - develop
+    paths:
+      - 'src/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'Dockerfile'
+      - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
 concurrency:
@@ -125,13 +133,17 @@ jobs:
           IMAGE_VERSIONED="$DOCKER_IMAGE_REPO:$IMAGE_TAG"
 
           # latest + 커밋 SHA 태그를 같이 붙여서 빌드 (롤백용 버전 보존)
-          sudo docker build -t "$IMAGE_LATEST" -t "$IMAGE_VERSIONED" .
+          # DOCKER_BUILDKIT=1: Dockerfile의 --mount=type=cache로 Gradle 캐시를
+          # 재사용하기 위해 필요 (없으면 매 배포마다 의존성 전체를 새로 받음)
+          sudo DOCKER_BUILDKIT=1 docker build -t "$IMAGE_LATEST" -t "$IMAGE_VERSIONED" .
           sudo docker rm -f "$DOCKER_CONTAINER" >/dev/null 2>&1 || true
           sudo docker run -d \
             --name "$DOCKER_CONTAINER" \
             --network "$DOCKER_NETWORK" \
             --restart unless-stopped \
             --env-file "$ENV_FILE" \
+            --memory="550m" \
+            --memory-swap="650m" \
             -p 8080:8080 \
             -v sashimi-logs:/app/logs \
             "$IMAGE_LATEST"
