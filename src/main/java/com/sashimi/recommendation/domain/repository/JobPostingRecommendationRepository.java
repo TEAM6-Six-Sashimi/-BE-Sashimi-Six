@@ -11,4 +11,5 @@ public interface JobPostingRecommendationRepository {
     Optional<JobPostingRecommendation> findLatestByUserId(Long userId);
 
     Optional<JobPostingRecommendation> findByIdAndUserId(Long recommendationId, Long userId);
+
 }

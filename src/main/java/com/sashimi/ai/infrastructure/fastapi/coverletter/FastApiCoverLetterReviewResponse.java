@@ -13,7 +13,7 @@ public record FastApiCoverLetterReviewResponse(
             String status,
             String summaryFeedback,
             List<SpellingCorrection> spellingCorrections,
-            List<RepeatedExpression> repeatedExpressions,
+            List<String> repeatedExpressions,
             int expressionImprovementCount,
             int flowImprovementCount,
             String feedback,
@@ -24,12 +24,6 @@ public record FastApiCoverLetterReviewResponse(
     public record SpellingCorrection(
             String original,
             String corrected
-    ) {
-    }
-
-    public record RepeatedExpression(
-            String expression,
-            int count
     ) {
     }
 }
