@@ -8,6 +8,7 @@ import com.sashimi.recommendation.application.usecase.JobPostingRecommendationQu
 import com.sashimi.recommendation.domain.model.JobPostingRecommendation;
 import com.sashimi.recommendation.presentation.api.request.CreateJobPostingRecommendationRequest;
 import com.sashimi.recommendation.presentation.api.response.JobPostingRecommendationResponse;
+import com.sashimi.recommendation.presentation.api.response.LatestJobPostingRecommendationResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -77,6 +78,20 @@ public class JobPostingRecommendationController {
         );
 
         return JobPostingRecommendationResponse.from(recommendation);
+    }
+
+    @Operation(
+            summary = "최근 채용공고 추천 결과 조회",
+            description = "사용자의 가장 최근 채용공고 추천 결과 1개를 조회합니다. 최근 기록이 없으면 recommendation을 null로 반환합니다."
+    )
+    @GetMapping("/latest")
+    public LatestJobPostingRecommendationResponse getLatest(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        return queryUseCase.getLatest(principal.getId())
+                .map(LatestJobPostingRecommendationResponse::of)
+                .orElseGet(LatestJobPostingRecommendationResponse::empty);
     }
 
     @Operation(
