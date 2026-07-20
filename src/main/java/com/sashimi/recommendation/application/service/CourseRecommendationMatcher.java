@@ -51,8 +51,27 @@ public class CourseRecommendationMatcher {
                 courseSearchCriteria
         );
 
+        List<CourseRecommendation> matchedRecommendations =
+                matchByKeywords(
+                        certificates,
+                        courseSearchCriteria,
+                        searchKeywords
+                );
+
+        if (matchedRecommendations.size() >= MAX_RECOMMENDATION_COUNT) {
+            return matchedRecommendations;
+        }
+
+        return fillWithFallbackCourses(matchedRecommendations);
+    }
+
+    private List<CourseRecommendation> matchByKeywords(
+            List<CertificateRecommendation> certificates,
+            List<CourseSearchCriterion> courseSearchCriteria,
+            List<String> searchKeywords
+    ) {
         if (searchKeywords.isEmpty()) {
-            log.debug("강의 추천 매칭 스킵: 검색 키워드 없음");
+            log.debug("강의 추천 키워드 매칭 스킵: 검색 키워드 없음");
             return List.of();
         }
 
@@ -60,7 +79,7 @@ public class CourseRecommendationMatcher {
 
         if (candidateCourses.isEmpty()) {
             log.debug(
-                    "강의 추천 매칭 결과 없음: keywordCount={}, certificateCount={}, criteriaCount={}",
+                    "강의 추천 키워드 후보 없음: keywordCount={}, certificateCount={}, criteriaCount={}",
                     searchKeywords.size(),
                     sizeOf(certificates),
                     sizeOf(courseSearchCriteria)
@@ -110,9 +129,61 @@ public class CourseRecommendationMatcher {
                         .toList();
 
         log.debug(
-                "강의 추천 매칭 완료: keywordCount={}, candidateCourseCount={}, matchedCourseCount={}",
+                "강의 추천 키워드 매칭 완료: keywordCount={}, candidateCourseCount={}, matchedCourseCount={}",
                 searchKeywords.size(),
                 candidateCourses.size(),
+                recommendations.size()
+        );
+
+        return recommendations;
+    }
+
+    private List<CourseRecommendation> fillWithFallbackCourses(
+            List<CourseRecommendation> matchedRecommendations
+    ) {
+        Map<Long, CourseRecommendation> recommendationByCourseId =
+                new LinkedHashMap<>();
+
+        for (CourseRecommendation recommendation : matchedRecommendations) {
+            recommendationByCourseId.put(
+                    recommendation.courseId(),
+                    recommendation
+            );
+        }
+
+        List<Course> fallbackCourses =
+                courseRepository.findPopularApprovedCourses();
+
+        for (Course course : fallbackCourses) {
+            if (recommendationByCourseId.size() >= MAX_RECOMMENDATION_COUNT) {
+                break;
+            }
+
+            if (recommendationByCourseId.containsKey(course.getId())) {
+                continue;
+            }
+
+            recommendationByCourseId.put(
+                    course.getId(),
+                    new CourseRecommendation(
+                            course.getId(),
+                            course.getTitle(),
+                            null,
+                            "인기 강의",
+                            "추천 조건과 정확히 일치하는 강의가 부족하여 인기 강의를 추천합니다."
+                    )
+            );
+        }
+
+        List<CourseRecommendation> recommendations =
+                recommendationByCourseId.values()
+                        .stream()
+                        .limit(MAX_RECOMMENDATION_COUNT)
+                        .toList();
+
+        log.debug(
+                "강의 fallback 추천 완료: originalCount={}, finalCount={}",
+                matchedRecommendations.size(),
                 recommendations.size()
         );
 
