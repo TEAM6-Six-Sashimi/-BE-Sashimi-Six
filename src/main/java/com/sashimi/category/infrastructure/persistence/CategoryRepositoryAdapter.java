@@ -104,4 +104,17 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
                 .map(CategoryJpaEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public boolean existsByMainCategoryId(Long mainCategoryId) {
+        return springDataCategoryRepository.existsByMainCategoryId(mainCategoryId);
+    }
+
+    @Override
+    public List<Category> findAllByMainCategoryIdIn(List<Long> mainCategoryIds) {
+        return springDataCategoryRepository.findAllByMainCategoryIdIn(mainCategoryIds)
+                .stream()
+                .map(CategoryJpaEntity::toDomain)
+                .toList();
+    }
 }

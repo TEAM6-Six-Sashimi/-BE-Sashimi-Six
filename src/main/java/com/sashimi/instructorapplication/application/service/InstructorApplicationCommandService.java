@@ -109,7 +109,8 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 throw new BusinessException(ErrorCode.RESUME_INVALID_FORMAT);
             }
 
-            if (!categoryRepository.findById(command.categoryId()).map(c -> true).orElse(false)) {
+            // 강사 지원은 세부 카테고리 제한 없이 대분류만 선택하므로 mainCategoryId 기준으로 검증
+            if (!categoryRepository.existsByMainCategoryId(command.categoryId())) {
                 throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
             }
 

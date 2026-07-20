@@ -49,10 +49,11 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                 .stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        Map<Long, String> categoryNameById = categoryRepository.findAllByIdIn(
+        // 강사 지원의 categoryId는 세부 카테고리가 아닌 대분류(mainCategoryId) 값이라 그 기준으로 이름 조회
+        Map<Long, String> categoryNameByMainCategoryId = categoryRepository.findAllByMainCategoryIdIn(
                         applications.stream().map(InstructorApplication::getCategoryId).distinct().toList())
                 .stream()
-                .collect(Collectors.toMap(Category::getId, Category::getName));
+                .collect(Collectors.toMap(Category::getMainCategoryId, Category::getName, (a, b) -> a));
 
         return applications.stream()
                 .map(application -> {
@@ -60,7 +61,7 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                     if (user == null) {
                         throw new BusinessException(ErrorCode.USER_NOT_FOUND);
                     }
-                    String categoryName = categoryNameById.get(application.getCategoryId());
+                    String categoryName = categoryNameByMainCategoryId.get(application.getCategoryId());
                     return InstructorApplicationListResponse.of(application, user, categoryName);
                 })
                 .toList();
