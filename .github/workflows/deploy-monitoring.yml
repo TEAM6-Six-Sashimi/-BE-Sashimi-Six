@@ -42,6 +42,9 @@ jobs:
         env:
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GRAFANA_MYSQL_HOST: ${{ secrets.GRAFANA_MYSQL_HOST }}
+          GRAFANA_MYSQL_USER: ${{ secrets.GRAFANA_MYSQL_USER }}
+          GRAFANA_MYSQL_PASSWORD: ${{ secrets.GRAFANA_MYSQL_PASSWORD }}
         run: |
           if [ -z "$GRAFANA_ADMIN_PASSWORD" ]; then
             echo "Missing GitHub secret: GRAFANA_ADMIN_PASSWORD" >&2
@@ -51,16 +54,26 @@ jobs:
             echo "Missing GitHub secret: SLACK_WEBHOOK_URL" >&2
             exit 1
           fi
+          if [ -z "$GRAFANA_MYSQL_HOST" ] || [ -z "$GRAFANA_MYSQL_USER" ] || [ -z "$GRAFANA_MYSQL_PASSWORD" ]; then
+            echo "Missing GitHub secret: GRAFANA_MYSQL_HOST/USER/PASSWORD" >&2
+            exit 1
+          fi
 
           GRAFANA_PASSWORD_B64="$(printf '%s' "$GRAFANA_ADMIN_PASSWORD" | base64 -w 0)"
           SLACK_WEBHOOK_URL_B64="$(printf '%s' "$SLACK_WEBHOOK_URL" | base64 -w 0)"
+          GRAFANA_MYSQL_HOST_B64="$(printf '%s' "$GRAFANA_MYSQL_HOST" | base64 -w 0)"
+          GRAFANA_MYSQL_USER_B64="$(printf '%s' "$GRAFANA_MYSQL_USER" | base64 -w 0)"
+          GRAFANA_MYSQL_PASSWORD_B64="$(printf '%s' "$GRAFANA_MYSQL_PASSWORD" | base64 -w 0)"
 
           ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$AI_EC2_HOST" \
-            "APP_DIR='$AI_APP_DIR' GRAFANA_PASSWORD_B64='$GRAFANA_PASSWORD_B64' SLACK_WEBHOOK_URL_B64='$SLACK_WEBHOOK_URL_B64' bash -s" <<'REMOTE'
+            "APP_DIR='$AI_APP_DIR' GRAFANA_PASSWORD_B64='$GRAFANA_PASSWORD_B64' SLACK_WEBHOOK_URL_B64='$SLACK_WEBHOOK_URL_B64' GRAFANA_MYSQL_HOST_B64='$GRAFANA_MYSQL_HOST_B64' GRAFANA_MYSQL_USER_B64='$GRAFANA_MYSQL_USER_B64' GRAFANA_MYSQL_PASSWORD_B64='$GRAFANA_MYSQL_PASSWORD_B64' bash -s" <<'REMOTE'
           set -euo pipefail
 
           GRAFANA_PASSWORD="$(printf '%s' "$GRAFANA_PASSWORD_B64" | base64 -d)"
           SLACK_WEBHOOK_URL="$(printf '%s' "$SLACK_WEBHOOK_URL_B64" | base64 -d)"
+          GRAFANA_MYSQL_HOST="$(printf '%s' "$GRAFANA_MYSQL_HOST_B64" | base64 -d)"
+          GRAFANA_MYSQL_USER="$(printf '%s' "$GRAFANA_MYSQL_USER_B64" | base64 -d)"
+          GRAFANA_MYSQL_PASSWORD="$(printf '%s' "$GRAFANA_MYSQL_PASSWORD_B64" | base64 -d)"
 
           if [ ! -d "$APP_DIR/.git" ]; then
             echo "Missing repo checkout at $APP_DIR — clone it once manually first (git clone <repo-url> $APP_DIR)." >&2
@@ -71,8 +84,12 @@ jobs:
           git fetch origin develop
           git checkout -B develop origin/develop
 
-          printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_PASSWORD" \
-            > monitoring/.env
+          {
+            printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_PASSWORD"
+            printf 'GRAFANA_MYSQL_HOST=%s\n' "$GRAFANA_MYSQL_HOST"
+            printf 'GRAFANA_MYSQL_USER=%s\n' "$GRAFANA_MYSQL_USER"
+            printf 'GRAFANA_MYSQL_PASSWORD=%s\n' "$GRAFANA_MYSQL_PASSWORD"
+          } > monitoring/.env
 
           SLACK_WEBHOOK_URL_ESCAPED=$(printf '%s' "$SLACK_WEBHOOK_URL" | sed -e 's/[\/&]/\\&/g')
           sed "s/__SLACK_WEBHOOK_URL__/${SLACK_WEBHOOK_URL_ESCAPED}/" \
