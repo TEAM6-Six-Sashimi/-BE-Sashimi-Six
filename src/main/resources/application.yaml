@@ -96,7 +96,8 @@ external:
 
   ai-server:
     base-url: http://172.31.33.226:8001
-    timeout-seconds: 30
+    # 챗봇은 분류 → RAG 검색 → 답변 3단계라 20~30초가 걸린다. 30초는 여유가 없어 60초로 둔다.
+    timeout-seconds: 60
 
 # 배포 시 환경 변수를 정상적으로 사용하는 방법
 
