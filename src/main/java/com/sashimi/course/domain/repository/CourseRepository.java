@@ -19,5 +19,7 @@ public interface CourseRepository {
     List<Course> findByStatusAndIdIn(CourseStatus status, List<Long> ids);
     List<Course> findByStatusAndApprovedAtBefore(CourseStatus status, LocalDateTime cutoff);
     List<Course> findByStatusAndArchivedFalse(CourseStatus status);
+    List<Course> searchApprovedByKeyword(String keyword);
+    List<Course> findPopularApprovedCourses(int limit);
     void deleteById(Long id);
 }

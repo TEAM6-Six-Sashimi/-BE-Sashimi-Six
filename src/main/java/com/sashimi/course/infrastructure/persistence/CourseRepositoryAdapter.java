@@ -4,6 +4,7 @@ import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.model.CourseSession;
 import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ public class CourseRepositoryAdapter implements CourseRepository {
 
     private Course saveNew(Course course) {
         CourseJpaEntity entity = new CourseJpaEntity(
-                course.getInstructorId(), course.getCategoryId(),course.getTitle(),
+                course.getInstructorId(), course.getCategoryId(), course.getTitle(),
                 course.getDescription(), course.getPrice(), course.getDifficulty(),
                 course.getThumbnail(), course.getTotalDuration(), course.getStatus(),
                 course.getRejectReason(), course.getRatingAvg(), course.getReviewCount(),
@@ -50,9 +51,9 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getTotalDuration(), course.getStatus(), course.getUpdatedAt());
 
-        if (course.getStatus() == com.sashimi.course.domain.model.CourseStatus.APPROVED) {
+        if (course.getStatus() == CourseStatus.APPROVED) {
             entity.approve(course.getApprovedAt(), course.getUpdatedAt());
-        } else if (course.getStatus() == com.sashimi.course.domain.model.CourseStatus.REJECTED) {
+        } else if (course.getStatus() == CourseStatus.REJECTED) {
             entity.reject(course.getRejectReason(), course.getRejectReasonCategory(),
                     course.getRejectDetail(), course.getUpdatedAt());
         }
@@ -123,6 +124,19 @@ public class CourseRepositoryAdapter implements CourseRepository {
     @Override
     public List<Course> findByStatusAndArchivedFalse(CourseStatus status) {
         return springDataCourseRepository.findByStatusAndArchivedFalse(status)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<Course> searchApprovedByKeyword(String keyword) {
+        return springDataCourseRepository.searchApprovedByKeyword(keyword)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
+    public List<Course> findPopularApprovedCourses(int limit) {
+        return springDataCourseRepository
+                .findPopularApprovedCourses(PageRequest.of(0, limit))
                 .stream().map(this::toDomain).toList();
     }
 
