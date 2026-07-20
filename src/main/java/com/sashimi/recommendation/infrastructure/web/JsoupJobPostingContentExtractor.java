@@ -117,12 +117,16 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
     private String extractReadableText(Document document) {
         document.select("script, style, noscript, svg, img").remove();
 
+        document.select("br, p, div, li, h1, h2, h3, h4, h5, h6").after("\n");
+
         String text = document.body() == null
                 ? document.wholeText()
                 : document.body().wholeText();
 
         return text
-                .replaceAll("[ \\t\\x0B\\f\\r]+", " ")
+                .replace("\r", "")
+                .replaceAll("[ \\t\\x0B\\f]+", " ")
+                .replaceAll(" \\n", "\n")
                 .replaceAll("\\n{3,}", "\n\n")
                 .trim();
     }
