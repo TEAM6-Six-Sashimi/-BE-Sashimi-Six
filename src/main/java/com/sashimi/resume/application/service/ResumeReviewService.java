@@ -129,14 +129,12 @@ public class ResumeReviewService implements ReviewResumeUseCase {
                 );
 
         return aiRequestHistoryRepository
-                .findFirstByUserIdAndFeatureTypeAndStatusOrderByCreatedAtDesc(
+                .findFirstByUserIdAndFeatureTypeAndStatusAndRequestSnapshotJsonOrderByCreatedAtDesc(
                         userId,
                         AiFeatureType.RESUME_REVIEW,
-                        AiRequestStatus.COMPLETED
+                        AiRequestStatus.COMPLETED,
+                        String.valueOf(resumeId)
                 )
-                .filter(history -> String.valueOf(resumeId).equals(
-                        history.getRequestSnapshotJson()
-                ))
                 .filter(history -> history.getResultJson() != null
                         && !history.getResultJson().isBlank())
                 .map(history -> readJson(

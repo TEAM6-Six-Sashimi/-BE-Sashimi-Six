@@ -63,4 +63,11 @@ public interface SpringDataAiRequestHistoryRepository
             Long userId,
             AiFeatureType featureType
     );
+
+    Optional<AiRequestHistoryJpaEntity> findFirstByUserIdAndFeatureTypeAndStatusAndRequestSnapshotJsonOrderByCreatedAtDesc(
+            Long userId,
+            AiFeatureType featureType,
+            AiRequestStatus status,
+            String requestSnapshotJson
+    );
 }

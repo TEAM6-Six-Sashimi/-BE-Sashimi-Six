@@ -86,7 +86,7 @@ external:
     service-key: ${QUALIFICATION_CODE_SERVICE_KEY:}
   ai-server:
     base-url: http://172.31.33.226:8001
-    timeout-seconds: 30
+    timeout-seconds: 60
 
 codef:
   client-id: ${CODEF_CLIENT_ID:}

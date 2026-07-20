@@ -127,6 +127,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> searchApprovedByKeyword(String keyword) {
+        return springDataCourseRepository.searchApprovedByKeyword(keyword)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public void deleteById(Long id) {
         springDataCourseRepository.deleteById(id);
     }
