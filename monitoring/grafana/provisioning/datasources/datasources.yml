@@ -15,3 +15,15 @@ datasources:
     access: proxy
     url: http://loki:3100
     editable: false
+
+  # 비즈니스 지표(구독 이탈률, 강의별 매출 등)용 - 읽기 전용 계정만 사용
+  - name: MySQL-Sashimi
+    type: mysql
+    uid: mysql-sashimi
+    access: proxy
+    url: $GRAFANA_MYSQL_HOST:3306
+    database: sashimi
+    user: $GRAFANA_MYSQL_USER
+    secureJsonData:
+      password: $GRAFANA_MYSQL_PASSWORD
+    editable: false

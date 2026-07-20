@@ -43,6 +43,9 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s/
+      - GRAFANA_MYSQL_HOST=${GRAFANA_MYSQL_HOST}
+      - GRAFANA_MYSQL_USER=${GRAFANA_MYSQL_USER}
+      - GRAFANA_MYSQL_PASSWORD=${GRAFANA_MYSQL_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
