@@ -24,6 +24,20 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
     List<CourseJpaEntity> findByStatusAndArchivedFalse(CourseStatus status);
 
     @Query("""
+            select c
+            from CourseJpaEntity c
+            where c.status = com.sashimi.course.domain.model.CourseStatus.APPROVED
+              and (
+                    lower(replace(coalesce(c.title, ''), ' ', '')) like concat('%', :keyword, '%')
+                 or lower(replace(coalesce(c.description, ''), ' ', '')) like concat('%', :keyword, '%')
+              )
+            order by c.id desc
+            """)
+    List<CourseJpaEntity> searchApprovedByKeyword(
+            @Param("keyword") String keyword
+    );
+
+    @Query("""
             select new com.sashimi.course.application.port.InstructorCourseSales(
                 c.id,
                 c.title,
