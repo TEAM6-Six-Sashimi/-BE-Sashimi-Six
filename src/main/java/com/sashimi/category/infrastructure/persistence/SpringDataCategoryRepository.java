@@ -15,6 +15,8 @@ public interface SpringDataCategoryRepository extends JpaRepository<CategoryJpaE
     List<CategoryJpaEntity> findAllByOrderByMainCategoryIdAscIdAsc();
     boolean existsBySubCategory(String subCategory);
     Optional<CategoryJpaEntity> findFirstByName(String name);
+    boolean existsByMainCategoryId(Long mainCategoryId);
+    List<CategoryJpaEntity> findAllByMainCategoryIdIn(List<Long> mainCategoryIds);
 
     @Query("select coalesce(max(c.mainCategoryId), 0) from CategoryJpaEntity c")
     Long findMaxMainCategoryId();
