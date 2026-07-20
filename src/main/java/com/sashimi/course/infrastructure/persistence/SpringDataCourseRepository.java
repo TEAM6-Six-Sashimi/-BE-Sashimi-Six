@@ -1,11 +1,11 @@
 package com.sashimi.course.infrastructure.persistence;
 
-import com.sashimi.course.domain.model.CourseStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import com.sashimi.course.application.port.InstructorCourseSales;
+import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.order.domain.model.OrderItemType;
 import com.sashimi.payment.domain.model.PaymentStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -43,7 +43,7 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
             where c.status = com.sashimi.course.domain.model.CourseStatus.APPROVED
             order by c.studentCount desc, c.id desc
             """)
-    List<CourseJpaEntity> findPopularApprovedCourses();
+    List<CourseJpaEntity> findPopularApprovedCourses(Pageable pageable);
 
     @Query("""
             select new com.sashimi.course.application.port.InstructorCourseSales(
