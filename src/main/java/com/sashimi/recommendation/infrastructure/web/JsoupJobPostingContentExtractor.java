@@ -50,16 +50,13 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
         }
 
         String normalizedUrl = normalizeUrl(sourceUrl);
+        normalizedUrl = normalizeSaraminUrl(normalizedUrl);
         validatePublicHttpUrl(normalizedUrl);
 
         try {
             Document document = fetchDocument(normalizedUrl);
 
-            document.select("script, style, noscript").remove();
-
-            String text = document.body() == null
-                    ? document.text()
-                    : document.body().text();
+            String text = extractReadableText(document);
 
             if (text == null || text.isBlank()) {
                 throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
@@ -71,6 +68,67 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         }
+    }
+
+    private String normalizeSaraminUrl(String sourceUrl) {
+        try {
+            URI uri = URI.create(sourceUrl);
+
+            String host = uri.getHost();
+            if (host == null
+                    || !(host.equals("saramin.co.kr")
+                    || host.equals("www.saramin.co.kr"))) {
+                return sourceUrl;
+            }
+
+            String recIdx = extractQueryParam(uri.getRawQuery(), "rec_idx");
+            if (recIdx == null || recIdx.isBlank()) {
+                return sourceUrl;
+            }
+
+            if (!recIdx.matches("\\d+")) {
+                return sourceUrl;
+            }
+
+            return "https://www.saramin.co.kr/zf_user/jobs/view?rec_idx=" + recIdx;
+        } catch (Exception e) {
+            return sourceUrl;
+        }
+    }
+
+    private String extractQueryParam(String rawQuery, String name) {
+        if (rawQuery == null || rawQuery.isBlank()) {
+            return null;
+        }
+
+        String[] params = rawQuery.split("&");
+
+        for (String param : params) {
+            String[] pair = param.split("=", 2);
+
+            if (pair.length == 2 && pair[0].equals(name)) {
+                return pair[1];
+            }
+        }
+
+        return null;
+    }
+
+    private String extractReadableText(Document document) {
+        document.select("script, style, noscript, svg, img").remove();
+
+        document.select("br, p, div, li, h1, h2, h3, h4, h5, h6").after("\n");
+
+        String text = document.body() == null
+                ? document.wholeText()
+                : document.body().wholeText();
+
+        return text
+                .replace("\r", "")
+                .replaceAll("[ \\t\\x0B\\f]+", " ")
+                .replaceAll(" \\n", "\n")
+                .replaceAll("\\n{3,}", "\n\n")
+                .trim();
     }
 
     private Document fetchDocument(String url) {
