@@ -73,6 +73,13 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findAllByIdIn(List<Long> ids) {
+        // sessions는 LAZY라 toDomain()으로 건별 접근하면 N+1이 재발함 - 커피챗 목록조회처럼 sessions가 안 쓰이는 배치조회 전용
+        return springDataCourseRepository.findAllById(ids)
+                .stream().map(this::toDomainWithoutSessions).toList();
+    }
+
+    @Override
     public List<Course> findByInstructorIdAndStatus(Long instructorId, CourseStatus status) {
         return springDataCourseRepository.findByInstructorIdAndStatus(instructorId, status)
                 .stream().map(this::toDomain).toList();
@@ -144,7 +151,14 @@ public class CourseRepositoryAdapter implements CourseRepository {
                         s.isPreview(), s.getAttachmentName(), s.getAttachmentUrl(),
                         s.getAttachmentType(), s.getAttachmentSize(), s.getCreatedAt(), s.getUpdatedAt()))
                 .toList();
+        return toDomain(entity, sessions);
+    }
 
+    private Course toDomainWithoutSessions(CourseJpaEntity entity) {
+        return toDomain(entity, List.of());
+    }
+
+    private Course toDomain(CourseJpaEntity entity, List<CourseSession> sessions) {
         return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(),
                 entity.getTitle(), entity.getDescription(), entity.getPrice(), entity.getDifficulty(),
                 entity.getThumbnail(), entity.getTotalDuration(), entity.getStatus(),

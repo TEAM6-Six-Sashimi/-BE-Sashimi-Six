@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -101,16 +102,32 @@ public class CoffeeChatQueryService implements CoffeeChatQueryUseCase {
         Map<Long, CoffeeChatMessage> latestMessages =
                 coffeeChatMessageRepository.findLatestMessagesByCoffeeChatIds(chatIds);
 
+        List<Long> courseIds = chats.stream().map(CoffeeChat::getCourseId).distinct().collect(Collectors.toList());
+        List<Long> userIds = chats.stream()
+                .flatMap(chat -> Stream.of(chat.getInstructorId(), chat.getStudentId()))
+                .distinct()
+                .collect(Collectors.toList());
+        List<Long> instructorIds = chats.stream().map(CoffeeChat::getInstructorId).distinct().collect(Collectors.toList());
+
+        Map<Long, Course> coursesById = courseRepository.findAllByIdIn(courseIds).stream()
+                .collect(Collectors.toMap(Course::getId, course -> course));
+        Map<Long, User> usersById = userRepository.findAllByIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getId, user -> user));
+        Map<Long, InstructorPort.InstructorInfo> instructorInfoById =
+                instructorPort.getInstructorInfoBatch(instructorIds);
+
         return chats.stream()
                 .map(chat -> {
-                    Course course = courseRepository.findById(chat.getCourseId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
-                    User instructor = userRepository.findById(chat.getInstructorId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-                    User student = userRepository.findById(chat.getStudentId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-                    String instructorProfileImagePath =
-                            instructorPort.getInstructorInfo(chat.getInstructorId()).profileImagePath();
+                    Course course = coursesById.get(chat.getCourseId());
+                    if (course == null) {
+                        throw new BusinessException(ErrorCode.COURSE_NOT_FOUND);
+                    }
+                    User instructor = usersById.get(chat.getInstructorId());
+                    User student = usersById.get(chat.getStudentId());
+                    if (instructor == null || student == null) {
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+                    }
+                    String instructorProfileImagePath = instructorInfoById.get(chat.getInstructorId()).profileImagePath();
                     CoffeeChatMessage lastMessage = latestMessages.get(chat.getId());
 
                     return new CoffeeChatSummaryView(
