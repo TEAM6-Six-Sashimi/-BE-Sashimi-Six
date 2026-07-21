@@ -18,6 +18,26 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
     private static final int TIMEOUT_MILLIS = 5000;
     private static final int MAX_TEXT_LENGTH = 12000;
     private static final int MAX_REDIRECT_COUNT = 3;
+    private static final int MIN_EXTRACTED_TEXT_LENGTH = 200;
+
+    private static final String[] JOB_POSTING_KEYWORDS = {
+            "주요업무",
+            "주요 업무",
+            "담당업무",
+            "담당 업무",
+            "자격요건",
+            "자격 요건",
+            "지원자격",
+            "지원 자격",
+            "우대사항",
+            "우대 사항",
+            "전형절차",
+            "전형 절차",
+            "근무조건",
+            "근무 조건",
+            "모집",
+            "채용"
+    };
 
     @Override
     public String extract(
@@ -53,21 +73,13 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
         normalizedUrl = normalizeSaraminUrl(normalizedUrl);
         validatePublicHttpUrl(normalizedUrl);
 
-        try {
-            Document document = fetchDocument(normalizedUrl);
+        Document document = fetchDocument(normalizedUrl);
 
-            String text = extractReadableText(document);
+        String text = extractReadableText(document);
 
-            if (text == null || text.isBlank()) {
-                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-            }
+        validateExtractedContent(text);
 
-            return limit(text.trim());
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+        return limit(text.trim());
     }
 
     private String normalizeSaraminUrl(String sourceUrl) {
@@ -131,6 +143,38 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
                 .trim();
     }
 
+    private void validateExtractedContent(String text) {
+        if (text == null || text.isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.JOB_POSTING_CONTENT_EXTRACT_FAILED
+            );
+        }
+
+        String trimmedText = text.trim();
+
+        if (trimmedText.length() < MIN_EXTRACTED_TEXT_LENGTH) {
+            throw new BusinessException(
+                    ErrorCode.JOB_POSTING_CONTENT_EXTRACT_FAILED
+            );
+        }
+
+        if (!containsJobPostingKeyword(trimmedText)) {
+            throw new BusinessException(
+                    ErrorCode.JOB_POSTING_CONTENT_EXTRACT_FAILED
+            );
+        }
+    }
+
+    private boolean containsJobPostingKeyword(String text) {
+        for (String keyword : JOB_POSTING_KEYWORDS) {
+            if (text.contains(keyword)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private Document fetchDocument(String url) {
         String currentUrl = url;
 
@@ -150,22 +194,34 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
                     String location = response.header("Location");
 
                     if (location == null || location.isBlank()) {
-                        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                        throw new BusinessException(
+                                ErrorCode.JOB_POSTING_URL_FETCH_FAILED
+                        );
                     }
 
                     currentUrl = resolveRedirectUrl(currentUrl, location);
                     continue;
                 }
 
+                if (statusCode < 200 || statusCode >= 300) {
+                    throw new BusinessException(
+                            ErrorCode.JOB_POSTING_URL_FETCH_FAILED
+                    );
+                }
+
                 return response.parse();
             } catch (BusinessException e) {
                 throw e;
             } catch (Exception e) {
-                throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                throw new BusinessException(
+                        ErrorCode.JOB_POSTING_URL_FETCH_FAILED
+                );
             }
         }
 
-        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        throw new BusinessException(
+                ErrorCode.JOB_POSTING_URL_FETCH_FAILED
+        );
     }
 
     private String normalizeUrl(String sourceUrl) {
@@ -194,7 +250,9 @@ public class JsoupJobPostingContentExtractor implements JobPostingContentExtract
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+            throw new BusinessException(
+                    ErrorCode.JOB_POSTING_URL_FETCH_FAILED
+            );
         }
     }
 

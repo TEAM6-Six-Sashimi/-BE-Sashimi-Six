@@ -156,6 +156,8 @@ public enum ErrorCode {
     COVER_LETTER_REVIEW_NOT_FOUND(404, "COVER_LETTER_404", "자기소개서 첨삭 결과를 찾을 수 없습니다."),
 
     JOB_POSTING_RECOMMENDATION_NOT_FOUND(404, "RECOMMENDATION_404", "채용공고 추천 결과를 찾을 수 없습니다."),
+    JOB_POSTING_URL_FETCH_FAILED(400, "RECOMMENDATION_001", "입력하신 URL에 접속할 수 없습니다. URL을 다시 확인해주세요."),
+    JOB_POSTING_CONTENT_EXTRACT_FAILED(400, "RECOMMENDATION_002", "해당 사이트의 페이지 구조상 채용공고 본문을 자동으로 불러오지 못했습니다. 공고 내용을 복사해 텍스트 직접 입력을 이용해주세요."),
 
     FILE_EMPTY(400, "FILE_001", "업로드할 파일이 없습니다."),
     FILE_INVALID_TYPE(400, "FILE_002", "지원하지 않는 파일 형식입니다. (jpg, png, gif, webp만 허용)"),
