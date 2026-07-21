@@ -3,13 +3,17 @@ package com.sashimi.course.infrastructure.persistence;
 import com.sashimi.course.application.port.InstructorPort;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.user.domain.model.User;
 import com.sashimi.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -67,6 +71,46 @@ public class InstructorPortAdapter implements InstructorPort {
                 },
                 instructorId
         );
+    }
+
+    @Override
+    public Map<Long, InstructorInfo> getInstructorInfoBatch(List<Long> instructorIds) {
+        if (instructorIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> distinctIds = instructorIds.stream().distinct().toList();
+        Map<Long, String> namesById = userRepository.findAllByIdIn(distinctIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getName));
+
+        String placeholders = distinctIds.stream().map(id -> "?").collect(Collectors.joining(","));
+        String sql = """
+                SELECT user_id, profile_image_path, bio, main_careers, portfolio_url
+                FROM instructor_profiles
+                WHERE user_id IN (%s) AND approval_status = 'APPROVED'
+                ORDER BY user_id, approved_at DESC
+                """.formatted(placeholders);
+
+        Map<Long, InstructorInfo> infoById = new HashMap<>();
+        jdbcTemplate.query(sql, rs -> {
+            long userId = rs.getLong("user_id");
+            if (!infoById.containsKey(userId)) {
+                List<String> mainCareers = parseJsonArray(rs.getString("main_careers"));
+                infoById.put(userId, new InstructorInfo(
+                        namesById.get(userId),
+                        rs.getString("profile_image_path"),
+                        rs.getString("bio"),
+                        mainCareers,
+                        rs.getString("portfolio_url")
+                ));
+            }
+        }, distinctIds.toArray());
+
+        for (Long id : distinctIds) {
+            infoById.putIfAbsent(id, new InstructorInfo(namesById.get(id), null, null, List.of(), null));
+        }
+
+        return infoById;
     }
 
     private List<String> parseJsonArray(String json) {

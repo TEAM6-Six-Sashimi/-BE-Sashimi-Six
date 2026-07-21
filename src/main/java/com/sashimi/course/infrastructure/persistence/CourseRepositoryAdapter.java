@@ -73,6 +73,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findAllByIdIn(List<Long> ids) {
+        return springDataCourseRepository.findAllById(ids)
+                .stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<Course> findByInstructorIdAndStatus(Long instructorId, CourseStatus status) {
         return springDataCourseRepository.findByInstructorIdAndStatus(instructorId, status)
                 .stream().map(this::toDomain).toList();
