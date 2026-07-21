@@ -24,7 +24,7 @@ public class OutboxEmailScheduler {
     @Transactional
     @Scheduled(fixedDelay = 30000)
     public void processOutbox() {
-        List<EmailOutboxJpaEntity> pending = outboxRepository.findByStatus(OutboxStatus.PENDING);
+        List<EmailOutboxJpaEntity> pending = outboxRepository.findFirst100ByStatusOrderByIdAsc(OutboxStatus.PENDING);
 
         if (pending.isEmpty()) return;
 
