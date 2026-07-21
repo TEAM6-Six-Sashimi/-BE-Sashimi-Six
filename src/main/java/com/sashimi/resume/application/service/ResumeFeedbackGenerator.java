@@ -146,7 +146,7 @@ public class ResumeFeedbackGenerator {
             case CAREER ->
                     "수행한 주요 업무와 프로젝트 성과를 중심으로 경력 사항을 구체적으로 작성해 주세요.";
             case CERTIFICATE ->
-                    "검증된 자격증 정보를 추가하면 자격증 사항의 완성도를 높일 수 있습니다.";
+                    "보유한 자격증 정보를 추가하면 자격증 사항의 점수를 높일 수 있습니다.";
         };
     }
 
