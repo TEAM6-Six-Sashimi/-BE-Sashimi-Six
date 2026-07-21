@@ -1,6 +1,7 @@
 package com.sashimi.resume.application.calculator;
 
 import com.sashimi.resume.application.result.ResumeScoreResult;
+import com.sashimi.resume.application.service.ResumeCareerDeduplicator;
 import com.sashimi.resume.domain.model.EducationDegree;
 import com.sashimi.resume.domain.model.EmploymentType;
 import com.sashimi.resume.domain.model.GraduationStatus;
@@ -18,11 +19,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 // 이력서 총 점수 및 등급 테스트
 class ResumeScoreCalculatorTest {
 
+    private final ResumeCareerDeduplicator resumeCareerDeduplicator =
+            new ResumeCareerDeduplicator();
+
     private final ResumeScoreCalculator calculator =
             new ResumeScoreCalculator(
                     new EducationScoreCalculator(),
-                    new CareerCountScoreCalculator(),
-                    new CareerPeriodScoreCalculator(),
+                    new CareerCountScoreCalculator(
+                            resumeCareerDeduplicator
+                    ),
+                    new CareerPeriodScoreCalculator(
+                            resumeCareerDeduplicator
+                    ),
                     new CertificateScoreCalculator(),
                     new ResumeGradeCalculator()
             );
@@ -38,37 +46,14 @@ class ResumeScoreCalculatorTest {
                 YearMonth.of(2026, 6)
         );
 
-        assertThat(
-                result.education().score()
-        ).isEqualTo(85);
-
-        assertThat(
-                result.careerCountScore()
-        ).isEqualTo(25);
-
-        assertThat(
-                result.careerPeriodScore()
-        ).isEqualTo(35);
-
-        assertThat(
-                result.careerContinuityScore()
-        ).isEqualTo(30);
-
-        assertThat(
-                result.career().score()
-        ).isEqualTo(90);
-
-        assertThat(
-                result.certificate().score()
-        ).isEqualTo(80);
-
-        assertThat(
-                result.overallScore()
-        ).isEqualTo(85);
-
-        assertThat(
-                result.overallGrade()
-        ).isEqualTo("양호");
+        assertThat(result.education().score()).isEqualTo(85);
+        assertThat(result.careerCountScore()).isEqualTo(25);
+        assertThat(result.careerPeriodScore()).isEqualTo(35);
+        assertThat(result.careerContinuityScore()).isEqualTo(30);
+        assertThat(result.career().score()).isEqualTo(90);
+        assertThat(result.certificate().score()).isEqualTo(80);
+        assertThat(result.overallScore()).isEqualTo(85);
+        assertThat(result.overallGrade()).isEqualTo("양호");
     }
 
     @Test
@@ -82,29 +67,12 @@ class ResumeScoreCalculatorTest {
                 YearMonth.of(2026, 6)
         );
 
-        assertThat(
-                result.careerCountScore()
-        ).isZero();
-
-        assertThat(
-                result.careerPeriodScore()
-        ).isZero();
-
-        assertThat(
-                result.careerContinuityScore()
-        ).isZero();
-
-        assertThat(
-                result.career().score()
-        ).isZero();
-
-        assertThat(
-                result.overallScore()
-        ).isEqualTo(28);
-
-        assertThat(
-                result.overallGrade()
-        ).isEqualTo("보완 필요");
+        assertThat(result.careerCountScore()).isZero();
+        assertThat(result.careerPeriodScore()).isZero();
+        assertThat(result.careerContinuityScore()).isZero();
+        assertThat(result.career().score()).isZero();
+        assertThat(result.overallScore()).isEqualTo(28);
+        assertThat(result.overallGrade()).isEqualTo("보완 필요");
     }
 
     @Test

@@ -46,13 +46,26 @@ public class CourseRecommendationMatcher {
             List<CertificateRecommendation> certificates,
             List<CourseSearchCriterion> courseSearchCriteria
     ) {
-        List<String> searchKeywords = extractSearchKeywords(
+
+        List<String> searchKeywords = extractCertificateSearchKeywords(
                 certificates,
                 courseSearchCriteria
         );
 
+        return matchByCertificateKeywords(
+                certificates,
+                courseSearchCriteria,
+                searchKeywords
+        );
+    }
+
+    private List<CourseRecommendation> matchByCertificateKeywords(
+            List<CertificateRecommendation> certificates,
+            List<CourseSearchCriterion> courseSearchCriteria,
+            List<String> searchKeywords
+    ) {
         if (searchKeywords.isEmpty()) {
-            log.debug("강의 추천 매칭 스킵: 검색 키워드 없음");
+            log.debug("자격증 기반 강의 추천 스킵: 검색 키워드 없음");
             return List.of();
         }
 
@@ -60,10 +73,9 @@ public class CourseRecommendationMatcher {
 
         if (candidateCourses.isEmpty()) {
             log.debug(
-                    "강의 추천 매칭 결과 없음: keywordCount={}, certificateCount={}, criteriaCount={}",
+                    "자격증 기반 강의 후보 없음: keywordCount={}, certificateCount={}",
                     searchKeywords.size(),
-                    sizeOf(certificates),
-                    sizeOf(courseSearchCriteria)
+                    sizeOf(certificates)
             );
             return List.of();
         }
@@ -76,7 +88,7 @@ public class CourseRecommendationMatcher {
                 candidates
         );
 
-        collectCourseSearchCriteriaCandidates(
+        collectCertificateCriteriaCandidates(
                 courseSearchCriteria,
                 candidateCourses,
                 candidates
@@ -84,7 +96,7 @@ public class CourseRecommendationMatcher {
 
         if (candidates.isEmpty()) {
             log.debug(
-                    "강의 추천 점수화 결과 없음: candidateCourseCount={}, keywordCount={}",
+                    "자격증 기반 강의 점수화 결과 없음: candidateCourseCount={}, keywordCount={}",
                     candidateCourses.size(),
                     searchKeywords.size()
             );
@@ -110,7 +122,7 @@ public class CourseRecommendationMatcher {
                         .toList();
 
         log.debug(
-                "강의 추천 매칭 완료: keywordCount={}, candidateCourseCount={}, matchedCourseCount={}",
+                "자격증 기반 강의 추천 완료: keywordCount={}, candidateCourseCount={}, matchedCourseCount={}",
                 searchKeywords.size(),
                 candidateCourses.size(),
                 recommendations.size()
@@ -119,7 +131,7 @@ public class CourseRecommendationMatcher {
         return recommendations;
     }
 
-    private List<String> extractSearchKeywords(
+    private List<String> extractCertificateSearchKeywords(
             List<CertificateRecommendation> certificates,
             List<CourseSearchCriterion> courseSearchCriteria
     ) {
@@ -134,11 +146,7 @@ public class CourseRecommendationMatcher {
         }
 
         for (CourseSearchCriterion criterion : nullToEmpty(courseSearchCriteria)) {
-            if (!isSupportedCriterion(criterion)) {
-                log.debug(
-                        "지원하지 않는 강의 검색 기준 제외: recommendationType={}",
-                        criterion == null ? null : criterion.recommendationType()
-                );
+            if (!isCertificateCriterion(criterion)) {
                 continue;
             }
 
@@ -248,13 +256,13 @@ public class CourseRecommendationMatcher {
         }
     }
 
-    private void collectCourseSearchCriteriaCandidates(
+    private void collectCertificateCriteriaCandidates(
             List<CourseSearchCriterion> courseSearchCriteria,
             List<Course> candidateCourses,
             List<CourseMatchCandidate> candidates
     ) {
         for (CourseSearchCriterion criterion : nullToEmpty(courseSearchCriteria)) {
-            if (!isSupportedCriterion(criterion)) {
+            if (!isCertificateCriterion(criterion)) {
                 continue;
             }
 
@@ -375,15 +383,13 @@ public class CourseRecommendationMatcher {
         return 0;
     }
 
-    private boolean isSupportedCriterion(CourseSearchCriterion criterion) {
+    private boolean isCertificateCriterion(CourseSearchCriterion criterion) {
         if (criterion == null) {
             return false;
         }
 
-        String recommendationType = safe(criterion.recommendationType());
-
-        return recommendationType.equals("CERTIFICATE")
-                || recommendationType.equals("JOB_POSTING");
+        return safe(criterion.recommendationType())
+                .equals("CERTIFICATE");
     }
 
     private <T> List<T> nullToEmpty(List<T> values) {

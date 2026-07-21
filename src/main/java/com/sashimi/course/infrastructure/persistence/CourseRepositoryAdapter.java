@@ -29,7 +29,7 @@ public class CourseRepositoryAdapter implements CourseRepository {
 
     private Course saveNew(Course course) {
         CourseJpaEntity entity = new CourseJpaEntity(
-                course.getInstructorId(), course.getCategoryId(),course.getTitle(),
+                course.getInstructorId(), course.getCategoryId(), course.getTitle(),
                 course.getDescription(), course.getPrice(), course.getDifficulty(),
                 course.getThumbnail(), course.getTotalDuration(), course.getStatus(),
                 course.getRejectReason(), course.getRatingAvg(), course.getReviewCount(),
@@ -50,9 +50,9 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getTotalDuration(), course.getStatus(), course.getUpdatedAt());
 
-        if (course.getStatus() == com.sashimi.course.domain.model.CourseStatus.APPROVED) {
+        if (course.getStatus() == CourseStatus.APPROVED) {
             entity.approve(course.getApprovedAt(), course.getUpdatedAt());
-        } else if (course.getStatus() == com.sashimi.course.domain.model.CourseStatus.REJECTED) {
+        } else if (course.getStatus() == CourseStatus.REJECTED) {
             entity.reject(course.getRejectReason(), course.getRejectReasonCategory(),
                     course.getRejectDetail(), course.getUpdatedAt());
         }

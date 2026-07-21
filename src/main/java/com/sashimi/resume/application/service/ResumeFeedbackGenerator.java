@@ -11,6 +11,7 @@ import com.sashimi.resume.application.result.ResumeScoreResult;
 import com.sashimi.resume.application.result.SectionFeedbackResult;
 import com.sashimi.resume.application.result.SectionScoreResult;
 import com.sashimi.resume.domain.model.ResumeReviewSection;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumMap;
@@ -19,25 +20,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// 항목별 점수 결과에 따른 항목별 강점 혹은 보완점 피드백 생성
-// 80점 이상은 백엔드 출력, 79점 이하는 AI 보완
+@Slf4j
 @Service
 public class ResumeFeedbackGenerator {
 
-    private final AiPromptRepository
-            aiPromptRepository;
+    private static final int STRENGTH_SCORE_THRESHOLD = 80;
+    private static final int DEFAULT_IMPROVEMENT_SCORE_THRESHOLD = 60;
 
-    private final ResumeImprovementAiPort
-            resumeImprovementAiPort;
+    private final AiPromptRepository aiPromptRepository;
+    private final ResumeImprovementAiPort resumeImprovementAiPort;
 
     public ResumeFeedbackGenerator(
             AiPromptRepository aiPromptRepository,
             ResumeImprovementAiPort resumeImprovementAiPort
     ) {
-        this.aiPromptRepository =
-                aiPromptRepository;
-        this.resumeImprovementAiPort =
-                resumeImprovementAiPort;
+        this.aiPromptRepository = aiPromptRepository;
+        this.resumeImprovementAiPort = resumeImprovementAiPort;
     }
 
     public List<SectionFeedbackResult> generate(
@@ -52,14 +50,13 @@ public class ResumeFeedbackGenerator {
         List<SectionScoreResult> sectionScores =
                 scoreResult.sectionScores();
 
-        Map<ResumeReviewSection, SectionFeedbackResult>
-                feedbackBySection =
-                new EnumMap<>(
-                        ResumeReviewSection.class
-                );
+        Map<ResumeReviewSection, SectionFeedbackResult> feedbackBySection =
+                new EnumMap<>(ResumeReviewSection.class);
 
         sectionScores.stream()
-                .filter(section -> section.score() >= 80)
+                .filter(section ->
+                        section.score() >= STRENGTH_SCORE_THRESHOLD
+                )
                 .map(SectionFeedbackResult::strength)
                 .forEach(feedback ->
                         feedbackBySection.put(
@@ -68,16 +65,24 @@ public class ResumeFeedbackGenerator {
                         )
                 );
 
-        List<SectionScoreResult> improvementTargets =
+        List<SectionScoreResult> defaultImprovementTargets =
                 sectionScores.stream()
-                        .filter(section ->
-                                section.score() < 80
-                        )
+                        .filter(this::requiresDefaultImprovement)
                         .toList();
 
-        if (!improvementTargets.isEmpty()) {
-            addImprovementFeedbacks(
-                    improvementTargets,
+        addDefaultImprovementFeedbacks(
+                defaultImprovementTargets,
+                feedbackBySection
+        );
+
+        List<SectionScoreResult> aiImprovementTargets =
+                sectionScores.stream()
+                        .filter(this::requiresAiImprovement)
+                        .toList();
+
+        if (!aiImprovementTargets.isEmpty()) {
+            addAiImprovementFeedbacksWithFallback(
+                    aiImprovementTargets,
                     feedbackBySection
             );
         }
@@ -92,10 +97,91 @@ public class ResumeFeedbackGenerator {
                 .toList();
     }
 
-    private void addImprovementFeedbacks(
+    private boolean requiresDefaultImprovement(
+            SectionScoreResult section
+    ) {
+        if (section.score() >= STRENGTH_SCORE_THRESHOLD) {
+            return false;
+        }
+
+        if (section.score() <= DEFAULT_IMPROVEMENT_SCORE_THRESHOLD) {
+            return true;
+        }
+
+        return section.type() != ResumeReviewSection.CAREER;
+    }
+
+    private boolean requiresAiImprovement(
+            SectionScoreResult section
+    ) {
+        return section.type() == ResumeReviewSection.CAREER
+                && section.score() < STRENGTH_SCORE_THRESHOLD
+                && section.score() > DEFAULT_IMPROVEMENT_SCORE_THRESHOLD;
+    }
+
+    private void addDefaultImprovementFeedbacks(
             List<SectionScoreResult> targets,
-            Map<ResumeReviewSection, SectionFeedbackResult>
+            Map<ResumeReviewSection, SectionFeedbackResult> feedbackBySection
+    ) {
+        for (SectionScoreResult target : targets) {
+            SectionFeedbackResult feedback =
+                    SectionFeedbackResult.improvement(
+                            target,
+                            defaultImprovementMessage(target.type())
+                    );
+
+            SectionFeedbackResult previous =
+                    feedbackBySection.put(
+                            feedback.section(),
+                            feedback
+                    );
+
+            if (previous != null) {
+                throw new BusinessException(
+                        ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
+                );
+            }
+        }
+    }
+
+    private String defaultImprovementMessage(
+            ResumeReviewSection section
+    ) {
+        return switch (section) {
+            case EDUCATION ->
+                    "학력 정보를 구체적으로 작성하면 학력 사항의 완성도를 높일 수 있습니다.";
+            case CAREER ->
+                    "수행한 주요 업무와 프로젝트 성과를 중심으로 경력 사항을 구체적으로 작성해 주세요.";
+            case CERTIFICATE ->
+                    "보유한 자격증 정보를 추가하면 자격증 사항의 완성도를 높일 수 있습니다.";
+        };
+    }
+
+    private void addAiImprovementFeedbacksWithFallback(
+            List<SectionScoreResult> targets,
+            Map<ResumeReviewSection, SectionFeedbackResult> feedbackBySection
+    ) {
+        try {
+            addAiImprovementFeedbacks(
+                    targets,
                     feedbackBySection
+            );
+        } catch (RuntimeException exception) {
+            log.warn(
+                    "이력서 AI 보완 피드백 생성 실패. 기본 피드백으로 대체합니다. reason={}",
+                    exception.getClass().getSimpleName()
+            );
+
+            addDefaultImprovementFeedbacks(
+                    targets,
+                    feedbackBySection
+            );
+        }
+    }
+
+    private void addAiImprovementFeedbacks(
+            List<SectionScoreResult> targets,
+            Map<ResumeReviewSection, SectionFeedbackResult> feedbackBySection
     ) {
         AiPrompt prompt = aiPromptRepository
                 .findActiveByType(
@@ -118,8 +204,7 @@ public class ResumeFeedbackGenerator {
                 improvements
         );
 
-        for (SectionFeedbackResult improvement
-                : improvements) {
+        for (SectionFeedbackResult improvement : improvements) {
             if (improvement == null) {
                 throw new BusinessException(
                         ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
@@ -161,11 +246,9 @@ public class ResumeFeedbackGenerator {
                             if (feedback == null
                                     || feedback.type() == null
                                     || feedback.type()
-                                    != ResumeFeedbackType
-                                    .IMPROVEMENT) {
+                                    != ResumeFeedbackType.IMPROVEMENT) {
                                 throw new BusinessException(
-                                        ErrorCode
-                                                .RESUME_INVALID_REVIEW_FEEDBACK
+                                        ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
                                 );
                             }
 
@@ -173,8 +256,7 @@ public class ResumeFeedbackGenerator {
                         })
                         .collect(Collectors.toSet());
 
-        if (improvements.size()
-                != targetSections.size()
+        if (improvements.size() != targetSections.size()
                 || !resultSections.equals(targetSections)) {
             throw new BusinessException(
                     ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
@@ -184,8 +266,7 @@ public class ResumeFeedbackGenerator {
 
     private SectionFeedbackResult requireFeedback(
             SectionScoreResult section,
-            Map<ResumeReviewSection, SectionFeedbackResult>
-                    feedbackBySection
+            Map<ResumeReviewSection, SectionFeedbackResult> feedbackBySection
     ) {
         SectionFeedbackResult feedback =
                 feedbackBySection.get(

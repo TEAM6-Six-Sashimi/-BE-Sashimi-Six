@@ -1,11 +1,10 @@
 package com.sashimi.course.infrastructure.persistence;
 
-import com.sashimi.course.domain.model.CourseStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import com.sashimi.course.application.port.InstructorCourseSales;
+import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.order.domain.model.OrderItemType;
 import com.sashimi.payment.domain.model.PaymentStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
