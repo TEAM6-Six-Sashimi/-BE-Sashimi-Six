@@ -46,10 +46,6 @@ public class CourseRecommendationMatcher {
             List<CertificateRecommendation> certificates,
             List<CourseSearchCriterion> courseSearchCriteria
     ) {
-        if (certificates == null || certificates.isEmpty()) {
-            log.debug("자격증 기반 강의 추천 스킵: 추천 자격증 없음");
-            return List.of();
-        }
 
         List<String> searchKeywords = extractCertificateSearchKeywords(
                 certificates,
