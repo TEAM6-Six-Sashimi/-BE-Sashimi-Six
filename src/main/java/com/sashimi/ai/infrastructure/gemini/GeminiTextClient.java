@@ -6,12 +6,14 @@ import com.sashimi.global.exception.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.Duration;
 import java.util.Map;
 
 @Slf4j
@@ -32,9 +34,14 @@ public class GeminiTextClient {
         this.geminiProperties = geminiProperties;
         this.objectMapper = objectMapper;
         this.aiMetrics = aiMetrics;
-        this.restClient = RestClient.create(
-                geminiProperties.baseUrl()
-        );
+        this.restClient = RestClient.builder()
+                .baseUrl(geminiProperties.baseUrl())
+                .requestFactory(
+                        createRequestFactory(
+                                geminiProperties.timeoutSeconds()
+                        )
+                )
+                .build();
     }
 
     public String generate(
@@ -54,10 +61,11 @@ public class GeminiTextClient {
         long startedAt = System.currentTimeMillis();
 
         log.info(
-                "Gemini API 호출: feature={}, model={}, promptLength={}",
+                "Gemini API 호출: feature={}, model={}, promptLength={}, timeoutSeconds={}",
                 metricFeature,
                 geminiProperties.model(),
-                prompt.length()
+                prompt.length(),
+                geminiProperties.timeoutSeconds()
         );
 
         try {
@@ -138,6 +146,28 @@ public class GeminiTextClient {
                     ErrorCode.AI_API_CALL_FAILED
             );
         }
+    }
+
+    private SimpleClientHttpRequestFactory createRequestFactory(
+            int timeoutSeconds
+    ) {
+        int safeTimeoutSeconds =
+                timeoutSeconds > 0
+                        ? timeoutSeconds
+                        : 30;
+
+        SimpleClientHttpRequestFactory requestFactory =
+                new SimpleClientHttpRequestFactory();
+
+        Duration timeout =
+                Duration.ofSeconds(
+                        safeTimeoutSeconds
+                );
+
+        requestFactory.setConnectTimeout(timeout);
+        requestFactory.setReadTimeout(timeout);
+
+        return requestFactory;
     }
 
     private String extractGeneratedText(
