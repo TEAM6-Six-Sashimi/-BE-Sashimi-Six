@@ -76,10 +76,12 @@ public class JobPostingRecommendationAsyncService {
         long startedAt = System.currentTimeMillis();
         aiMetrics.incrementRequestStarted(AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION);
 
-        JobPostingRecommendation recommendation = recommendationRepository.findByIdAndUserId(recommendationId, userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.JOB_POSTING_RECOMMENDATION_NOT_FOUND));
+        JobPostingRecommendation recommendation = null;
 
         try {
+            recommendation = recommendationRepository.findByIdAndUserId(recommendationId, userId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.JOB_POSTING_RECOMMENDATION_NOT_FOUND));
+
             AiPrompt prompt = aiPromptRepository.findActiveByType(AiPromptType.JOB_POSTING_ANALYSIS)
                     .orElseThrow(() -> new BusinessException(ErrorCode.AI_PROMPT_NOT_FOUND));
 
@@ -180,8 +182,10 @@ public class JobPostingRecommendationAsyncService {
                     System.currentTimeMillis() - startedAt
             );
 
-            JobPostingRecommendation failedRecommendation = recommendation.failed();
-            recommendationRepository.save(failedRecommendation);
+            if (recommendation != null) {
+                JobPostingRecommendation failedRecommendation = recommendation.failed();
+                recommendationRepository.save(failedRecommendation);
+            }
         }
     }
 

@@ -2,17 +2,13 @@ package com.sashimi.coverletter.application.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
 import com.sashimi.ai.domain.model.AiFeatureType;
 import com.sashimi.ai.domain.model.AiRequestStatus;
 import com.sashimi.ai.infrastructure.fastapi.coverletter.FastApiCoverLetterClient;
-import com.sashimi.ai.infrastructure.fastapi.coverletter.FastApiCoverLetterReviewRequest;
 import com.sashimi.ai.infrastructure.fastapi.coverletter.FastApiCoverLetterReviewResponse;
 import com.sashimi.ai.infrastructure.persistence.AiRequestHistoryJpaEntity;
 import com.sashimi.ai.infrastructure.persistence.SpringDataAiRequestHistoryRepository;
-import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.coverletter.domain.model.CoverLetterQuestion;
-import com.sashimi.coverletter.infrastructure.persistence.SpringDataCoverLetterRepository;
 import com.sashimi.coverletter.presentation.api.response.CoverLetterReviewCreateResponse;
 import com.sashimi.coverletter.presentation.api.response.CoverLetterReviewQuestionResponse;
 import com.sashimi.coverletter.presentation.api.response.CoverLetterReviewResultResponse;
@@ -26,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -37,69 +32,59 @@ public class CoverLetterReviewService {
 
     private static final int TOTAL_QUESTION_COUNT = 5;
 
-    private final SpringDataCoverLetterRepository coverLetterRepository;
     private final SpringDataAiRequestHistoryRepository aiRequestHistoryRepository;
-    private final AiFeatureAccessPolicy aiFeatureAccessPolicy;
     private final FastApiCoverLetterClient fastApiCoverLetterClient;
     private final ObjectMapper objectMapper;
+    private final CoverLetterReviewTransactionService coverLetterReviewTransactionService;
 
     public CoverLetterReviewService(
-            SpringDataCoverLetterRepository coverLetterRepository,
             SpringDataAiRequestHistoryRepository aiRequestHistoryRepository,
-            AiFeatureAccessPolicy aiFeatureAccessPolicy,
             FastApiCoverLetterClient fastApiCoverLetterClient,
-            ObjectMapper objectMapper
+            ObjectMapper objectMapper,
+            CoverLetterReviewTransactionService coverLetterReviewTransactionService
     ) {
-        this.coverLetterRepository = coverLetterRepository;
         this.aiRequestHistoryRepository = aiRequestHistoryRepository;
-        this.aiFeatureAccessPolicy = aiFeatureAccessPolicy;
         this.fastApiCoverLetterClient = fastApiCoverLetterClient;
         this.objectMapper = objectMapper;
+        this.coverLetterReviewTransactionService =
+                coverLetterReviewTransactionService;
     }
 
-    @Transactional
     public CoverLetterReviewCreateResponse review(Long userId) {
-        Map<CoverLetterQuestion, String> contentMap = getContentMap(userId);
+        CoverLetterReviewPreparation preparation =
+                coverLetterReviewTransactionService.prepareReview(userId);
 
-        if (isAllBlank(contentMap)) {
-            throw new BusinessException(ErrorCode.COVER_LETTER_EMPTY);
+        try {
+            FastApiCoverLetterReviewResponse fastApiResponse =
+                    fastApiCoverLetterClient.review(
+                            preparation.fastApiRequest()
+                    );
+
+            CoverLetterReviewResultResponse result = toReviewResult(
+                    preparation.historyId(),
+                    preparation.createdAt(),
+                    preparation.contentMap(),
+                    fastApiResponse
+            );
+
+            coverLetterReviewTransactionService.completeReview(
+                    preparation.historyId(),
+                    result
+            );
+
+            return new CoverLetterReviewCreateResponse(
+                    preparation.historyId(),
+                    preparation.createdAt(),
+                    result.summary()
+            );
+        } catch (RuntimeException exception) {
+            coverLetterReviewTransactionService.failReview(
+                    preparation.historyId(),
+                    exception
+            );
+
+            throw exception;
         }
-
-        aiFeatureAccessPolicy.validate(
-                userId,
-                AiMetrics.FEATURE_COVER_LETTER_REVIEW
-        );
-
-        FastApiCoverLetterReviewRequest request =
-                createFastApiRequest(contentMap);
-
-        String requestSnapshotJson = writeJson(request);
-
-        AiRequestHistoryJpaEntity history = aiRequestHistoryRepository.save(
-                AiRequestHistoryJpaEntity.started(
-                        userId,
-                        AiFeatureType.COVER_LETTER_REVIEW,
-                        requestSnapshotJson
-                )
-        );
-
-        FastApiCoverLetterReviewResponse fastApiResponse =
-                fastApiCoverLetterClient.review(request);
-
-        CoverLetterReviewResultResponse result = toReviewResult(
-                history.getId(),
-                history.getCreatedAt(),
-                contentMap,
-                fastApiResponse
-        );
-
-        history.complete(writeJson(result));
-
-        return new CoverLetterReviewCreateResponse(
-                history.getId(),
-                history.getCreatedAt(),
-                result.summary()
-        );
     }
 
     @Transactional(readOnly = true)
@@ -139,39 +124,6 @@ public class CoverLetterReviewService {
                 ));
 
         return readResult(history.getResultJson());
-    }
-
-    private FastApiCoverLetterReviewRequest createFastApiRequest(
-            Map<CoverLetterQuestion, String> contentMap
-    ) {
-        List<FastApiCoverLetterReviewRequest.Question> questions =
-                Arrays.stream(CoverLetterQuestion.values())
-                        .sorted(java.util.Comparator.comparingInt(
-                                CoverLetterQuestion::displayOrder
-                        ))
-                        .map(question -> toFastApiQuestion(
-                                question,
-                                contentMap.getOrDefault(question, "")
-                        ))
-                        .filter(question -> !question.content().isBlank())
-                        .toList();
-
-        return new FastApiCoverLetterReviewRequest(
-                questions,
-                null,
-                null
-        );
-    }
-
-    private FastApiCoverLetterReviewRequest.Question toFastApiQuestion(
-            CoverLetterQuestion question,
-            String content
-    ) {
-        return new FastApiCoverLetterReviewRequest.Question(
-                question.name(),
-                question.title(),
-                normalize(content)
-        );
     }
 
     private CoverLetterReviewResultResponse toReviewResult(
@@ -333,25 +285,6 @@ public class CoverLetterReviewService {
         );
     }
 
-    private Map<CoverLetterQuestion, String> getContentMap(Long userId) {
-        Map<CoverLetterQuestion, String> contentMap =
-                new EnumMap<>(CoverLetterQuestion.class);
-
-        coverLetterRepository.findAllByUserId(userId)
-                .forEach(entity -> contentMap.put(
-                        entity.getQuestionKey(),
-                        normalize(entity.getContent())
-                ));
-
-        return contentMap;
-    }
-
-    private boolean isAllBlank(Map<CoverLetterQuestion, String> contentMap) {
-        return Arrays.stream(CoverLetterQuestion.values())
-                .map(question -> contentMap.getOrDefault(question, ""))
-                .allMatch(String::isBlank);
-    }
-
     private String normalize(String content) {
         if (content == null) {
             return "";
@@ -377,17 +310,6 @@ public class CoverLetterReviewService {
         }
 
         return values;
-    }
-
-    private String writeJson(Object value) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException(
-                    "자기소개서 첨삭 결과 JSON 변환에 실패했습니다.",
-                    e
-            );
-        }
     }
 
     private CoverLetterReviewResultResponse readResult(String resultJson) {

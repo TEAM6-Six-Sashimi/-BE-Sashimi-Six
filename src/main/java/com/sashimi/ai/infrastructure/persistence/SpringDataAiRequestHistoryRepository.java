@@ -70,4 +70,8 @@ public interface SpringDataAiRequestHistoryRepository
             AiRequestStatus status,
             String requestSnapshotJson
     );
+
+    long deleteByCreatedAtBefore(
+            LocalDateTime threshold
+    );
 }
