@@ -3,6 +3,7 @@ package com.sashimi.recommendation.application.service;
 import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.ai.domain.model.AiPromptType;
 import com.sashimi.ai.domain.repository.AiPromptRepository;
+import com.sashimi.ai.infrastructure.persistence.SpringDataAiRequestHistoryRepository;
 import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -35,6 +36,7 @@ public class JobPostingRecommendationAsyncService {
     private final OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter;
     private final CourseRecommendationMatcher courseRecommendationMatcher;
     private final CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder;
+    private final SpringDataAiRequestHistoryRepository aiRequestHistoryRepository;
     private final AiMetrics aiMetrics;
 
     public JobPostingRecommendationAsyncService(
@@ -47,6 +49,7 @@ public class JobPostingRecommendationAsyncService {
             OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter,
             CourseRecommendationMatcher courseRecommendationMatcher,
             CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder,
+            SpringDataAiRequestHistoryRepository aiRequestHistoryRepository,
             AiMetrics aiMetrics
     ) {
         this.recommendationRepository = recommendationRepository;
@@ -58,13 +61,17 @@ public class JobPostingRecommendationAsyncService {
         this.ownedCertificateRecommendationFilter = ownedCertificateRecommendationFilter;
         this.courseRecommendationMatcher = courseRecommendationMatcher;
         this.certificateRecommendationFallbackBuilder = certificateRecommendationFallbackBuilder;
+        this.aiRequestHistoryRepository = aiRequestHistoryRepository;
         this.aiMetrics = aiMetrics;
     }
 
     @Async("aiAnalysisExecutor")
     @Transactional
-    public void analyze(Long recommendationId, Long userId) {
-        log.info("🗃️ 채용공고 추천 비동기 분석 시작: userId={}, recommendationId={}", userId, recommendationId);
+    public void analyze(Long recommendationId, Long userId, Long historyId) {
+        log.info("채용공고 추천 비동기 분석 시작: userId={}, recommendationId={}, historyId={}",
+                userId,
+                recommendationId,
+                historyId);
 
         long startedAt = System.currentTimeMillis();
         aiMetrics.incrementRequestStarted(AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION);
@@ -78,7 +85,6 @@ public class JobPostingRecommendationAsyncService {
 
             JobPostingRecommendationAnalyzeResult analyzeResult = analyzePort.analyze(recommendation, prompt);
 
-            // 삭제
             log.info("AI 분석 결과 certificates size={}, fitAnalysis missingItems={}",
                     analyzeResult.certificates() == null ? null : analyzeResult.certificates().size(),
                     analyzeResult.fitAnalysis() == null || analyzeResult.fitAnalysis().certification() == null
@@ -129,9 +135,13 @@ public class JobPostingRecommendationAsyncService {
 
             JobPostingRecommendation savedRecommendation = recommendationRepository.save(analyzedRecommendation);
 
-            log.info("채용공고 추천 비동기 분석 완료: userId={}, recommendationId={}, jobRole={}",
+            aiRequestHistoryRepository.findById(historyId)
+                    .ifPresent(history -> history.complete(null));
+
+            log.info("채용공고 추천 비동기 분석 완료: userId={}, recommendationId={}, historyId={}, jobRole={}",
                     savedRecommendation.userId(),
                     savedRecommendation.recommendationId(),
+                    historyId,
                     savedRecommendation.summary() == null ? null : savedRecommendation.summary().jobRole());
 
             aiMetrics.incrementRequestSuccess(AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION);
@@ -151,7 +161,14 @@ public class JobPostingRecommendationAsyncService {
             );
 
         } catch (Exception e) {
-            log.error("채용공고 AI 분석 실패. recommendationId={}, userId={}", recommendationId, userId, e);
+            log.error("채용공고 AI 분석 실패. recommendationId={}, userId={}, historyId={}",
+                    recommendationId,
+                    userId,
+                    historyId,
+                    e);
+
+            aiRequestHistoryRepository.findById(historyId)
+                    .ifPresent(history -> history.fail(e.getClass().getSimpleName()));
 
             aiMetrics.incrementRequestFailed(
                     AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION,

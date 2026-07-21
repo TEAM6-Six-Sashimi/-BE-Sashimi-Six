@@ -56,7 +56,7 @@ public class JobPostingRecommendationService implements
                 AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION
         );
 
-        aiRequestHistoryRepository.save(
+        AiRequestHistoryJpaEntity history = aiRequestHistoryRepository.save(
                 AiRequestHistoryJpaEntity.started(
                         command.userId(),
                         AiFeatureType.JOB_POSTING_ANALYSIS,
@@ -95,20 +95,23 @@ public class JobPostingRecommendationService implements
         JobPostingRecommendation savedRecommendation =
                 recommendationRepository.save(recommendation);
 
-        log.info("채용공고 추천 분석 대기 상태 저장: userId={}, recommendationId={}, resumeBased={}, analysisStatus={}",
+        log.info("채용공고 추천 분석 대기 상태 저장: userId={}, recommendationId={}, resumeBased={}, analysisStatus={}, historyId={}",
                 savedRecommendation.userId(),
                 savedRecommendation.recommendationId(),
                 savedRecommendation.resumeBased(),
-                savedRecommendation.analysisStatus());
+                savedRecommendation.analysisStatus(),
+                history.getId());
 
         asyncService.analyze(
                 savedRecommendation.recommendationId(),
-                savedRecommendation.userId()
+                savedRecommendation.userId(),
+                history.getId()
         );
 
-        log.debug("채용공고 추천 비동기 분석 요청 발행: userId={}, recommendationId={}",
+        log.debug("채용공고 추천 비동기 분석 요청 발행: userId={}, recommendationId={}, historyId={}",
                 savedRecommendation.userId(),
-                savedRecommendation.recommendationId());
+                savedRecommendation.recommendationId(),
+                history.getId());
 
         return savedRecommendation;
     }
