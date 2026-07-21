@@ -1,8 +1,6 @@
 package com.sashimi.recommendation.presentation.api;
 
-import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.ErrorResponse;
-import com.sashimi.recommendation.application.command.CreateJobPostingRecommendationCommand;
 import com.sashimi.recommendation.application.usecase.JobPostingRecommendationCommandUseCase;
 import com.sashimi.recommendation.application.usecase.JobPostingRecommendationQueryUseCase;
 import com.sashimi.recommendation.domain.model.JobPostingRecommendation;
@@ -68,13 +66,7 @@ public class JobPostingRecommendationController {
             @RequestBody CreateJobPostingRecommendationRequest request
     ) {
         JobPostingRecommendation recommendation = commandUseCase.create(
-                new CreateJobPostingRecommendationCommand(
-                        principal.getId(),
-                        request.resumeId(),
-                        request.inputType(),
-                        request.sourceUrl(),
-                        request.rawContent()
-                )
+                request.toCommand(principal.getId())
         );
 
         return JobPostingRecommendationResponse.from(recommendation);

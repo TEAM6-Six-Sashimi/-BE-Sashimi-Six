@@ -11,6 +11,7 @@ import com.sashimi.resume.application.result.ResumeScoreResult;
 import com.sashimi.resume.application.result.SectionFeedbackResult;
 import com.sashimi.resume.application.result.SectionScoreResult;
 import com.sashimi.resume.domain.model.ResumeReviewSection;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.EnumMap;
@@ -19,9 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// 항목별 점수 결과에 따른 항목별 강점 혹은 보완점 피드백 생성
-// 80점 이상은 백엔드 강점 문구, 60점 이하는 백엔드 기본 보완 문구,
-// 61~79점은 AI 보완 문구를 사용한다.
+@Slf4j
 @Service
 public class ResumeFeedbackGenerator {
 
@@ -68,14 +67,7 @@ public class ResumeFeedbackGenerator {
 
         List<SectionScoreResult> defaultImprovementTargets =
                 sectionScores.stream()
-                        .filter(section ->
-                                section.score()
-                                        < STRENGTH_SCORE_THRESHOLD
-                        )
-                        .filter(section ->
-                                section.score()
-                                        <= DEFAULT_IMPROVEMENT_SCORE_THRESHOLD
-                        )
+                        .filter(this::requiresDefaultImprovement)
                         .toList();
 
         addDefaultImprovementFeedbacks(
@@ -85,18 +77,11 @@ public class ResumeFeedbackGenerator {
 
         List<SectionScoreResult> aiImprovementTargets =
                 sectionScores.stream()
-                        .filter(section ->
-                                section.score()
-                                        < STRENGTH_SCORE_THRESHOLD
-                        )
-                        .filter(section ->
-                                section.score()
-                                        > DEFAULT_IMPROVEMENT_SCORE_THRESHOLD
-                        )
+                        .filter(this::requiresAiImprovement)
                         .toList();
 
         if (!aiImprovementTargets.isEmpty()) {
-            addAiImprovementFeedbacks(
+            addAiImprovementFeedbacksWithFallback(
                     aiImprovementTargets,
                     feedbackBySection
             );
@@ -110,6 +95,28 @@ public class ResumeFeedbackGenerator {
                         )
                 )
                 .toList();
+    }
+
+    private boolean requiresDefaultImprovement(
+            SectionScoreResult section
+    ) {
+        if (section.score() >= STRENGTH_SCORE_THRESHOLD) {
+            return false;
+        }
+
+        if (section.score() <= DEFAULT_IMPROVEMENT_SCORE_THRESHOLD) {
+            return true;
+        }
+
+        return section.type() != ResumeReviewSection.CAREER;
+    }
+
+    private boolean requiresAiImprovement(
+            SectionScoreResult section
+    ) {
+        return section.type() == ResumeReviewSection.CAREER
+                && section.score() < STRENGTH_SCORE_THRESHOLD
+                && section.score() > DEFAULT_IMPROVEMENT_SCORE_THRESHOLD;
     }
 
     private void addDefaultImprovementFeedbacks(
@@ -146,8 +153,30 @@ public class ResumeFeedbackGenerator {
             case CAREER ->
                     "수행한 주요 업무와 프로젝트 성과를 중심으로 경력 사항을 구체적으로 작성해 주세요.";
             case CERTIFICATE ->
-                    "검증된 자격증 정보를 추가하면 자격증 사항의 완성도를 높일 수 있습니다.";
+                    "보유한 자격증 정보를 추가하면 자격증 사항의 완성도를 높일 수 있습니다.";
         };
+    }
+
+    private void addAiImprovementFeedbacksWithFallback(
+            List<SectionScoreResult> targets,
+            Map<ResumeReviewSection, SectionFeedbackResult> feedbackBySection
+    ) {
+        try {
+            addAiImprovementFeedbacks(
+                    targets,
+                    feedbackBySection
+            );
+        } catch (RuntimeException exception) {
+            log.warn(
+                    "이력서 AI 보완 피드백 생성 실패. 기본 피드백으로 대체합니다. reason={}",
+                    exception.getClass().getSimpleName()
+            );
+
+            addDefaultImprovementFeedbacks(
+                    targets,
+                    feedbackBySection
+            );
+        }
     }
 
     private void addAiImprovementFeedbacks(
@@ -219,8 +248,7 @@ public class ResumeFeedbackGenerator {
                                     || feedback.type()
                                     != ResumeFeedbackType.IMPROVEMENT) {
                                 throw new BusinessException(
-                                        ErrorCode
-                                                .RESUME_INVALID_REVIEW_FEEDBACK
+                                        ErrorCode.RESUME_INVALID_REVIEW_FEEDBACK
                                 );
                             }
 

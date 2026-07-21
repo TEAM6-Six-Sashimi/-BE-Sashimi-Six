@@ -1,5 +1,8 @@
 package com.sashimi.recommendation.presentation.api.request;
 
+import com.sashimi.global.exception.BusinessException;
+import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.recommendation.application.command.CreateJobPostingRecommendationCommand;
 import com.sashimi.recommendation.domain.model.RecommendationInputType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -19,4 +22,65 @@ public record CreateJobPostingRecommendationRequest(
                 example = "프론트엔드 개발자 채용공고입니다. React, TypeScript, Next.js 경험을 우대합니다.")
         String rawContent
 ) {
+
+        private static final int MIN_RAW_CONTENT_LENGTH = 50;
+
+        public CreateJobPostingRecommendationCommand toCommand(Long userId) {
+                validate();
+
+                return new CreateJobPostingRecommendationCommand(
+                        userId,
+                        resumeId,
+                        inputType,
+                        normalizedSourceUrl(),
+                        normalizedRawContent()
+                );
+        }
+
+        private void validate() {
+                if (inputType == null) {
+                        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                }
+
+                if (inputType == RecommendationInputType.URL) {
+                        validateUrlInput();
+                        return;
+                }
+
+                if (inputType == RecommendationInputType.TEXT) {
+                        validateTextInput();
+                }
+        }
+
+        private void validateUrlInput() {
+                if (sourceUrl == null || sourceUrl.isBlank()) {
+                        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                }
+        }
+
+        private void validateTextInput() {
+                if (rawContent == null || rawContent.isBlank()) {
+                        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                }
+
+                if (rawContent.trim().length() < MIN_RAW_CONTENT_LENGTH) {
+                        throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+                }
+        }
+
+        private String normalizedSourceUrl() {
+                if (sourceUrl == null) {
+                        return null;
+                }
+
+                return sourceUrl.trim();
+        }
+
+        private String normalizedRawContent() {
+                if (rawContent == null) {
+                        return null;
+                }
+
+                return rawContent.trim();
+        }
 }

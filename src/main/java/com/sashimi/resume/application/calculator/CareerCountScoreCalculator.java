@@ -1,5 +1,6 @@
 package com.sashimi.resume.application.calculator;
 
+import com.sashimi.resume.application.service.ResumeCareerDeduplicator;
 import com.sashimi.resume.domain.model.ResumeCareer;
 import org.springframework.stereotype.Component;
 
@@ -9,14 +10,27 @@ import java.util.List;
 @Component
 public class CareerCountScoreCalculator {
 
+    private final ResumeCareerDeduplicator resumeCareerDeduplicator;
+
+    public CareerCountScoreCalculator(
+            ResumeCareerDeduplicator resumeCareerDeduplicator
+    ) {
+        this.resumeCareerDeduplicator = resumeCareerDeduplicator;
+    }
+
     public int calculate(
             List<ResumeCareer> careers
     ) {
-        if (careers == null || careers.isEmpty()) {
+        List<ResumeCareer> uniqueCareers =
+                resumeCareerDeduplicator.deduplicate(
+                        careers
+                );
+
+        if (uniqueCareers.isEmpty()) {
             return 0;
         }
 
-        int careerCount = careers.size();
+        int careerCount = uniqueCareers.size();
 
         if (careerCount == 1) {
             return 15;
