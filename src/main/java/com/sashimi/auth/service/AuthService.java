@@ -349,7 +349,9 @@ public class AuthService {
         LocalDateTime refreshExpiryDate = LocalDateTime.now()
                 .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
 
-        refreshService.saveOrUpdate(user, tokenResponse.getRefreshToken(), refreshExpiryDate);
+        // refreshToken은 findValidRefreshToken()에서 가져온 같은 트랜잭션 내 영속 엔티티라
+        // 직접 갱신하면 더티체킹으로 반영됨 (saveOrUpdate의 user_id 재조회 불필요)
+        refreshToken.updateToken(tokenResponse.getRefreshToken(), refreshExpiryDate);
 
         return tokenResponse.withName(user.getName());
     }
@@ -386,10 +388,7 @@ public class AuthService {
     public void logout(String accessToken, String refreshTokenValue) {
         RefreshToken refreshToken = refreshService.findValidRefreshToken(refreshTokenValue);
 
-        User user = userRepository.findById(refreshToken.getUserId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        refreshService.deleteByUser(user);
+        refreshService.deleteByUserId(refreshToken.getUserId());
 
         if (accessToken != null) {
             long remainingMillis = jwtTokenProvider.getRemainingExpiry(accessToken);
