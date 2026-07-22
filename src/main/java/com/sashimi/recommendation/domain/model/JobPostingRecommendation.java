@@ -79,6 +79,40 @@ public class JobPostingRecommendation {
         );
     }
 
+    public static JobPostingRecommendation restore(
+            Long recommendationId,
+            Long userId,
+            Long resumeId,
+            RecommendationInputType inputType,
+            String sourceUrl,
+            String rawContent,
+            String resumeContent,
+            RecommendationAnalysisStatus analysisStatus,
+            boolean resumeBased,
+            JobPostingSummary summary,
+            JobFitAnalysis fitAnalysis,
+            List<CourseRecommendation> courses,
+            List<CertificateRecommendation> certificates,
+            LocalDateTime createdAt
+    ) {
+        return new JobPostingRecommendation(
+                recommendationId,
+                userId,
+                resumeId,
+                inputType,
+                sourceUrl,
+                rawContent,
+                resumeContent,
+                analysisStatus,
+                resumeBased,
+                summary,
+                fitAnalysis,
+                courses,
+                certificates,
+                createdAt
+        );
+    }
+
     public JobPostingRecommendation analyzed(
             JobPostingSummary summary,
             JobFitAnalysis fitAnalysis,
