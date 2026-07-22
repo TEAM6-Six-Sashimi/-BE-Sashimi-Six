@@ -74,4 +74,11 @@ public interface SpringDataAiRequestHistoryRepository
     long deleteByCreatedAtBefore(
             LocalDateTime threshold
     );
+
+    Optional<AiRequestHistoryJpaEntity> findByIdAndUserIdAndFeatureTypeAndStatus(
+            Long id,
+            Long userId,
+            AiFeatureType featureType,
+            AiRequestStatus status
+    );
 }
