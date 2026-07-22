@@ -56,8 +56,10 @@ public class FileDownloadController {
         String filename = key.substring(key.lastIndexOf('/') + 1);
         MediaType contentType = resolveContentType(filename);
 
+        // key가 업로드마다 새로 발급되는 UUID라 같은 key는 항상 같은 내용을 가리킴 -> 영구 캐시 가능
         return ResponseEntity.ok()
                 .contentType(contentType)
+                .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000, immutable")
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                 .body(bytes);
     }
