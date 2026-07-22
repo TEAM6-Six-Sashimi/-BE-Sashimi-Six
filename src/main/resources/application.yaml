@@ -71,7 +71,7 @@ gemini:
   base-url: https://generativelanguage.googleapis.com/v1beta
   api-key: ${GEMINI_API_KEY}
   model: ${GEMINI_MODEL:gemini-3.5-flash}
-  timeout-seconds: 30
+  timeout-seconds: 90
 
 toss:
   payments:
@@ -98,7 +98,7 @@ external:
   ai-server:
     base-url: http://172.31.33.226:8001
     # 챗봇은 분류 → RAG 검색 → 답변 3단계라 20~30초가 걸린다. 30초는 여유가 없어 60초로 둔다.
-    timeout-seconds: 60
+    timeout-seconds: 90
     
 subscription:
   renewal:
