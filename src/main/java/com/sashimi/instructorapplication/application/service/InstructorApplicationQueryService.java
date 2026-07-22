@@ -9,6 +9,7 @@ import com.sashimi.instructorapplication.application.usecase.InstructorApplicati
 import com.sashimi.instructorapplication.domain.model.ApprovalStatus;
 import com.sashimi.instructorapplication.domain.model.InstructorApplication;
 import com.sashimi.instructorapplication.domain.model.InstructorCertification;
+import com.sashimi.instructorapplication.domain.model.VerificationStatus;
 import com.sashimi.instructorapplication.domain.repository.InstructorApplicationRepository;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationListResponse;
@@ -55,6 +56,10 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                 .stream()
                 .collect(Collectors.toMap(Category::getMainCategoryId, Category::getName, (a, b) -> a));
 
+        Map<Long, VerificationStatus> verificationStatusByApplicationId =
+                instructorApplicationRepository.findVerificationStatusesByApplicationIds(
+                        applications.stream().map(InstructorApplication::getId).toList());
+
         return applications.stream()
                 .map(application -> {
                     User user = userById.get(application.getUserId());
@@ -62,7 +67,9 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                         throw new BusinessException(ErrorCode.USER_NOT_FOUND);
                     }
                     String categoryName = categoryNameByMainCategoryId.get(application.getCategoryId());
-                    return InstructorApplicationListResponse.of(application, user, categoryName);
+                    VerificationStatus verificationStatus = verificationStatusByApplicationId
+                            .getOrDefault(application.getId(), VerificationStatus.PENDING);
+                    return InstructorApplicationListResponse.of(application, user, categoryName, verificationStatus);
                 })
                 .toList();
     }
