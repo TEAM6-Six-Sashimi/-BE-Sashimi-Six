@@ -53,17 +53,24 @@ public class CartCheckoutProcessor implements PaymentCheckoutProcessor {
             );
         }
 
-        List<CheckoutCourse> courses = cartItems.stream()
-                .map(item -> coursePurchasePolicy.validatePurchasable(
-                        command.userId(),
-                        item.getCourseId()
-                ))
-                .map(course -> new CheckoutCourse(
-                        course.courseId(),
-                        course.title(),
-                        course.price()
-                ))
+        List<Long> courseIds = cartItems.stream()
+                .map(CartItem::getCourseId)
+                .distinct()
                 .toList();
+
+        List<CheckoutCourse> courses =
+                coursePurchasePolicy
+                        .validatePurchasableCourses(
+                                command.userId(),
+                                courseIds
+                        )
+                        .stream()
+                        .map(course -> new CheckoutCourse(
+                                course.courseId(),
+                                course.title(),
+                                course.price()
+                        ))
+                        .toList();
 
         OrderPaymentWriter.CourseOrderPayment saved =
                 orderPaymentWriter.saveCoursePayment(

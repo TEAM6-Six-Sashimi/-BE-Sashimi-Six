@@ -53,12 +53,12 @@ public class SubscriptionRepositoryAdapter implements SubscriptionRepository {
     }
 
     @Override
-    public List<Long> findRenewalDueIds(LocalDateTime now) {
-        return repository.findRenewalDueIds(now);
+    public List<Long> findRenewalDueIdsAfter(LocalDateTime now, Long lastId, int limit) {
+        return repository.findRenewalDueIdsAfter(now, lastId, PageRequest.of(0, limit));
     }
 
     @Override
-    public List<Long> findExpirationDueIds(LocalDateTime now) {
-        return repository.findExpirationDueIds(now);
+    public List<Long> findExpirationDueIdsAfter(LocalDateTime now, Long lastId, int limit) {
+        return repository.findExpirationDueIdsAfter(now, lastId, PageRequest.of(0, limit));
     }
 }
