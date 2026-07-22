@@ -41,6 +41,23 @@ public interface SpringDataAiRequestHistoryRepository
             @Param("to") LocalDateTime to
     );
 
+    @Query(value = """
+        select *
+        from ai_request_histories
+        where user_id = :userId
+          and feature_type = 'RESUME_REVIEW'
+          and status = 'COMPLETED'
+          and json_unquote(json_extract(request_snapshot_json, '$')) = :resumeId
+          and result_json is not null
+        order by created_at desc
+        limit 1
+        """, nativeQuery = true)
+
+    Optional<AiRequestHistoryJpaEntity> findLatestCompletedResumeReview(
+            @Param("userId") Long userId,
+            @Param("resumeId") String resumeId
+    );
+
     long countByUserIdAndFeatureTypeAndCreatedAtGreaterThanEqual(
             Long userId,
             AiFeatureType featureType,
