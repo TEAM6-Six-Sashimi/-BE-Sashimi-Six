@@ -68,7 +68,7 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                     }
                     String categoryName = categoryNameByMainCategoryId.get(application.getCategoryId());
                     VerificationStatus verificationStatus = verificationStatusByApplicationId
-                            .getOrDefault(application.getId(), VerificationStatus.PENDING);
+                            .getOrDefault(application.getId(), VerificationStatus.SUBMITTED);
                     return InstructorApplicationListResponse.of(application, user, categoryName, verificationStatus);
                 })
                 .toList();

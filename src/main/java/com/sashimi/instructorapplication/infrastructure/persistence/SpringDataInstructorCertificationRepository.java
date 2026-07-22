@@ -17,7 +17,8 @@ public interface SpringDataInstructorCertificationRepository
             @Param("status") VerificationStatus status);
 
     @Query("SELECT c.application.id AS applicationId, c.verificationStatus AS status " +
-            "FROM InstructorCertificationJpaEntity c WHERE c.application.id IN :applicationIds")
+            "FROM InstructorCertificationJpaEntity c " +
+            "WHERE c.application.id IN :applicationIds AND c.certificationNumber IS NOT NULL")
     List<ApplicationVerificationStatusView> findVerificationStatusesByApplicationIds(
             @Param("applicationIds") List<Long> applicationIds);
 
