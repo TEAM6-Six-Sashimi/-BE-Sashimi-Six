@@ -27,7 +27,7 @@ public class ReviewReportRepositoryAdapter implements ReviewReportRepository {
 
     @Override
     public List<ReviewReport> findAll() {
-        return springDataReviewReportRepository.findAll().stream()
+        return springDataReviewReportRepository.findTop500ByOrderByCreatedAtDesc().stream()
                 .map(ReviewReportJpaEntity::toDomain)
                 .toList();
     }
