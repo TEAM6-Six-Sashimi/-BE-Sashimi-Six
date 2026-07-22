@@ -40,7 +40,7 @@ gemini:
   base-url: https://generativelanguage.googleapis.com/v1beta
   api-key: ${GEMINI_API_KEY}
   model: ${GEMINI_MODEL:gemini-3.5-flash}
-  timeout-seconds: 30
+  timeout-seconds: 90
 clova:
   ocr:
     secret-key: ${CLOVA_OCR_SECRET_KEY}
@@ -86,7 +86,7 @@ external:
     service-key: ${QUALIFICATION_CODE_SERVICE_KEY:}
   ai-server:
     base-url: http://172.31.33.226:8001
-    timeout-seconds: 60
+    timeout-seconds: 90
 
 codef:
   client-id: ${CODEF_CLIENT_ID:}
