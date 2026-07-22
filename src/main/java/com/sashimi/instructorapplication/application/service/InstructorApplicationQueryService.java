@@ -50,7 +50,6 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                 .stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        // 강사 지원의 categoryId는 세부 카테고리가 아닌 대분류(mainCategoryId) 값이라 그 기준으로 이름 조회
         Map<Long, String> categoryNameByMainCategoryId = categoryRepository.findAllByMainCategoryIdIn(
                         applications.stream().map(InstructorApplication::getCategoryId).distinct().toList())
                 .stream()

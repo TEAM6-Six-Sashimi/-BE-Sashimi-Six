@@ -5,6 +5,7 @@ import com.sashimi.review.domain.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,5 +28,12 @@ public class ReviewRepositoryAdapter implements ReviewRepository {
     @Override
     public Optional<Review> findById(Long reviewId) {
         return springDataReviewRepository.findById(reviewId).map(ReviewJpaEntity::toDomain);
+    }
+
+    @Override
+    public List<Review> findAllByIdIn(List<Long> reviewIds) {
+        return springDataReviewRepository.findAllByIdIn(reviewIds).stream()
+                .map(ReviewJpaEntity::toDomain)
+                .toList();
     }
 }
