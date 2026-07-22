@@ -177,4 +177,23 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 entity.getStudentCount(), entity.getCreatedAt(), entity.getUpdatedAt(),
                 entity.getApprovedAt(), entity.isArchived(), sessions);
     }
+
+    private CourseSessionJpaEntity toSessionEntity(
+            CourseSession session
+    ) {
+        return new CourseSessionJpaEntity(
+                session.getSessionUid(),
+                session.getTitle(),
+                session.getVideoUrl(),
+                session.getDurationSeconds(),
+                session.getSessionOrder(),
+                session.isPreview(),
+                session.getAttachmentName(),
+                session.getAttachmentUrl(),
+                session.getAttachmentType(),
+                session.getAttachmentSize(),
+                session.getCreatedAt(),
+                session.getUpdatedAt()
+        );
+    }
 }
