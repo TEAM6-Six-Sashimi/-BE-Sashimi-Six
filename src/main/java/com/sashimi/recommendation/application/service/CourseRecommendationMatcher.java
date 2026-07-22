@@ -25,6 +25,7 @@ public class CourseRecommendationMatcher {
 
     private static final int MAX_RECOMMENDATION_COUNT = 4;
     private static final int MAX_SEARCH_KEYWORD_COUNT = 10;
+    private static final int MAX_COURSE_CANDIDATE_COUNT_PER_KEYWORD = 20;
 
     private static final int CERTIFICATE_NAME_TITLE_SCORE = 50;
     private static final int CERTIFICATE_NAME_DESCRIPTION_SCORE = 35;
@@ -180,7 +181,10 @@ public class CourseRecommendationMatcher {
 
         for (String keyword : searchKeywords) {
             List<Course> courses =
-                    courseRepository.searchApprovedByKeyword(keyword);
+                    courseRepository.searchApprovedByKeyword(
+                            keyword,
+                            MAX_COURSE_CANDIDATE_COUNT_PER_KEYWORD
+                    );
 
             for (Course course : courses) {
                 candidateByCourseId.putIfAbsent(course.getId(), course);
