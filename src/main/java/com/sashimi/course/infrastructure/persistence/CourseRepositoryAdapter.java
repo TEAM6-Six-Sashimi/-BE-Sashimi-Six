@@ -4,6 +4,7 @@ import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.model.CourseSession;
 import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -134,9 +135,17 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
-    public List<Course> searchApprovedByKeyword(String keyword) {
-        return springDataCourseRepository.searchApprovedByKeyword(keyword)
-                .stream().map(this::toDomain).toList();
+    public List<Course> searchApprovedByKeyword(
+            String keyword,
+            int limit
+    ) {
+        return springDataCourseRepository.searchApprovedByKeyword(
+                        keyword,
+                        PageRequest.of(0, limit)
+                )
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     @Override

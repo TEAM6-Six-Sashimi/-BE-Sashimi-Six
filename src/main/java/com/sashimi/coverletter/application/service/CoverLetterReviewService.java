@@ -114,14 +114,21 @@ public class CoverLetterReviewService {
             Long reviewId
     ) {
         AiRequestHistoryJpaEntity history = aiRequestHistoryRepository
-                .findByIdAndUserIdAndFeatureType(
+                .findByIdAndUserIdAndFeatureTypeAndStatus(
                         reviewId,
                         userId,
-                        AiFeatureType.COVER_LETTER_REVIEW
+                        AiFeatureType.COVER_LETTER_REVIEW,
+                        AiRequestStatus.COMPLETED
                 )
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.COVER_LETTER_REVIEW_NOT_FOUND
                 ));
+
+        if (history.getResultJson() == null || history.getResultJson().isBlank()) {
+            throw new BusinessException(
+                    ErrorCode.COVER_LETTER_REVIEW_NOT_FOUND
+            );
+        }
 
         return readResult(history.getResultJson());
     }

@@ -2,8 +2,10 @@ package com.sashimi.instructorapplication.domain.repository;
 
 import com.sashimi.instructorapplication.domain.model.ApprovalStatus;
 import com.sashimi.instructorapplication.domain.model.InstructorApplication;
+import com.sashimi.instructorapplication.domain.model.VerificationStatus;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface InstructorApplicationRepository {
@@ -25,4 +27,6 @@ public interface InstructorApplicationRepository {
     List<PendingCertification> findAllPendingCertificationsWithNumber();
 
     void markCertificationsSubmitted(List<Long> certificationIds);
+
+    Map<Long, VerificationStatus> findVerificationStatusesByApplicationIds(List<Long> applicationIds);
 }

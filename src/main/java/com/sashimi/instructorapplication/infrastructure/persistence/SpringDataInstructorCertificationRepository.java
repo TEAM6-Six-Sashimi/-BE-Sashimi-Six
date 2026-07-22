@@ -16,6 +16,11 @@ public interface SpringDataInstructorCertificationRepository
     List<InstructorCertificationJpaEntity> findAllByVerificationStatusAndCertificationNumberIsNotNull(
             @Param("status") VerificationStatus status);
 
+    @Query("SELECT c.application.id AS applicationId, c.verificationStatus AS status " +
+            "FROM InstructorCertificationJpaEntity c WHERE c.application.id IN :applicationIds")
+    List<ApplicationVerificationStatusView> findVerificationStatusesByApplicationIds(
+            @Param("applicationIds") List<Long> applicationIds);
+
     @Modifying
     @Query("UPDATE InstructorCertificationJpaEntity c SET c.verificationStatus = :status WHERE c.id IN :ids")
     void updateVerificationStatus(@Param("ids") List<Long> ids, @Param("status") VerificationStatus status);
