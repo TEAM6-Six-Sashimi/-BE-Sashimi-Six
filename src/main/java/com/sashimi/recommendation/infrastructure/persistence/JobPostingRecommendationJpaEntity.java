@@ -23,6 +23,7 @@ import jakarta.persistence.Table;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -79,6 +80,10 @@ public class JobPostingRecommendationJpaEntity {
     protected JobPostingRecommendationJpaEntity() {
     }
 
+    Long getRecommendationId() {
+        return recommendationId;
+    }
+
     public static JobPostingRecommendationJpaEntity from(
             JobPostingRecommendation recommendation,
             ObjectMapper objectMapper
@@ -99,7 +104,7 @@ public class JobPostingRecommendationJpaEntity {
 
         entity.summaryJson = writeNullable(
                 objectMapper,
-                recommendation.summary()
+                toSummaryJson(recommendation.summary())
         );
         entity.fitAnalysisJson = writeNullable(
                 objectMapper,
@@ -107,11 +112,11 @@ public class JobPostingRecommendationJpaEntity {
         );
         entity.coursesJson = writeNullable(
                 objectMapper,
-                recommendation.courses()
+                toCourseJsonList(recommendation.courses())
         );
         entity.certificatesJson = writeNullable(
                 objectMapper,
-                recommendation.certificates()
+                toCertificateJsonList(recommendation.certificates())
         );
 
         return entity;
@@ -120,10 +125,10 @@ public class JobPostingRecommendationJpaEntity {
     public JobPostingRecommendation toDomain(
             ObjectMapper objectMapper
     ) {
-        JobPostingSummary summary = readNullable(
+        SummaryJson summaryJsonValue = readNullable(
                 objectMapper,
                 summaryJson,
-                JobPostingSummary.class
+                SummaryJson.class
         );
 
         FitAnalysisJson fitAnalysisJsonValue = readNullable(
@@ -132,14 +137,14 @@ public class JobPostingRecommendationJpaEntity {
                 FitAnalysisJson.class
         );
 
-        List<CourseRecommendation> courses = readList(
+        List<CourseJson> courseJsonValues = readList(
                 objectMapper,
                 coursesJson,
                 new TypeReference<>() {
                 }
         );
 
-        List<CertificateRecommendation> certificates = readList(
+        List<CertificateJson> certificateJsonValues = readList(
                 objectMapper,
                 certificatesJson,
                 new TypeReference<>() {
@@ -156,12 +161,122 @@ public class JobPostingRecommendationJpaEntity {
                 resumeContent,
                 analysisStatus,
                 resumeBased,
-                summary,
+                toDomainSummary(summaryJsonValue),
                 toDomainFitAnalysis(fitAnalysisJsonValue),
-                courses,
-                certificates,
+                toDomainCourses(courseJsonValues),
+                toDomainCertificates(certificateJsonValues),
                 createdAt
         );
+    }
+
+    private static SummaryJson toSummaryJson(
+            JobPostingSummary summary
+    ) {
+        if (summary == null) {
+            return null;
+        }
+
+        return new SummaryJson(
+                summary.jobRole(),
+                summary.requiredQualifications(),
+                summary.preferredQualifications(),
+                summary.experienceRequirement(),
+                summary.mainTaskSummary()
+        );
+    }
+
+    private static JobPostingSummary toDomainSummary(
+            SummaryJson json
+    ) {
+        if (json == null) {
+            return null;
+        }
+
+        return new JobPostingSummary(
+                json.jobRole(),
+                json.requiredQualifications(),
+                json.preferredQualifications(),
+                json.experienceRequirement(),
+                json.mainTaskSummary()
+        );
+    }
+
+    private static List<CourseJson> toCourseJsonList(
+            List<CourseRecommendation> courses
+    ) {
+        if (courses == null) {
+            return List.of();
+        }
+
+        return courses.stream()
+                .map(course -> new CourseJson(
+                        course.courseId(),
+                        course.title(),
+                        course.instructor(),
+                        course.matchedSkill(),
+                        course.reason()
+                ))
+                .toList();
+    }
+
+    private static List<CourseRecommendation> toDomainCourses(
+            List<CourseJson> courses
+    ) {
+        if (courses == null) {
+            return List.of();
+        }
+
+        return courses.stream()
+                .map(course -> new CourseRecommendation(
+                        course.courseId(),
+                        course.title(),
+                        course.instructor(),
+                        course.matchedSkill(),
+                        course.reason()
+                ))
+                .toList();
+    }
+
+    private static List<CertificateJson> toCertificateJsonList(
+            List<CertificateRecommendation> certificates
+    ) {
+        if (certificates == null) {
+            return List.of();
+        }
+
+        return certificates.stream()
+                .map(certificate -> new CertificateJson(
+                        certificate.certificationId(),
+                        certificate.name(),
+                        certificate.reason(),
+                        certificate.relatedSkills(),
+                        certificate.difficulty(),
+                        certificate.nextExamDate(),
+                        certificate.applicationStartDate(),
+                        certificate.applicationEndDate()
+                ))
+                .toList();
+    }
+
+    private static List<CertificateRecommendation> toDomainCertificates(
+            List<CertificateJson> certificates
+    ) {
+        if (certificates == null) {
+            return List.of();
+        }
+
+        return certificates.stream()
+                .map(certificate -> new CertificateRecommendation(
+                        certificate.certificationId(),
+                        certificate.name(),
+                        certificate.reason(),
+                        certificate.relatedSkills(),
+                        certificate.difficulty(),
+                        certificate.nextExamDate(),
+                        certificate.applicationStartDate(),
+                        certificate.applicationEndDate()
+                ))
+                .toList();
     }
 
     private static FitAnalysisJson toFitAnalysisJson(
@@ -285,6 +400,36 @@ public class JobPostingRecommendationJpaEntity {
                     ErrorCode.AI_RESPONSE_PARSE_FAILED
             );
         }
+    }
+
+    private record SummaryJson(
+            String jobRole,
+            List<String> requiredQualifications,
+            List<String> preferredQualifications,
+            String experienceRequirement,
+            String mainTaskSummary
+    ) {
+    }
+
+    private record CourseJson(
+            Long courseId,
+            String title,
+            String instructor,
+            String matchedSkill,
+            String reason
+    ) {
+    }
+
+    private record CertificateJson(
+            Long certificationId,
+            String name,
+            String reason,
+            List<String> relatedSkills,
+            String difficulty,
+            LocalDate nextExamDate,
+            LocalDate applicationStartDate,
+            LocalDate applicationEndDate
+    ) {
     }
 
     private record FitAnalysisJson(

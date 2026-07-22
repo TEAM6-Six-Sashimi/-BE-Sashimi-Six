@@ -35,7 +35,13 @@ public class JpaJobPostingRecommendationRepositoryAdapter
         JobPostingRecommendationJpaEntity savedEntity =
                 repository.save(entity);
 
-        return savedEntity.toDomain(objectMapper);
+        if (recommendation.recommendationId() == null) {
+            return recommendation.withId(
+                    savedEntity.getRecommendationId()
+            );
+        }
+
+        return recommendation;
     }
 
     @Override
