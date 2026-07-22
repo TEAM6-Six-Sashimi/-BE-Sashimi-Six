@@ -39,6 +39,16 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
     );
 
     @Query("""
+        select c
+        from CourseJpaEntity c
+        where c.status = com.sashimi.course.domain.model.CourseStatus.APPROVED
+        order by c.studentCount desc, c.id desc
+        """)
+    List<CourseJpaEntity> findPopularApprovedCourses(
+            Pageable pageable
+    );
+
+    @Query("""
             select new com.sashimi.course.application.port.InstructorCourseSales(
                 c.id,
                 c.title,
