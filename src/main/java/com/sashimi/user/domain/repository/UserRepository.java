@@ -28,4 +28,6 @@ public interface UserRepository {
     List<User> findAllByStatusAndDeactivatedAtBefore(UserStatus status, LocalDateTime dateTime);
 
     List<User> findAllForAdmin();
+
+    List<User> findAllByIdIn(List<Long> ids);
 }

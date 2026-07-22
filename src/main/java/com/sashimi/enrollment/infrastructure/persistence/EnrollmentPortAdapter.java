@@ -14,6 +14,9 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -39,6 +42,57 @@ public class EnrollmentPortAdapter implements EnrollmentPort {
         );
 
         return count != null && count > 0;
+    }
+
+    @Override
+    public Set<Long> findEnrolledCourseIds(
+            Long userId,
+            List<Long> courseIds
+    ) {
+        if (courseIds == null || courseIds.isEmpty()) {
+            return Set.of();
+        }
+
+        List<Long> distinctCourseIds = courseIds.stream()
+                .distinct()
+                .toList();
+
+        String placeholders = String.join(
+                ", ",
+                Collections.nCopies(
+                        distinctCourseIds.size(),
+                        "?"
+                )
+        );
+
+        String sql = """
+            SELECT course_id
+            FROM enrollments
+            WHERE user_id = ?
+              AND course_id IN (%s)
+            """.formatted(placeholders);
+
+        Object[] parameters =
+                new Object[distinctCourseIds.size() + 1];
+
+        parameters[0] = userId;
+
+        for (int index = 0;
+             index < distinctCourseIds.size();
+             index++) {
+            parameters[index + 1] =
+                    distinctCourseIds.get(index);
+        }
+
+        List<Long> enrolledCourseIds =
+                jdbcTemplate.query(
+                        sql,
+                        (resultSet, rowNumber) ->
+                                resultSet.getLong("course_id"),
+                        parameters
+                );
+
+        return new HashSet<>(enrolledCourseIds);
     }
 
     @Override

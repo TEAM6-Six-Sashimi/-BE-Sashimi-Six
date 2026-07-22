@@ -165,13 +165,20 @@ public class PaymentQueryService implements PaymentQueryUseCase {
             );
         }
 
-        List<PaymentPreviewCourse> courses = items.stream()
-                .map(item -> coursePurchasePolicy.validatePurchasable(
-                        userId,
-                        item.getCourseId()
-                ))
-                .map(this::toPreviewCourse)
+        List<Long> courseIds = items.stream()
+                .map(CartItem::getCourseId)
+                .distinct()
                 .toList();
+
+        List<PaymentPreviewCourse> courses =
+                coursePurchasePolicy
+                        .validatePurchasableCourses(
+                                userId,
+                                courseIds
+                        )
+                        .stream()
+                        .map(this::toPreviewCourse)
+                        .toList();
 
         return createPreview(
                 "CART",

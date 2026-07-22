@@ -73,6 +73,14 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> findAllByIdIn(List<Long> ids) {
+        return springDataCourseRepository.findAllById(ids)
+                .stream()
+                .map(this::toDomainWithoutSessions)
+                .toList();
+    }
+
+    @Override
     public List<Course> findByInstructorIdAndStatus(Long instructorId, CourseStatus status) {
         return springDataCourseRepository.findByInstructorIdAndStatus(instructorId, status)
                 .stream().map(this::toDomain).toList();
@@ -146,6 +154,16 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 entity.getRatingAvg(), entity.getReviewCount(),
                 entity.getStudentCount(), entity.getCreatedAt(), entity.getUpdatedAt(),
                 entity.getApprovedAt(), entity.isArchived(), sessions);
+    }
+
+    private Course toDomainWithoutSessions(
+            CourseJpaEntity entity
+    ) {
+        return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(), entity.getTitle(), entity.getDescription(), entity.getPrice(), entity.getDifficulty(), entity.getThumbnail(),
+                entity.getTotalDuration(), entity.getStatus(), entity.getRejectReason(), entity.getRejectReasonCategory(),
+                entity.getRejectDetail(), entity.getRatingAvg(), entity.getReviewCount(), entity.getStudentCount(),
+                entity.getCreatedAt(), entity.getUpdatedAt(), entity.getApprovedAt(), entity.isArchived(), List.of()
+        );
     }
 
     private CourseSessionJpaEntity toSessionEntity(CourseSession session) {
