@@ -12,7 +12,7 @@ public interface SpringDataJobPostingRecommendationRepository
             Long userId
     );
 
-    Optional<JobPostingRecommendationJpaEntity> findFirstByUserIdOrderByCreatedAtDesc(
+    Optional<JobPostingRecommendationJpaEntity> findFirstByUserIdOrderByCreatedAtDescRecommendationIdDesc(
             Long userId
     );
 }

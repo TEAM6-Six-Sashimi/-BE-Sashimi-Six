@@ -42,7 +42,7 @@ public class JpaJobPostingRecommendationRepositoryAdapter
     public Optional<JobPostingRecommendation> findLatestByUserId(
             Long userId
     ) {
-        return repository.findFirstByUserIdOrderByCreatedAtDesc(
+        return repository.findFirstByUserIdOrderByCreatedAtDescRecommendationIdDesc(
                         userId
                 )
                 .map(entity -> entity.toDomain(objectMapper));
