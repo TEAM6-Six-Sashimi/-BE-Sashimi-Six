@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
@@ -32,15 +31,9 @@ public class FileUploadController {
     public ResponseEntity<FileUploadResponse> upload(@RequestParam("image") MultipartFile image) {
         validateExtension(image, ALLOWED_IMAGE_EXTENSIONS);
 
-        byte[] bytes;
-        try {
-            bytes = image.getBytes();
-        } catch (IOException e) {
-            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
-        }
-
         // 비공개 버킷에 저장하고, 만료 없는 공개 이미지 프록시 URL로 반환
-        String key = fileStoragePort.storePrivate(bytes, image.getOriginalFilename(), "images");
+        // (파일 전체를 힙에 버퍼링하지 않고 스트리밍으로 업로드)
+        String key = fileStoragePort.storePrivateStream(image, "images");
         String url = "/files/images?key=" + URLEncoder.encode(key, StandardCharsets.UTF_8);
         return ResponseEntity.ok(FileUploadResponse.of(url));
     }

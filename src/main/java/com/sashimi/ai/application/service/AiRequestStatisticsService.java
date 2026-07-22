@@ -9,7 +9,6 @@ import com.sashimi.ai.presentation.api.response.AiUsageDataResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
@@ -44,13 +43,21 @@ public class AiRequestStatisticsService {
         LocalDateTime to = today.plusDays(1).atStartOfDay();
 
         Map<Integer, Map<AiFeatureType, Long>> countMap =
-                toCountMap(repository.countHourlyRequestsByFeatureType(from, to));
+                toCountMap(
+                        repository.countHourlyRequestsByFeatureType(
+                                from,
+                                to
+                        )
+                );
 
         List<AiUsageDataResponse> data =
                 java.util.stream.IntStream.rangeClosed(0, 23)
                         .mapToObj(hour -> toResponse(
                                 hour + "시",
-                                countMap.getOrDefault(hour, new EnumMap<>(AiFeatureType.class))
+                                countMap.getOrDefault(
+                                        hour,
+                                        new EnumMap<>(AiFeatureType.class)
+                                )
                         ))
                         .toList();
 
@@ -62,22 +69,34 @@ public class AiRequestStatisticsService {
 
     private AiRequestStatisticsResponse getDailyUsage() {
         LocalDate today = LocalDate.now();
-        LocalDate monday = today.with(DayOfWeek.MONDAY);
-        LocalDateTime from = monday.atStartOfDay();
-        LocalDateTime to = monday.plusDays(7).atStartOfDay();
+        LocalDate startDate = today.minusDays(6);
+
+        LocalDateTime from = startDate.atStartOfDay();
+        LocalDateTime to = today.plusDays(1).atStartOfDay();
 
         Map<Integer, Map<AiFeatureType, Long>> countMap =
-                toCountMap(repository.countDailyRequestsByFeatureType(from, to));
+                toCountMap(
+                        repository.countDailyRequestsByFeatureType(
+                                from,
+                                to
+                        )
+                );
 
-        List<AiUsageDataResponse> data = List.of(
-                toResponse("월", countMap.getOrDefault(2, new EnumMap<>(AiFeatureType.class))),
-                toResponse("화", countMap.getOrDefault(3, new EnumMap<>(AiFeatureType.class))),
-                toResponse("수", countMap.getOrDefault(4, new EnumMap<>(AiFeatureType.class))),
-                toResponse("목", countMap.getOrDefault(5, new EnumMap<>(AiFeatureType.class))),
-                toResponse("금", countMap.getOrDefault(6, new EnumMap<>(AiFeatureType.class))),
-                toResponse("토", countMap.getOrDefault(7, new EnumMap<>(AiFeatureType.class))),
-                toResponse("일", countMap.getOrDefault(1, new EnumMap<>(AiFeatureType.class)))
-        );
+        List<AiUsageDataResponse> data =
+                java.util.stream.IntStream.rangeClosed(0, 6)
+                        .mapToObj(dayOffset -> {
+                            LocalDate date =
+                                    startDate.plusDays(dayOffset);
+
+                            return toResponse(
+                                    toDayLabel(date),
+                                    countMap.getOrDefault(
+                                            toMysqlDayOfWeek(date),
+                                            new EnumMap<>(AiFeatureType.class)
+                                    )
+                            );
+                        })
+                        .toList();
 
         return new AiRequestStatisticsResponse(
                 AiUsagePeriod.daily.name(),
@@ -112,9 +131,42 @@ public class AiRequestStatisticsService {
     ) {
         return new AiUsageDataResponse(
                 label,
-                counts.getOrDefault(AiFeatureType.JOB_POSTING_ANALYSIS, 0L),
-                counts.getOrDefault(AiFeatureType.RESUME_REVIEW, 0L),
-                counts.getOrDefault(AiFeatureType.COVER_LETTER_REVIEW, 0L)
+                counts.getOrDefault(
+                        AiFeatureType.JOB_POSTING_ANALYSIS,
+                        0L
+                ),
+                counts.getOrDefault(
+                        AiFeatureType.RESUME_REVIEW,
+                        0L
+                ),
+                counts.getOrDefault(
+                        AiFeatureType.COVER_LETTER_REVIEW,
+                        0L
+                )
         );
+    }
+
+    private String toDayLabel(LocalDate date) {
+        return switch (date.getDayOfWeek()) {
+            case MONDAY -> "월";
+            case TUESDAY -> "화";
+            case WEDNESDAY -> "수";
+            case THURSDAY -> "목";
+            case FRIDAY -> "금";
+            case SATURDAY -> "토";
+            case SUNDAY -> "일";
+        };
+    }
+
+    private int toMysqlDayOfWeek(LocalDate date) {
+        return switch (date.getDayOfWeek()) {
+            case SUNDAY -> 1;
+            case MONDAY -> 2;
+            case TUESDAY -> 3;
+            case WEDNESDAY -> 4;
+            case THURSDAY -> 5;
+            case FRIDAY -> 6;
+            case SATURDAY -> 7;
+        };
     }
 }

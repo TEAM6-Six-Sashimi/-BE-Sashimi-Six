@@ -5,13 +5,12 @@ import com.sashimi.stats.login.application.usecase.AdminLoginStatsQueryUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -60,23 +59,32 @@ public class AdminLoginStatsQueryService implements AdminLoginStatsQueryUseCase 
     }
 
     private LoginStats getDailyStats() {
-        LocalDate monday = LocalDate.now(SERVICE_ZONE).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
-        ZonedDateTime startOfMonday = monday.atStartOfDay(SERVICE_ZONE);
-        Instant queryStart = startOfMonday.plusDays(1).toInstant();
-        Instant queryEnd = startOfMonday.plusWeeks(1).toInstant();
+        LocalDate today = LocalDate.now(SERVICE_ZONE);
+        LocalDate startDate = today.minusDays(6);
+        ZonedDateTime startOfWindow = startDate.atStartOfDay(SERVICE_ZONE);
+        Instant now = Instant.now();
 
-        Map<Long, Double> countsByEpochSecond = fetchCountsByEpochSecond(
+        Map<Long, Double> countsByEpochSecond = new HashMap<>(fetchCountsByEpochSecond(
                 LOGIN_SUCCESS_PROM_QUERY.formatted("1d"),
-                queryStart,
-                queryEnd,
+                startOfWindow.plusDays(1).toInstant(),
+                startOfWindow.plusDays(6).toInstant(),
                 86400
-        );
+        ));
+        // 오늘은 아직 하루가 안 끝났으니, 자정 경계 대신 "지금 이 순간까지의 최근 24시간"으로 조회
+        countsByEpochSecond.putAll(fetchCountsByEpochSecond(
+                LOGIN_SUCCESS_PROM_QUERY.formatted("1d"),
+                now,
+                now,
+                1
+        ));
 
         List<LoginStatsItem> data = new ArrayList<>();
         for (int day = 0; day < 7; day++) {
-            Instant bucketEnd = startOfMonday.plusDays(day + 1L).toInstant();
+            LocalDate bucketDate = startDate.plusDays(day);
+            boolean isToday = day == 6;
+            Instant bucketEnd = isToday ? now : startOfWindow.plusDays(day + 1L).toInstant();
             data.add(new LoginStatsItem(
-                    WEEKDAY_LABELS[day],
+                    WEEKDAY_LABELS[bucketDate.getDayOfWeek().getValue() - 1],
                     resolveCount(countsByEpochSecond, bucketEnd)
             ));
         }
