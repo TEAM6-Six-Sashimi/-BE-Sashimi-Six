@@ -1,7 +1,5 @@
 package com.sashimi.resume.application.service;
 
-import com.sashimi.ai.domain.model.AiFeatureType;
-import com.sashimi.ai.domain.model.AiRequestStatus;
 import com.sashimi.ai.infrastructure.persistence.SpringDataAiRequestHistoryRepository;
 import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
@@ -114,14 +112,10 @@ public class ResumeReviewService implements ReviewResumeUseCase {
                 );
 
         return aiRequestHistoryRepository
-                .findFirstByUserIdAndFeatureTypeAndStatusAndRequestSnapshotJsonOrderByCreatedAtDesc(
+                .findLatestCompletedResumeReview(
                         userId,
-                        AiFeatureType.RESUME_REVIEW,
-                        AiRequestStatus.COMPLETED,
                         String.valueOf(resumeId)
                 )
-                .filter(history -> history.getResultJson() != null
-                        && !history.getResultJson().isBlank())
                 .map(history -> readJson(
                         history.getResultJson(),
                         ReviewResumeResult.class
