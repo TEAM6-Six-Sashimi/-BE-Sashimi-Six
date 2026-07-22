@@ -25,7 +25,7 @@ public class AdminLoginStatsController {
             summary = "로그인 수 통계 조회",
             description = """
                     period=hourly면 오늘의 시간대별(00시~23시) 로그인 수를,
-                    period=daily면 이번 주(월~일)의 요일별 로그인 수를 반환합니다.
+                    period=daily면 오늘을 마지막 날로 하는 최근 7일간의 요일별 로그인 수를 반환합니다.
                     """
     )
     @GetMapping

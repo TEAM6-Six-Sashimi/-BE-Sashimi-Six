@@ -96,7 +96,6 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 throw new BusinessException(ErrorCode.INVALID_INPUT);
             }
 
-            // 파일 형식 검증 (매직바이트) - OCR/Apache POI 파싱 이전에 즉시 차단
             for (ApplyInstructorCommand.FileEntry certFile : command.certificateFiles()) {
                 if (!FileSignatureValidator.isJpegPngOrPdf(certFile.fileBytes())) {
                     throw new BusinessException(ErrorCode.CERTIFICATE_FILE_INVALID_TYPE);
@@ -109,12 +108,10 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 throw new BusinessException(ErrorCode.RESUME_INVALID_FORMAT);
             }
 
-            // 강사 지원은 세부 카테고리 제한 없이 대분류만 선택하므로 mainCategoryId 기준으로 검증
             if (!categoryRepository.existsByMainCategoryId(command.categoryId())) {
                 throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
             }
 
-            // 중복 신청 방지 - S3 업로드 전에 체크해야 orphan 파일 방지
             boolean alreadyApplied = instructorApplicationRepository
                     .existsByUserIdAndApprovalStatus(command.userId(), ApprovalStatus.PENDING);
             if (alreadyApplied) {
@@ -127,7 +124,6 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 throw new BusinessException(ErrorCode.ALREADY_INSTRUCTOR);
             }
 
-            // 자격증 OCR 검증 + 이력서 주요 이력 추출 - 서로 무관한 작업이라 병렬 실행
             record CertCandidate(OcrPort.OcrResult ocr, ApplyInstructorCommand.FileEntry file) {}
 
             CompletableFuture<List<CertCandidate>> certFuture = CompletableFuture.supplyAsync(() -> {
@@ -156,9 +152,6 @@ public class InstructorApplicationCommandService implements InstructorApplicatio
                 throw new BusinessException(ErrorCode.RESUME_PARSE_FAILED);
             }
 
-            // 모든 검증 통과 후 S3 업로드 3종(자격증 N개+프로필+이력서) 병렬 수행 (실패 시 보상 삭제)
-            // 작업 "제출" 자체(supplyAsync 호출)도 try 안에서 해야 함 - executor 포화로 제출이
-            // RejectedExecutionException을 던지는 경우, 그 전에 이미 제출된 업로드도 보상 대상이라서
             List<CompletableFuture<String>> allUploadFutures = new ArrayList<>();
             List<CompletableFuture<String>> certUploadFutures = new ArrayList<>();
             List<String> certFileKeys;

@@ -10,6 +10,7 @@ groups:
         title: "[CRITICAL] 서버 다운"
         condition: C
         for: 1m
+        noDataState: OK
         labels:
           severity: critical
         annotations:
@@ -60,7 +61,7 @@ groups:
       - uid: sashimi-db-pool-pending
         title: "[CRITICAL] DB 커넥션 풀 고갈"
         condition: C
-        for: 1m
+        for: 3m
         noDataState: OK
         labels:
           severity: critical
@@ -86,7 +87,7 @@ groups:
       - uid: sashimi-db-timeout
         title: "[CRITICAL] DB 커넥션 타임아웃"
         condition: C
-        for: 1m
+        for: 3m
         noDataState: OK
         labels:
           severity: critical

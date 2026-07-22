@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,7 @@ public class InstructorApplicationRepositoryAdapter implements InstructorApplica
     public List<InstructorApplication> findAllByUserId(Long userId) {
         return springDataRepository.findAllByUserId(userId)
                 .stream()
-                .map(InstructorApplicationJpaEntity::toDomain)
+                .map(InstructorApplicationJpaEntity::toDomainWithoutCertifications)
                 .collect(Collectors.toList());
     }
 
@@ -49,7 +50,7 @@ public class InstructorApplicationRepositoryAdapter implements InstructorApplica
     public List<InstructorApplication> findAllByStatus(ApprovalStatus status) {
         return springDataRepository.findAllByApprovalStatus(status)
                 .stream()
-                .map(InstructorApplicationJpaEntity::toDomain)
+                .map(InstructorApplicationJpaEntity::toDomainWithoutCertifications)
                 .collect(Collectors.toList());
     }
 
@@ -75,5 +76,14 @@ public class InstructorApplicationRepositoryAdapter implements InstructorApplica
     @Override
     public void markCertificationsSubmitted(List<Long> certificationIds) {
         certificationRepository.updateVerificationStatus(certificationIds, VerificationStatus.SUBMITTED);
+    }
+
+    @Override
+    public Map<Long, VerificationStatus> findVerificationStatusesByApplicationIds(List<Long> applicationIds) {
+        return certificationRepository.findVerificationStatusesByApplicationIds(applicationIds).stream()
+                .collect(Collectors.toMap(
+                        ApplicationVerificationStatusView::getApplicationId,
+                        ApplicationVerificationStatusView::getStatus,
+                        (first, second) -> first));
     }
 }

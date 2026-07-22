@@ -92,6 +92,11 @@ public class S3FileStorageAdapter implements FileStoragePort {
     }
 
     @Override
+    public String storePrivateStream(MultipartFile file, String folder) {
+        return storeToPrivateBucket(file, properties.getS3().getBucketDocs(), folder);
+    }
+
+    @Override
     public String storeVideo(MultipartFile file) {
         return storeToPrivateBucket(file, properties.getS3().getBucketVideos(), "videos/lectures");
     }

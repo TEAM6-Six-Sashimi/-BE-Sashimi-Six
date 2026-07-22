@@ -15,6 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,17 +35,26 @@ public class AdminReviewReportQueryService implements AdminReviewReportQueryUseC
                 ? reviewReportRepository.findAll()
                 : reviewReportRepository.findAllByStatus(status);
 
+        List<Long> reviewIds = reports.stream().map(ReviewReport::getReviewId).distinct().toList();
+        Map<Long, Review> reviewsById = reviewRepository.findAllByIdIn(reviewIds).stream()
+                .collect(Collectors.toMap(Review::getId, Function.identity()));
+
+        List<Long> courseIds = reviewsById.values().stream().map(Review::getCourseId).distinct().toList();
+        List<Long> writerIds = reviewsById.values().stream().map(Review::getUserId).distinct().toList();
+        Map<Long, String> courseNamesById = reviewCoursePort.getCourseNamesBatch(courseIds);
+        Map<Long, String> loginIdsByUserId = reviewUserPort.getUserLoginIdsBatch(writerIds);
+
         return reports.stream()
                 .map(report -> {
-                    Review review = reviewRepository.findById(report.getReviewId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
-                    String courseName = reviewCoursePort.getCourseName(review.getCourseId());
-                    String writerLoginId = reviewUserPort.getUserLoginId(review.getUserId());
+                    Review review = reviewsById.get(report.getReviewId());
+                    if (review == null) {
+                        throw new BusinessException(ErrorCode.REVIEW_NOT_FOUND);
+                    }
                     return new ReportSummary(
                             report.getId(),
                             review.getContent(),
-                            courseName,
-                            writerLoginId,
+                            courseNamesById.get(review.getCourseId()),
+                            loginIdsByUserId.get(review.getUserId()),
                             report.getCategory(),
                             report.getCreatedAt(),
                             report.getStatus()

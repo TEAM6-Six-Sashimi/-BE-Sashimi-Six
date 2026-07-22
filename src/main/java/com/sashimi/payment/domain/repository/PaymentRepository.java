@@ -9,4 +9,6 @@ public interface PaymentRepository {
     Payment save(Payment payment);
 
     List<Payment> findAllByUserId(Long userId);
+
+    List<Payment> findRecentCoursePaymentsByUserId(Long userId, int limit);
 }

@@ -3,6 +3,8 @@ package com.sashimi.payment.infrastructure.persistence;
 import com.sashimi.payment.domain.model.Payment;
 import com.sashimi.payment.domain.repository.PaymentRepository;
 import org.springframework.stereotype.Repository;
+import com.sashimi.order.domain.model.OrderItemType;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -28,6 +30,19 @@ public class PaymentRepositoryAdapter implements PaymentRepository {
     public List<Payment> findAllByUserId(Long userId) {
         return repository
                 .findAllByUserIdOrderByCreatedAtDescIdDesc(userId)
+                .stream()
+                .map(PaymentJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public List<Payment> findRecentCoursePaymentsByUserId(Long userId, int limit) {
+        return repository
+                .findCoursePaymentsByUserId(
+                        userId,
+                        OrderItemType.COURSE,
+                        PageRequest.of(0, limit)
+                )
                 .stream()
                 .map(PaymentJpaEntity::toDomain)
                 .toList();

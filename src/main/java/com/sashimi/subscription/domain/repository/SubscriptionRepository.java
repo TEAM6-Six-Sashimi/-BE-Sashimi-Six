@@ -18,8 +18,8 @@ public interface SubscriptionRepository {
 
     Optional<Subscription> findByIdForUpdate(Long subscriptionId);
 
-    List<Long> findRenewalDueIds(LocalDateTime now);
+    List<Long> findRenewalDueIdsAfter(LocalDateTime now, Long lastId, int limit);
 
-    List<Long> findExpirationDueIds(LocalDateTime now);
+    List<Long> findExpirationDueIdsAfter(LocalDateTime now, Long lastId, int limit);
 
 }

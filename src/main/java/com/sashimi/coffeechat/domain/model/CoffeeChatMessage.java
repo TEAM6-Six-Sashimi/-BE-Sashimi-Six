@@ -47,8 +47,8 @@ public class CoffeeChatMessage {
     private static String systemMessageContent(CoffeeChatMessageType messageType) {
         return switch (messageType) {
             case SYSTEM_ACCEPT -> "강사가 요청을 수락했습니다.";
-            case SYSTEM_REJECT -> "강사가 요청을 거절했습니다.";
-            case SYSTEM_LEAVE -> "강사가 채팅방을 나갔습니다.";
+            case SYSTEM_REJECT -> "강사가 요청을 거절했습니다. 다시 메시지를 보내시면 재요청이 가능합니다.";
+            case SYSTEM_LEAVE -> "강사가 채팅방을 나갔습니다. 다시 메시지를 보내시면 재요청이 가능합니다.";
             case TEXT -> throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
         };
     }

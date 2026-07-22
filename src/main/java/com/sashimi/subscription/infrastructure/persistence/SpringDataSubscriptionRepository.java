@@ -72,29 +72,38 @@ public interface SpringDataSubscriptionRepository
     );
 
     @Query("""
-        select s.id
-        from SubscriptionJpaEntity s
-        where s.status in (
-            com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE,
-            com.sashimi.subscription.domain.model.SubscriptionStatus.PAST_DUE
-        )
-          and s.autoRenew = true
-          and s.nextBillingAt is not null
-          and s.nextBillingAt <= :now
-        """)
-    List<Long> findRenewalDueIds(
-            @Param("now") LocalDateTime now
+    select s.id
+    from SubscriptionJpaEntity s
+    where s.status in (
+        com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE,
+        com.sashimi.subscription.domain.model.SubscriptionStatus.PAST_DUE
+    )
+      and s.autoRenew = true
+      and s.nextBillingAt is not null
+      and s.nextBillingAt <= :now
+      and s.id > :lastId
+    order by s.id asc
+    """)
+    List<Long> findRenewalDueIdsAfter(
+            @Param("now") LocalDateTime now,
+            @Param("lastId") Long lastId,
+            Pageable pageable
     );
 
     @Query("""
-            select s.id
-            from SubscriptionJpaEntity s
-            where s.status = com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE
-              and s.autoRenew = false
-              and s.expiredAt is not null
-              and s.expiredAt <= :now
-            """)
-    List<Long> findExpirationDueIds(
-            @Param("now") LocalDateTime now
+    select s.id
+    from SubscriptionJpaEntity s
+    where s.status =
+        com.sashimi.subscription.domain.model.SubscriptionStatus.ACTIVE
+      and s.autoRenew = false
+      and s.expiredAt is not null
+      and s.expiredAt <= :now
+      and s.id > :lastId
+    order by s.id asc
+    """)
+    List<Long> findExpirationDueIdsAfter(
+            @Param("now") LocalDateTime now,
+            @Param("lastId") Long lastId,
+            Pageable pageable
     );
 }

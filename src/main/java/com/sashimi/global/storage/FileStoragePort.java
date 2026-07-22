@@ -5,6 +5,10 @@ import org.springframework.web.multipart.MultipartFile;
 public interface FileStoragePort {
     String store(MultipartFile file);
     String storePrivate(byte[] bytes, String originalFilename, String folder);
+
+    /** storePrivate와 동일하지만 파일 전체를 메모리에 버퍼링하지 않고 스트리밍으로 업로드 */
+    String storePrivateStream(MultipartFile file, String folder);
+
     String generatePresignedDownloadUrl(String s3Key, int expiryMinutes);
 
     /** 강의 영상 업로드 (비공개, sashimi-videos) → S3 key 반환 */

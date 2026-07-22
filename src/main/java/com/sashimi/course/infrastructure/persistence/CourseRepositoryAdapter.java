@@ -127,6 +127,17 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 .stream()
                 .map(this::toDomain)
                 .toList();
+    public List<Course> findAllByIdIn(List<Long> ids) {
+        return springDataCourseRepository.findAllById(ids)
+                .stream()
+                .map(this::toDomainWithoutSessions)
+                .toList();
+    }
+
+    @Override
+    public List<Course> findByInstructorIdAndStatus(Long instructorId, CourseStatus status) {
+        return springDataCourseRepository.findByInstructorIdAndStatus(instructorId, status)
+                .stream().map(this::toDomain).toList();
     }
 
     @Override
@@ -291,6 +302,12 @@ public class CourseRepositoryAdapter implements CourseRepository {
                         session.getUpdatedAt()
                 ))
                 .toList();
+        return toDomain(entity, sessions);
+    }
+
+    private Course toDomainWithoutSessions(CourseJpaEntity entity) {
+        return toDomain(entity, List.of());
+    }
 
         return Course.restore(
                 entity.getId(),
@@ -357,5 +374,32 @@ public class CourseRepositoryAdapter implements CourseRepository {
         }
 
         return limit;
+    private Course toDomain(CourseJpaEntity entity, List<CourseSession> sessions) {
+        return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(),
+                entity.getTitle(), entity.getDescription(), entity.getPrice(), entity.getDifficulty(),
+                entity.getThumbnail(), entity.getTotalDuration(), entity.getStatus(),
+                entity.getRejectReason(), entity.getRejectReasonCategory(), entity.getRejectDetail(),
+                entity.getRatingAvg(), entity.getReviewCount(),
+                entity.getStudentCount(), entity.getCreatedAt(), entity.getUpdatedAt(),
+                entity.getApprovedAt(), entity.isArchived(), sessions);
+    }
+
+    private CourseSessionJpaEntity toSessionEntity(
+            CourseSession session
+    ) {
+        return new CourseSessionJpaEntity(
+                session.getSessionUid(),
+                session.getTitle(),
+                session.getVideoUrl(),
+                session.getDurationSeconds(),
+                session.getSessionOrder(),
+                session.isPreview(),
+                session.getAttachmentName(),
+                session.getAttachmentUrl(),
+                session.getAttachmentType(),
+                session.getAttachmentSize(),
+                session.getCreatedAt(),
+                session.getUpdatedAt()
+        );
     }
 }

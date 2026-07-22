@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface CourseRepository {
     Course save(Course course);
     Optional<Course> findById(Long id);
+    List<Course> findAllByIdIn(List<Long> ids);
     List<Course> findByInstructorIdAndStatus(Long instructorId, CourseStatus status);
     List<Course> findByInstructorIdAndStatusIn(Long instructorId, List<CourseStatus> statuses);
     List<Course> findByStatus(CourseStatus status);

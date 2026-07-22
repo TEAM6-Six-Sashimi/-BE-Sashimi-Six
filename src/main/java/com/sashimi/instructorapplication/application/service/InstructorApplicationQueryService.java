@@ -9,6 +9,7 @@ import com.sashimi.instructorapplication.application.usecase.InstructorApplicati
 import com.sashimi.instructorapplication.domain.model.ApprovalStatus;
 import com.sashimi.instructorapplication.domain.model.InstructorApplication;
 import com.sashimi.instructorapplication.domain.model.InstructorCertification;
+import com.sashimi.instructorapplication.domain.model.VerificationStatus;
 import com.sashimi.instructorapplication.domain.repository.InstructorApplicationRepository;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationListResponse;
@@ -49,11 +50,14 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                 .stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        // 강사 지원의 categoryId는 세부 카테고리가 아닌 대분류(mainCategoryId) 값이라 그 기준으로 이름 조회
         Map<Long, String> categoryNameByMainCategoryId = categoryRepository.findAllByMainCategoryIdIn(
                         applications.stream().map(InstructorApplication::getCategoryId).distinct().toList())
                 .stream()
                 .collect(Collectors.toMap(Category::getMainCategoryId, Category::getName, (a, b) -> a));
+
+        Map<Long, VerificationStatus> verificationStatusByApplicationId =
+                instructorApplicationRepository.findVerificationStatusesByApplicationIds(
+                        applications.stream().map(InstructorApplication::getId).toList());
 
         return applications.stream()
                 .map(application -> {
@@ -62,7 +66,9 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
                         throw new BusinessException(ErrorCode.USER_NOT_FOUND);
                     }
                     String categoryName = categoryNameByMainCategoryId.get(application.getCategoryId());
-                    return InstructorApplicationListResponse.of(application, user, categoryName);
+                    VerificationStatus verificationStatus = verificationStatusByApplicationId
+                            .getOrDefault(application.getId(), VerificationStatus.SUBMITTED);
+                    return InstructorApplicationListResponse.of(application, user, categoryName, verificationStatus);
                 })
                 .toList();
     }
