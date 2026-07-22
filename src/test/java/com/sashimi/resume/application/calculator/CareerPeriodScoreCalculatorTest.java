@@ -1,5 +1,6 @@
 package com.sashimi.resume.application.calculator;
 
+import com.sashimi.resume.application.service.ResumeCareerDeduplicator;
 import com.sashimi.resume.domain.model.EmploymentType;
 import com.sashimi.resume.domain.model.ResumeCareer;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CareerPeriodScoreCalculatorTest {
 
     private final CareerPeriodScoreCalculator calculator =
-            new CareerPeriodScoreCalculator();
+            new CareerPeriodScoreCalculator(
+                    new ResumeCareerDeduplicator()
+            );
 
     @Test
     void returnsZeroWhenCareerListIsEmpty() {
@@ -92,6 +95,25 @@ class CareerPeriodScoreCalculatorTest {
                 List.of(
                         firstCareer,
                         secondCareer
+                ),
+                YearMonth.of(2026, 6)
+        );
+
+        assertThat(result).isEqualTo(35);
+    }
+
+    @Test
+    void calculatesDuplicatedCareerPeriodOnlyOnce() {
+        ResumeCareer career =
+                completedCareer(
+                        YearMonth.of(2020, 1),
+                        YearMonth.of(2023, 1)
+                );
+
+        int result = calculator.calculate(
+                List.of(
+                        career,
+                        career
                 ),
                 YearMonth.of(2026, 6)
         );

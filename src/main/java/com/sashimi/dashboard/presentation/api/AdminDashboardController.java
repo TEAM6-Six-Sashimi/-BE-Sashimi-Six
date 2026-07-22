@@ -1,6 +1,7 @@
 package com.sashimi.dashboard.presentation.api;
 
 import com.sashimi.dashboard.application.usecase.AdminDashboardQueryUseCase;
+import com.sashimi.dashboard.presentation.api.response.AdminDashboardStatisticsResponse;
 import com.sashimi.dashboard.presentation.api.response.AdminDashboardSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,6 +33,24 @@ public class AdminDashboardController {
         return ResponseEntity.ok(
                 AdminDashboardSummaryResponse.from(
                         adminDashboardQueryUseCase.getSummary()
+                )
+        );
+    }
+
+    @Operation(
+            summary = "관리자 대시보드 현황 요약 조회",
+            description = """
+                    관리자 대시보드 현황 요약 카드에 표시할 집계 수치를 조회합니다.
+                    전체 회원 수는 수강생 수와 강사 수의 합계이며 관리자는 제외합니다.
+                    수강생 수와 강사 수는 ACTIVE 상태 회원만 집계합니다.
+                    전체 강의 수는 APPROVED 상태의 강의만 집계합니다.
+                    """
+    )
+    @GetMapping("/statistics")
+    public ResponseEntity<AdminDashboardStatisticsResponse> getStatistics() {
+        return ResponseEntity.ok(
+                AdminDashboardStatisticsResponse.from(
+                        adminDashboardQueryUseCase.getStatistics()
                 )
         );
     }

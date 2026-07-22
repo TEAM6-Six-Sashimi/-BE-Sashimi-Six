@@ -6,7 +6,7 @@
   "timezone": "Asia/Seoul",
   "tags": ["sashimi", "business", "ai"],
   "time": { "from": "now-24h", "to": "now" },
-  "refresh": "30s",
+  "refresh": "5m",
   "panels": [
     {
       "id": 1,
@@ -160,6 +160,23 @@
       ],
       "fieldConfig": {
         "defaults": { "unit": "reqps", "custom": { "lineWidth": 2 } }
+      }
+    },
+    {
+      "id": 7,
+      "title": "AI 채용공고 추천 사용 후 30일 내 결제 전환 (강의구매/구독/크레딧충전 통합)",
+      "type": "table",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 24 },
+      "datasource": { "type": "mysql", "uid": "mysql-sashimi" },
+      "targets": [
+        {
+          "rawSql": "WITH payment_events AS (\n    SELECT user_id, created_at AS paid_at\n    FROM orders\n    WHERE status = 'PAID'\n\n    UNION ALL\n\n    SELECT user_id, paid_at\n    FROM subscription_payments\n\n    UNION ALL\n\n    SELECT user_id, approved_at AS paid_at\n    FROM credit_charge_payments\n    WHERE status = 'DONE'\n),\nrecommendation_users AS (\n    SELECT user_id, MIN(created_at) AS first_used_at\n    FROM ai_request_histories\n    WHERE feature_type = 'JOB_POSTING_ANALYSIS'\n      AND status = 'COMPLETED'\n    GROUP BY user_id\n)\nSELECT\n    COUNT(DISTINCT r.user_id) AS total_users_used_feature,\n    COUNT(DISTINCT CASE WHEN p.user_id IS NOT NULL THEN r.user_id END) AS users_paid_after,\n    ROUND(\n        COUNT(DISTINCT CASE WHEN p.user_id IS NOT NULL THEN r.user_id END) * 100.0\n        / NULLIF(COUNT(DISTINCT r.user_id), 0),\n        1\n    ) AS conversion_rate_pct\nFROM recommendation_users r\nLEFT JOIN payment_events p\n    ON p.user_id = r.user_id\n   AND p.paid_at > r.first_used_at\n   AND p.paid_at <= DATE_ADD(r.first_used_at, INTERVAL 30 DAY);",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "none" }
       }
     }
   ]

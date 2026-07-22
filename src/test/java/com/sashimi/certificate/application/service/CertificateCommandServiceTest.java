@@ -49,7 +49,8 @@ class CertificateCommandServiceTest {
                 "정보처리기사",
                 "한국산업인력공단",
                 LocalDate.of(2024, 1, 15),
-                true
+                true,
+                null
         );
 
         when(ocrPort.extractCertificateInfo(fileBytes, fileName)).thenReturn(ocrResult);
@@ -75,7 +76,7 @@ class CertificateCommandServiceTest {
                 List.of(new RegisterCertificateCommand.FileEntry(fileBytes, fileName))
         );
 
-        OcrPort.OcrResult ocrResult = new OcrPort.OcrResult(null, null, null, false);
+        OcrPort.OcrResult ocrResult = new OcrPort.OcrResult(null, null, null, false, null);
 
         when(ocrPort.extractCertificateInfo(fileBytes, fileName)).thenReturn(ocrResult);
 

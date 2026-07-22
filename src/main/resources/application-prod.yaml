@@ -1,9 +1,23 @@
+server:
+  tomcat:
+    threads:
+      max: 80
+      min-spare: 10
+
 spring:
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      max-lifetime: 1500000
+      keepalive-time: 300000
+      connection-timeout: 5000
+
+  flyway:
+    enabled: false
 
   jpa:
     show-sql: false
@@ -32,10 +46,10 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
 
-openai:
-  api-key: ${OPENAI_API_KEY}
-  model: ${OPENAI_MODEL:gpt-4o-mini}
-  base-url: https://api.openai.com/v1
+gemini:
+  base-url: https://generativelanguage.googleapis.com/v1beta
+  api-key: ${GEMINI_API_KEY}
+  model: ${GEMINI_MODEL:gemini-3.5-flash}
   timeout-seconds: 30
 
 clova:
@@ -71,6 +85,14 @@ codef:
 
 grafana:
   url: ${GRAFANA_URL}
+
+prometheus:
+  url: ${PROMETHEUS_URL:http://sashimi-prometheus:9090}
+
+external:
+  ai-server:
+    base-url: ${AI_SERVER_BASE_URL:http://172.31.33.226:8001}
+    timeout-seconds: 30
 
 springdoc:
   swagger-ui:

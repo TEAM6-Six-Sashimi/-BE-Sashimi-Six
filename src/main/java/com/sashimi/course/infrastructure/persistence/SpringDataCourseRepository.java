@@ -1,11 +1,11 @@
 package com.sashimi.course.infrastructure.persistence;
 
-import com.sashimi.course.domain.model.CourseStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import com.sashimi.course.application.port.InstructorCourseSales;
+import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.order.domain.model.OrderItemType;
 import com.sashimi.payment.domain.model.PaymentStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -22,6 +22,21 @@ public interface SpringDataCourseRepository extends JpaRepository<CourseJpaEntit
     List<CourseJpaEntity> findByStatusAndIdIn(CourseStatus status, List<Long> ids);
     List<CourseJpaEntity> findByStatusAndApprovedAtBefore(CourseStatus status, LocalDateTime approvedAt);
     List<CourseJpaEntity> findByStatusAndArchivedFalse(CourseStatus status);
+
+    @Query("""
+            select c
+            from CourseJpaEntity c
+            where c.status = com.sashimi.course.domain.model.CourseStatus.APPROVED
+              and (
+                    lower(replace(coalesce(c.title, ''), ' ', '')) like concat('%', :keyword, '%')
+                 or lower(replace(coalesce(c.description, ''), ' ', '')) like concat('%', :keyword, '%')
+              )
+            order by c.id desc
+            """)
+    List<CourseJpaEntity> searchApprovedByKeyword(
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
 
     @Query("""
             select new com.sashimi.course.application.port.InstructorCourseSales(

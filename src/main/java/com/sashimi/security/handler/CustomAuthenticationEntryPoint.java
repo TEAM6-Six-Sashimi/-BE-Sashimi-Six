@@ -31,9 +31,13 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
     ) throws IOException {
         boolean concurrentSession = Boolean.TRUE.equals(
                 request.getAttribute(JwtAuthenticationFilter.CONCURRENT_SESSION_ATTRIBUTE));
+        boolean inactiveUser = Boolean.TRUE.equals(
+                request.getAttribute(JwtAuthenticationFilter.INACTIVE_USER_ATTRIBUTE));
         ErrorCode errorCode = concurrentSession
                 ? ErrorCode.CONCURRENT_SESSION_DETECTED
-                : ErrorCode.UNAUTHORIZED;
+                : inactiveUser
+                        ? ErrorCode.INACTIVE_USER
+                        : ErrorCode.UNAUTHORIZED;
 
         ErrorResponse errorResponse = new ErrorResponse(
                 LocalDateTime.now(),

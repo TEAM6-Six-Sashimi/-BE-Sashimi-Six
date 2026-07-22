@@ -3,20 +3,19 @@ package com.sashimi.recommendation.application.service;
 import com.sashimi.ai.domain.model.AiPrompt;
 import com.sashimi.ai.domain.model.AiPromptType;
 import com.sashimi.ai.domain.repository.AiPromptRepository;
+import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.recommendation.application.event.JobPostingRecommendationAnalyzedEvent;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzePort;
 import com.sashimi.recommendation.application.port.JobPostingRecommendationAnalyzeResult;
 import com.sashimi.recommendation.domain.model.JobPostingRecommendation;
-import com.sashimi.recommendation.domain.repository.JobPostingRecommendationRepository;
 import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.domain.repository.ResumeRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -25,7 +24,7 @@ import java.util.Optional;
 @Service
 public class JobPostingRecommendationAsyncService {
 
-    private final JobPostingRecommendationRepository recommendationRepository;
+    private final JobPostingRecommendationAsyncTransactionService transactionService;
     private final JobPostingRecommendationAnalyzePort analyzePort;
     private final AiPromptRepository aiPromptRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -34,9 +33,10 @@ public class JobPostingRecommendationAsyncService {
     private final OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter;
     private final CourseRecommendationMatcher courseRecommendationMatcher;
     private final CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder;
+    private final AiMetrics aiMetrics;
 
     public JobPostingRecommendationAsyncService(
-            JobPostingRecommendationRepository recommendationRepository,
+            JobPostingRecommendationAsyncTransactionService transactionService,
             JobPostingRecommendationAnalyzePort analyzePort,
             AiPromptRepository aiPromptRepository,
             ApplicationEventPublisher eventPublisher,
@@ -44,9 +44,10 @@ public class JobPostingRecommendationAsyncService {
             ResumeRepository resumeRepository,
             OwnedCertificateRecommendationFilter ownedCertificateRecommendationFilter,
             CourseRecommendationMatcher courseRecommendationMatcher,
-            CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder
+            CertificateRecommendationFallbackBuilder certificateRecommendationFallbackBuilder,
+            AiMetrics aiMetrics
     ) {
-        this.recommendationRepository = recommendationRepository;
+        this.transactionService = transactionService;
         this.analyzePort = analyzePort;
         this.aiPromptRepository = aiPromptRepository;
         this.eventPublisher = eventPublisher;
@@ -54,92 +55,180 @@ public class JobPostingRecommendationAsyncService {
         this.resumeRepository = resumeRepository;
         this.ownedCertificateRecommendationFilter = ownedCertificateRecommendationFilter;
         this.courseRecommendationMatcher = courseRecommendationMatcher;
-        this.certificateRecommendationFallbackBuilder = certificateRecommendationFallbackBuilder;
+        this.certificateRecommendationFallbackBuilder =
+                certificateRecommendationFallbackBuilder;
+        this.aiMetrics = aiMetrics;
     }
 
     @Async("aiAnalysisExecutor")
-    @Transactional
-    public void analyze(Long recommendationId, Long userId) {
-        log.info("🗃️ 채용공고 추천 비동기 분석 시작: userId={}, recommendationId={}", userId, recommendationId);
+    public void analyze(
+            Long recommendationId,
+            Long userId,
+            Long historyId
+    ) {
+        log.info(
+                "채용공고 추천 비동기 분석 시작: userId={}, recommendationId={}, historyId={}",
+                userId,
+                recommendationId,
+                historyId
+        );
 
-        JobPostingRecommendation recommendation = recommendationRepository.findByIdAndUserId(recommendationId, userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.JOB_POSTING_RECOMMENDATION_NOT_FOUND));
+        long startedAt = System.currentTimeMillis();
+
+        aiMetrics.incrementRequestStarted(
+                AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION
+        );
 
         try {
-            AiPrompt prompt = aiPromptRepository.findActiveByType(AiPromptType.JOB_POSTING_ANALYSIS)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.AI_PROMPT_NOT_FOUND));
+            JobPostingRecommendation recommendation =
+                    transactionService.getRecommendation(
+                            recommendationId,
+                            userId
+                    );
 
-            JobPostingRecommendationAnalyzeResult analyzeResult = analyzePort.analyze(recommendation, prompt);
+            AiPrompt prompt = aiPromptRepository
+                    .findActiveByType(
+                            AiPromptType.JOB_POSTING_ANALYSIS
+                    )
+                    .orElseThrow(() -> new BusinessException(
+                            ErrorCode.AI_PROMPT_NOT_FOUND
+                    ));
 
-            // 삭제
-            log.info("AI 분석 결과 certificates size={}, fitAnalysis missingItems={}",
-                    analyzeResult.certificates() == null ? null : analyzeResult.certificates().size(),
-                    analyzeResult.fitAnalysis() == null || analyzeResult.fitAnalysis().certification() == null
+            JobPostingRecommendationAnalyzeResult analyzeResult =
+                    analyzePort.analyze(
+                            recommendation,
+                            prompt
+                    );
+
+            log.info(
+                    "AI 분석 결과 certificates size={}, fitAnalysis missingItems={}",
+                    analyzeResult.certificates() == null
                             ? null
-                            : analyzeResult.fitAnalysis().certification().missingItems());
-
-            Optional<Resume> resume = findResumeForCertificateFilter(recommendation);
-
-            var fallbackCertificates = certificateRecommendationFallbackBuilder.build(
-                    analyzeResult.certificates(),
-                    analyzeResult.fitAnalysis()
+                            : analyzeResult.certificates().size(),
+                    analyzeResult.fitAnalysis() == null
+                            || analyzeResult.fitAnalysis().certification() == null
+                            ? null
+                            : analyzeResult.fitAnalysis()
+                            .certification()
+                            .missingItems()
             );
 
-            log.info("fallback certificates size={}, names={}",
+            Optional<Resume> resume =
+                    findResumeForCertificateFilter(
+                            recommendation
+                    );
+
+            var fallbackCertificates =
+                    certificateRecommendationFallbackBuilder.build(
+                            analyzeResult.certificates(),
+                            analyzeResult.fitAnalysis()
+                    );
+
+            log.info(
+                    "fallback certificates size={}, names={}",
                     fallbackCertificates.size(),
                     fallbackCertificates.stream()
                             .map(certificate -> certificate.name())
-                            .toList());
-
-            var filteredCertificates = ownedCertificateRecommendationFilter.filter(
-                    fallbackCertificates,
-                    resume.orElse(null)
+                            .toList()
             );
 
-            var enrichedCertificates = certificateRecommendationEnricher.enrich(
-                    filteredCertificates
-            );
+            var filteredCertificates =
+                    ownedCertificateRecommendationFilter.filter(
+                            fallbackCertificates,
+                            resume.orElse(null)
+                    );
 
-            log.info("enriched certificates size={}, names={}",
+            var enrichedCertificates =
+                    certificateRecommendationEnricher.enrich(
+                            filteredCertificates
+                    );
+
+            log.info(
+                    "enriched certificates size={}, names={}",
                     enrichedCertificates.size(),
                     enrichedCertificates.stream()
                             .map(certificate -> certificate.name())
-                            .toList());
-
-            var matchedCourses = courseRecommendationMatcher.match(
-                    enrichedCertificates
+                            .toList()
             );
 
-            JobPostingRecommendation analyzedRecommendation = recommendation.analyzed(
-                    analyzeResult.summary(),
-                    recommendation.resumeBased()
-                            ? analyzeResult.fitAnalysis()
-                            : null,
-                    matchedCourses,
-                    enrichedCertificates
-            );
+            var matchedCourses =
+                    courseRecommendationMatcher.match(
+                            enrichedCertificates,
+                            analyzeResult.courseSearchCriteria()
+                    );
 
-            JobPostingRecommendation savedRecommendation = recommendationRepository.save(analyzedRecommendation);
+            JobPostingRecommendation analyzedRecommendation =
+                    recommendation.analyzed(
+                            analyzeResult.summary(),
+                            recommendation.resumeBased()
+                                    ? analyzeResult.fitAnalysis()
+                                    : null,
+                            matchedCourses,
+                            enrichedCertificates
+                    );
 
-            log.info("채용공고 추천 비동기 분석 완료: userId={}, recommendationId={}, jobRole={}",
+            JobPostingRecommendation savedRecommendation =
+                    transactionService.completeAnalysis(
+                            analyzedRecommendation,
+                            historyId
+                    );
+
+            log.info(
+                    "채용공고 추천 비동기 분석 완료: userId={}, recommendationId={}, historyId={}, jobRole={}",
                     savedRecommendation.userId(),
                     savedRecommendation.recommendationId(),
-                    savedRecommendation.summary() == null ? null : savedRecommendation.summary().jobRole());
+                    historyId,
+                    savedRecommendation.summary() == null
+                            ? null
+                            : savedRecommendation.summary().jobRole()
+            );
+
+            aiMetrics.incrementRequestSuccess(
+                    AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION
+            );
+
+            aiMetrics.recordRequestDuration(
+                    AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION,
+                    "SUCCESS",
+                    System.currentTimeMillis() - startedAt
+            );
 
             eventPublisher.publishEvent(
                     new JobPostingRecommendationAnalyzedEvent(
                             savedRecommendation.userId(),
                             savedRecommendation.recommendationId(),
-                            savedRecommendation.summary() == null ? null : savedRecommendation.summary().jobRole(),
+                            savedRecommendation.summary() == null
+                                    ? null
+                                    : savedRecommendation.summary().jobRole(),
                             LocalDateTime.now()
                     )
             );
+        } catch (Exception exception) {
+            log.error(
+                    "채용공고 AI 분석 실패. recommendationId={}, userId={}, historyId={}",
+                    recommendationId,
+                    userId,
+                    historyId,
+                    exception
+            );
 
-        } catch (Exception e) {
-            log.error("🗃️ 채용공고 AI 분석 실패. recommendationId={}, userId={}", recommendationId, userId, e);
+            transactionService.failAnalysis(
+                    recommendationId,
+                    userId,
+                    historyId,
+                    exception
+            );
 
-            JobPostingRecommendation failedRecommendation = recommendation.failed();
-            recommendationRepository.save(failedRecommendation);
+            aiMetrics.incrementRequestFailed(
+                    AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION,
+                    exception.getClass().getSimpleName()
+            );
+
+            aiMetrics.recordRequestDuration(
+                    AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION,
+                    "FAILED",
+                    System.currentTimeMillis() - startedAt
+            );
         }
     }
 

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@Profile("local & !openai")
+@Profile("local & !gemini")
 public class StubJobPostingRecommendationAnalyzeAdapter
         implements JobPostingRecommendationAnalyzePort {
 
@@ -92,6 +92,7 @@ public class StubJobPostingRecommendationAnalyzeAdapter
                                 "보통"
                         )
                 ),
+                List.of(),
                 List.of()
         );
     }

@@ -1,5 +1,6 @@
 package com.sashimi.resume.application.calculator;
 
+import com.sashimi.resume.application.service.ResumeCareerDeduplicator;
 import com.sashimi.resume.domain.model.EmploymentType;
 import com.sashimi.resume.domain.model.ResumeCareer;
 import org.junit.jupiter.api.Test;
@@ -13,7 +14,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CareerCountScoreCalculatorTest {
 
     private final CareerCountScoreCalculator calculator =
-            new CareerCountScoreCalculator();
+            new CareerCountScoreCalculator(
+                    new ResumeCareerDeduplicator()
+            );
 
     @Test
     void returnsZeroWhenCareerListIsEmpty() {
@@ -55,6 +58,20 @@ class CareerCountScoreCalculatorTest {
         );
 
         assertThat(result).isEqualTo(30);
+    }
+
+    @Test
+    void countsDuplicatedCareersAsOneCareer() {
+        ResumeCareer career = career("회사 1");
+
+        int result = calculator.calculate(
+                List.of(
+                        career,
+                        career
+                )
+        );
+
+        assertThat(result).isEqualTo(15);
     }
 
     private ResumeCareer career(

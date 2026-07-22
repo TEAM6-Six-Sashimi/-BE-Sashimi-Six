@@ -18,20 +18,18 @@ import java.util.List;
 @Service
 public class CareerContinuityEvaluator {
 
-    private final AiPromptRepository
-            aiPromptRepository;
-
-    private final CareerContinuityAiPort
-            careerContinuityAiPort;
+    private final AiPromptRepository aiPromptRepository;
+    private final CareerContinuityAiPort careerContinuityAiPort;
+    private final ResumeCareerDeduplicator resumeCareerDeduplicator;
 
     public CareerContinuityEvaluator(
             AiPromptRepository aiPromptRepository,
-            CareerContinuityAiPort careerContinuityAiPort
+            CareerContinuityAiPort careerContinuityAiPort,
+            ResumeCareerDeduplicator resumeCareerDeduplicator
     ) {
-        this.aiPromptRepository =
-                aiPromptRepository;
-        this.careerContinuityAiPort =
-                careerContinuityAiPort;
+        this.aiPromptRepository = aiPromptRepository;
+        this.careerContinuityAiPort = careerContinuityAiPort;
+        this.resumeCareerDeduplicator = resumeCareerDeduplicator;
     }
 
     public CareerContinuityResult evaluate(
@@ -44,7 +42,9 @@ public class CareerContinuityEvaluator {
         }
 
         List<ResumeCareer> careers =
-                resume.careers();
+                resumeCareerDeduplicator.deduplicate(
+                        resume.careers()
+                );
 
         if (careers.isEmpty()) {
             return CareerContinuityResult

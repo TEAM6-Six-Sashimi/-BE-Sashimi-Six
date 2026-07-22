@@ -15,6 +15,8 @@ import com.sashimi.auth.dto.PasswordResetConfirmResponseDto;
 import com.sashimi.auth.dto.PasswordResetRequestDto;
 import com.sashimi.auth.dto.PasswordResetRequestResponseDto;
 import com.sashimi.auth.dto.TokenResponseDto;
+import com.sashimi.auth.dto.WsTicketResponseDto;
+import io.jsonwebtoken.JwtException;
 import com.sashimi.category.domain.repository.CategoryRepository;
 import com.sashimi.credit.application.command.CreateInitialCreditCommand;
 import com.sashimi.credit.application.command.GrantReferralSignupRewardCommand;
@@ -22,8 +24,11 @@ import com.sashimi.credit.application.usecase.CreditCommandUseCase;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
 import com.sashimi.security.jwt.JwtTokenProvider;
+import com.sashimi.security.loginprotection.AccountLockCheckResult;
+import com.sashimi.security.loginprotection.LoginProtectionService;
 import com.sashimi.token.entity.RefreshToken;
 import com.sashimi.token.service.RefreshService;
+import com.sashimi.user.application.event.SuspiciousLoginDetectedEvent;
 import com.sashimi.user.application.event.UserPasswordChangedEvent;
 import com.sashimi.user.application.event.UserRegisteredEvent;
 import com.sashimi.user.domain.model.User;
@@ -86,6 +91,7 @@ public class AuthService {
     private final TokenBlacklistService tokenBlacklistService;
     private final TokenVersionService tokenVersionService;
     private final RateLimiterService rateLimiterService;
+    private final LoginProtectionService loginProtectionService;
 
     public UserResponseDto register(SignupRequestDto request) {
         SignupEligibility eligibility = signupEligibilityPolicy.validate(request);
@@ -246,8 +252,23 @@ public class AuthService {
         return user;
     }
 
-    public TokenResponseDto login(LoginRequestDto request) {
-        if (!rateLimiterService.isAllowed("login:" + request.getLoginId(), 5, 300)) {
+    public TokenResponseDto login(LoginRequestDto request, String clientIp) {
+        if (loginProtectionService.isIpBlocked(clientIp)) {
+            throw new BusinessException(ErrorCode.IP_BLOCKED);
+        }
+
+        AccountLockCheckResult lockCheck = loginProtectionService.checkAccountLock(request.getLoginId());
+        if (lockCheck.locked()) {
+            if (lockCheck.justEscalated()) {
+                userRepository.findByLoginId(request.getLoginId()).ifPresent(user ->
+                        eventPublisher.publishEvent(new SuspiciousLoginDetectedEvent(
+                                user.getId(),
+                                user.getName(),
+                                user.getEmail(),
+                                lockCheck.violationCount(),
+                                lockCheck.lockDurationSeconds()
+                        )));
+            }
             throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
         }
 
@@ -263,10 +284,15 @@ public class AuthService {
                         )
                 );
             } catch (AuthenticationException e) {
+                loginProtectionService.recordFailedAttempt(clientIp, request.getLoginId());
                 authMetrics.recordLoginFailed(resolveFailureReason(e));
                 log.warn("event=login_failed loginId={} reason={}", maskLoginId(request.getLoginId()), resolveFailureReason(e));
                 throw e;
             }
+
+            // 인증 성공: 실패 카운트를 남겨두면 정상 사용자가 재시도 몇 번만으로도
+            // 위반 처리될 수 있으므로 초기화한다.
+            rateLimiterService.reset("login:" + request.getLoginId());
 
             CustomUserPrincipal principal = (CustomUserPrincipal) authentication.getPrincipal();
             User user = userRepository.findById(principal.getId())
@@ -323,18 +349,46 @@ public class AuthService {
         LocalDateTime refreshExpiryDate = LocalDateTime.now()
                 .plusNanos(jwtTokenProvider.getRefreshTokenValidityInMilliseconds() * 1_000_000);
 
-        refreshService.saveOrUpdate(user, tokenResponse.getRefreshToken(), refreshExpiryDate);
+        // refreshToken은 findValidRefreshToken()에서 가져온 같은 트랜잭션 내 영속 엔티티라
+        // 직접 갱신하면 더티체킹으로 반영됨 (saveOrUpdate의 user_id 재조회 불필요)
+        refreshToken.updateToken(tokenResponse.getRefreshToken(), refreshExpiryDate);
 
         return tokenResponse.withName(user.getName());
+    }
+
+    public WsTicketResponseDto issueWsTicket(String bearerToken) {
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ") || bearerToken.length() <= 7) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        String accessToken = bearerToken.substring(7);
+
+        try {
+            if (!jwtTokenProvider.validateToken(accessToken)) {
+                throw new BusinessException(ErrorCode.INVALID_TOKEN);
+            }
+        } catch (JwtException e) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        if (JwtTokenProvider.WS_TICKET_PURPOSE.equals(jwtTokenProvider.extractPurpose(accessToken))) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        Long userId = jwtTokenProvider.extractUserId(accessToken);
+        Long version = jwtTokenProvider.extractVersion(accessToken);
+
+        if (tokenBlacklistService.isBlacklisted(accessToken) || !tokenVersionService.isValidVersion(userId, version)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+
+        return jwtTokenProvider.generateWsTicket(userId, version);
     }
 
     public void logout(String accessToken, String refreshTokenValue) {
         RefreshToken refreshToken = refreshService.findValidRefreshToken(refreshTokenValue);
 
-        User user = userRepository.findById(refreshToken.getUserId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        refreshService.deleteByUser(user);
+        refreshService.deleteByUserId(refreshToken.getUserId());
 
         if (accessToken != null) {
             long remainingMillis = jwtTokenProvider.getRemainingExpiry(accessToken);

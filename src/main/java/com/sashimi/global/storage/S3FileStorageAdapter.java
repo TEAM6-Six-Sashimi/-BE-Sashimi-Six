@@ -92,6 +92,11 @@ public class S3FileStorageAdapter implements FileStoragePort {
     }
 
     @Override
+    public String storePrivateStream(MultipartFile file, String folder) {
+        return storeToPrivateBucket(file, properties.getS3().getBucketDocs(), folder);
+    }
+
+    @Override
     public String storeVideo(MultipartFile file) {
         return storeToPrivateBucket(file, properties.getS3().getBucketVideos(), "videos/lectures");
     }
@@ -118,6 +123,8 @@ public class S3FileStorageAdapter implements FileStoragePort {
                     RequestBody.fromInputStream(inputStream, file.getSize())
             );
         } catch (Exception e) {
+            log.error("[S3] 파일 업로드 실패 - bucket: {}, key: {}, cause: {}",
+                    bucket, key, e.getMessage(), e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
         }
 

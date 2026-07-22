@@ -2,169 +2,177 @@ package com.sashimi.ncs.application.service;
 
 import com.sashimi.category.infrastructure.persistence.CategoryJpaEntity;
 import com.sashimi.category.infrastructure.persistence.SpringDataCategoryRepository;
+import com.sashimi.ncs.infrastructure.persistence.NcsCategoryMappingJpaEntity;
 import com.sashimi.ncs.infrastructure.persistence.NcsInfoJpaEntity;
+import com.sashimi.ncs.infrastructure.persistence.SpringDataNcsCategoryMappingRepository;
 import com.sashimi.ncs.infrastructure.persistence.SpringDataNcsInfoRepository;
 import com.sashimi.ncs.infrastructure.publicdata.NcsApiClient;
 import com.sashimi.ncs.infrastructure.publicdata.NcsCompeUnitApiResponse;
 import com.sashimi.ncs.infrastructure.publicdata.NcsDutyApiResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class NcsSyncService {
 
     private static final String SUCCESS_CODE = "000";
 
-    private static final Map<String, String> CATEGORY_MAPPING_KEYWORDS = Map.ofEntries(
-            // IT·정보통신
-            Map.entry("정보처리기사", "응용SW엔지니어링"),
-            Map.entry("정보보안기사", "보안엔지니어링"),
-            Map.entry("네트워크관리사", "NW엔지니어링"),
-            Map.entry("빅데이터분석기사", "빅데이터분석"),
-            Map.entry("ADsP", "빅데이터분석"),
-            Map.entry("SQLD", "DB엔지니어링"),
-
-            // 경영·회계
-            Map.entry("전산회계", "회계·감사"),
-
-            // 디자인
-            Map.entry("웹디자인기능사", "디지털디자인"),
-
-            // 건설·안전
-            Map.entry("산업안전기사", "산업안전관리"),
-
-            // 식품·조리
-            Map.entry("조리기능사", "한식조리"),
-
-            // 부동산·금융
-            Map.entry("공인중개사", "부동산중개"),
-
-            // 어학
-            Map.entry("관광통역안내사", "국내여행안내")
-    );
-
     private final NcsApiClient ncsApiClient;
     private final SpringDataNcsInfoRepository ncsInfoRepository;
+    private final SpringDataNcsCategoryMappingRepository mappingRepository;
     private final SpringDataCategoryRepository categoryRepository;
-
-    public NcsSyncService(NcsApiClient ncsApiClient,
-                          SpringDataNcsInfoRepository ncsInfoRepository,
-                          SpringDataCategoryRepository categoryRepository) {
-        this.ncsApiClient = ncsApiClient;
-        this.ncsInfoRepository = ncsInfoRepository;
-        this.categoryRepository = categoryRepository;
-    }
 
     public int syncByDutyCd(String dutyCd) {
         NcsDutyApiResponse dutyResponse = ncsApiClient.fetchNcsDutyInfoAsDto(dutyCd, 1);
-        NcsDutyApiResponse.NcsDutyItem duty = extractDuty(dutyResponse, dutyCd);
+        validateDutyResponse(dutyResponse, dutyCd);
 
-        int savedCount = 0;
-        int pageNo = 1;
+        NcsDutyApiResponse.NcsDutyItem duty = dutyResponse.data().get(0);
+        List<NcsCompeUnitApiResponse.NcsCompeUnitItem> units = fetchAllCompeUnits(dutyCd);
 
-        while (true) {
-            NcsCompeUnitApiResponse unitResponse = ncsApiClient.fetchNcsCompeUnitInfoAsDto(dutyCd, pageNo);
-            validateSuccess(unitResponse.dataInfo().code(), unitResponse.dataInfo().message());
+        LocalDateTime now = LocalDateTime.now();
+        int syncedCount = 0;
 
-            List<NcsCompeUnitApiResponse.NcsCompeUnitItem> units = unitResponse.data();
-            if (units == null || units.isEmpty()) {
-                break;
-            }
-
-            for (NcsCompeUnitApiResponse.NcsCompeUnitItem unit : units) {
-                upsertNcsInfo(duty, unit);
-                savedCount++;
-            }
-
-            if (pageNo >= unitResponse.dataInfo().totalPage()) {
-                break;
-            }
-
-            pageNo++;
+        for (NcsCompeUnitApiResponse.NcsCompeUnitItem unit : units) {
+            upsertNcsInfo(duty, unit, now);
+            syncedCount++;
         }
 
-        mapCategoriesToNcsInfo();
+        mapCategoriesByDutyCd(dutyCd);
 
-        return savedCount;
+        return syncedCount;
     }
 
-    private NcsDutyApiResponse.NcsDutyItem extractDuty(NcsDutyApiResponse response, String dutyCd) {
-        validateSuccess(response.dataInfo().code(), response.dataInfo().message());
+    public void syncDefaultMappingsIfNeeded() {
+        List<NcsCategoryMappingJpaEntity> mappings = mappingRepository.findByActiveTrue();
 
-        if (response.data() == null || response.data().isEmpty()) {
-            throw new IllegalStateException("NCS duty not found: " + dutyCd);
+        for (NcsCategoryMappingJpaEntity mapping : mappings) {
+            syncMappingIfNeeded(mapping);
+        }
+    }
+
+    private void syncMappingIfNeeded(NcsCategoryMappingJpaEntity mapping) {
+        if (!ncsInfoRepository.existsByJobName(mapping.getNcsJobName())) {
+            syncByDutyCd(mapping.getDutyCd());
         }
 
-        return response.data().get(0);
+        connectCategoryToNcsInfo(mapping.getCategoryName(), mapping.getNcsJobName());
+    }
+
+    private void mapCategoriesByDutyCd(String dutyCd) {
+        List<NcsCategoryMappingJpaEntity> mappings = mappingRepository.findByDutyCdAndActiveTrue(dutyCd);
+
+        for (NcsCategoryMappingJpaEntity mapping : mappings) {
+            connectCategoryToNcsInfo(mapping.getCategoryName(), mapping.getNcsJobName());
+        }
+    }
+
+    private void connectCategoryToNcsInfo(String categoryName, String ncsJobName) {
+        CategoryJpaEntity category = categoryRepository.findBySubCategoryAndActiveTrue(categoryName)
+                .orElse(null);
+
+        if (category == null) {
+            return;
+        }
+
+        NcsInfoJpaEntity ncsInfo = ncsInfoRepository.findFirstByJobNameOrderByIdAsc(ncsJobName)
+                .orElse(null);
+
+        if (ncsInfo == null) {
+            return;
+        }
+
+        category.updateNcsInfoId(ncsInfo.getId());
+    }
+
+    private List<NcsCompeUnitApiResponse.NcsCompeUnitItem> fetchAllCompeUnits(String dutyCd) {
+        List<NcsCompeUnitApiResponse.NcsCompeUnitItem> result = new ArrayList<>();
+
+        NcsCompeUnitApiResponse firstResponse = ncsApiClient.fetchNcsCompeUnitInfoAsDto(dutyCd, 1);
+        validateCompeUnitResponse(firstResponse, dutyCd);
+
+        if (firstResponse.data() != null) {
+            result.addAll(firstResponse.data());
+        }
+
+        int totalPage = firstResponse.dataInfo() == null ? 1 : firstResponse.dataInfo().totalPage();
+
+        for (int pageNo = 2; pageNo <= totalPage; pageNo++) {
+            NcsCompeUnitApiResponse response = ncsApiClient.fetchNcsCompeUnitInfoAsDto(dutyCd, pageNo);
+            validateCompeUnitResponse(response, dutyCd);
+
+            if (response.data() != null) {
+                result.addAll(response.data());
+            }
+        }
+
+        return result;
     }
 
     private void upsertNcsInfo(NcsDutyApiResponse.NcsDutyItem duty,
-                               NcsCompeUnitApiResponse.NcsCompeUnitItem unit) {
-        LocalDateTime syncedAt = LocalDateTime.now();
-
-        NcsInfoJpaEntity ncsInfo = ncsInfoRepository.findByNcsCode(unit.ncsClCd())
-                .orElseGet(() -> new NcsInfoJpaEntity(
-                        unit.ncsClCd(),
-                        duty.dutyNm(),
-                        duty.dutyNm(),
-                        duty.dutyDef(),
-                        unit.compUnitCd(),
-                        unit.compUnitName(),
-                        unit.compUnitDef(),
-                        syncedAt
-                ));
-
-        ncsInfo.updateFromSync(
-                duty.dutyNm(),
-                duty.dutyNm(),
-                duty.dutyDef(),
-                unit.compUnitCd(),
-                unit.compUnitName(),
-                unit.compUnitDef(),
-                syncedAt
-        );
-
-        ncsInfoRepository.save(ncsInfo);
+                               NcsCompeUnitApiResponse.NcsCompeUnitItem unit,
+                               LocalDateTime syncedAt) {
+        ncsInfoRepository.findByNcsCode(unit.ncsClCd())
+                .ifPresentOrElse(
+                        ncsInfo -> ncsInfo.updateFromSync(
+                                duty.dutyNm(),
+                                duty.dutyNm(),
+                                duty.dutyDef(),
+                                unit.compUnitCd(),
+                                cleanAbilityUnitName(unit.compUnitName()),
+                                unit.compUnitDef(),
+                                syncedAt
+                        ),
+                        () -> ncsInfoRepository.save(new NcsInfoJpaEntity(
+                                unit.ncsClCd(),
+                                duty.dutyNm(),
+                                duty.dutyNm(),
+                                duty.dutyDef(),
+                                unit.compUnitCd(),
+                                cleanAbilityUnitName(unit.compUnitName()),
+                                unit.compUnitDef(),
+                                syncedAt
+                        ))
+                );
     }
 
-    private void mapCategoriesToNcsInfo() {
-        List<CategoryJpaEntity> categories = categoryRepository.findAllByActiveTrueOrderBySortOrderAsc();
+    private void validateDutyResponse(NcsDutyApiResponse response, String dutyCd) {
+        if (response == null || response.dataInfo() == null) {
+            throw new IllegalStateException("NCS 직무정보 응답이 비어 있습니다. dutyCd=" + dutyCd);
+        }
 
-        for (CategoryJpaEntity category : categories) {
-            resolveMappingKeyword(category.getSubCategory())
-                    .flatMap(this::findNcsInfoByKeyword)
-                    .ifPresent(ncsInfo -> category.updateNcsInfoId(ncsInfo.getId()));
+        if (!SUCCESS_CODE.equals(response.dataInfo().code())) {
+            throw new IllegalStateException("NCS 직무정보 조회 실패. dutyCd=" + dutyCd
+                    + ", message=" + response.dataInfo().message());
+        }
+
+        if (response.data() == null || response.data().isEmpty()) {
+            throw new IllegalStateException("NCS 직무정보가 없습니다. dutyCd=" + dutyCd);
         }
     }
 
-    private Optional<String> resolveMappingKeyword(String subCategory) {
-        if (subCategory == null || subCategory.isBlank()) {
-            return Optional.empty();
+    private void validateCompeUnitResponse(NcsCompeUnitApiResponse response, String dutyCd) {
+        if (response == null || response.dataInfo() == null) {
+            throw new IllegalStateException("NCS 능력단위 응답이 비어 있습니다. dutyCd=" + dutyCd);
         }
 
-        return CATEGORY_MAPPING_KEYWORDS.entrySet().stream()
-                .filter(entry -> subCategory.contains(entry.getKey()))
-                .map(Map.Entry::getValue)
-                .findFirst();
-    }
-
-    private Optional<NcsInfoJpaEntity> findNcsInfoByKeyword(String keyword) {
-        return ncsInfoRepository.findFirstByCategoryPathContainingOrJobNameContainingOrAbilityUnitNameContaining(
-                keyword,
-                keyword,
-                keyword
-        );
-    }
-
-    private void validateSuccess(String code, String message) {
-        if (!SUCCESS_CODE.equals(code)) {
-            throw new IllegalStateException("NCS API failed: " + code + " / " + message);
+        if (!SUCCESS_CODE.equals(response.dataInfo().code())) {
+            throw new IllegalStateException("NCS 능력단위 조회 실패. dutyCd=" + dutyCd
+                    + ", message=" + response.dataInfo().message());
         }
+    }
+
+    private String cleanAbilityUnitName(String abilityUnitName) {
+        if (abilityUnitName == null) {
+            return null;
+        }
+
+        return abilityUnitName.replaceFirst("^\\d+\\.", "").trim();
     }
 }

@@ -1,5 +1,6 @@
 package com.sashimi.security.config;
 
+import com.sashimi.maintenance.MaintenanceModeFilter;
 import com.sashimi.security.handler.CustomAccessDeniedHandler;
 import com.sashimi.security.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final MaintenanceModeFilter maintenanceModeFilter;
 
     @Value("${swagger.username}")
     private String swaggerUsername;
@@ -129,6 +131,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/files/images").permitAll()
                         .requestMatchers(HttpMethod.GET, "/subscriptions/plans").permitAll()
                         .requestMatchers(HttpMethod.GET, "/notices/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/chatbot/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/maintenance/status").permitAll()
+                        .requestMatchers("/ws-coffeechat/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/files/download").authenticated()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/api/members/instructor-applications/**").hasAuthority("ROLE_ADMIN")
@@ -137,6 +142,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(maintenanceModeFilter, JwtAuthenticationFilter.class)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)

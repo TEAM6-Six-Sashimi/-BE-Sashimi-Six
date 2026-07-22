@@ -2,6 +2,7 @@ package com.sashimi.resume.application.calculator;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.resume.application.service.ResumeCareerDeduplicator;
 import com.sashimi.resume.domain.model.ResumeCareer;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,14 @@ import java.util.List;
 // 이력서 항목 중 경력의 총 근무 개월 수 계산기
 @Component
 public class CareerPeriodScoreCalculator {
+
+    private final ResumeCareerDeduplicator resumeCareerDeduplicator;
+
+    public CareerPeriodScoreCalculator(
+            ResumeCareerDeduplicator resumeCareerDeduplicator
+    ) {
+        this.resumeCareerDeduplicator = resumeCareerDeduplicator;
+    }
 
     public int calculate(
             List<ResumeCareer> careers
@@ -26,7 +35,12 @@ public class CareerPeriodScoreCalculator {
             List<ResumeCareer> careers,
             YearMonth currentYearMonth
     ) {
-        if (careers == null || careers.isEmpty()) {
+        List<ResumeCareer> uniqueCareers =
+                resumeCareerDeduplicator.deduplicate(
+                        careers
+                );
+
+        if (uniqueCareers.isEmpty()) {
             return 0;
         }
 
@@ -36,7 +50,7 @@ public class CareerPeriodScoreCalculator {
             );
         }
 
-        long totalMonths = careers.stream()
+        long totalMonths = uniqueCareers.stream()
                 .mapToLong(career ->
                         calculateMonths(
                                 career,

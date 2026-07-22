@@ -74,9 +74,4 @@ public class RefreshToken {
     public void markUsed(LocalDateTime usedAt) {
         this.lastUsedAt = usedAt;
     }
-
-    public void revoke(RefreshTokenRevokedReason reason, LocalDateTime revokedAt) {
-        this.revokedAt = revokedAt;
-        this.revokedReason = reason;
-    }
 }

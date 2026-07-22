@@ -1,0 +1,52 @@
+# Changelog
+
+이 프로젝트의 주요 변경사항을 기록합니다. [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/) 형식을
+참고하되, `develop` 머지마다 자동 배포되는 구조라 버전 번호 대신 **날짜 기준**으로 기록합니다.
+각 항목의 이슈 번호는 GitHub 이슈/PR과 연결됩니다.
+
+## 2026-07-15
+
+### Added
+- **점검모드(Maintenance Mode)** — 정기점검/배포 중 일반 사용자 접근을 막고 관리자(`ROLE_ADMIN`)는
+  평소처럼 이용 가능한 기능. `POST /admin/maintenance/enable|disable`, `GET /maintenance/status`(공개,
+  5초 캐시) (#496)
+- **CI/CD 배포 파이프라인에 점검모드 자동 연동** — 배포 시작 직전 자동으로 점검모드를 켜고, 배포
+  완료(또는 실패) 후 자동으로 끔. 프론트가 "진짜 장애"와 "배포 중"을 명확히 구분할 수 있게 됨 (#506)
+- **배포 이미지 버전 태깅 + 롤백 워크플로우** — 빌드 시 `latest`와 커밋 short SHA 태그를 함께 생성,
+  최근 5개 버전 보관. `rollback-backend.yml`(수동 실행)로 재빌드 없이 즉시 이전 버전 전환 가능 (#506)
+- 관리자 테스트 계정 `admin02`~`admin08` 추가 — `admin08`은 CI/CD 전용으로 분리해 팀원 수동 테스트
+  세션과 충돌(동시 로그인 차단) 방지 (#496, #506)
+- 부하테스트 스크립트(`k6/concurrent-users-capacity-test.js`)에 점검모드 우회용 관리자 로그인 옵션
+  추가 — 점검모드 중에도 실제 API 경로를 그대로 부하테스트할 수 있음
+
+### Changed
+- **HikariCP 커넥션 풀 사이즈 10 → 20** — 동시접속 80명 목표 부하테스트에서 피크 시점(약 30 req/s)에
+  커넥션 대기 큐가 발생하는 걸 확인, 조정 후 재검증에서 대기 큐 해소 확인 (#503)
+- **배포 워크플로우 동시성 정책 변경**(`cancel-in-progress: true → false`) — 배포 도중 다른 팀원이
+  머지하면 진행 중이던 배포가 강제 취소되어 컨테이너가 안 뜬 채로 남을 수 있던 위험 제거, 취소 대신
+  큐잉되도록 변경 (#498)
+- `/maintenance/status` 응답에 `Cache-Control: max-age=5` 헤더 추가
+
+### Fixed
+- **Gemini API 응답 파싱 오류** — raw REST 응답에 없는 `output_text` 필드(SDK 전용 편의 필드)를
+  읽으려 해서 API 호출은 성공해도 매번 실패 처리되던 문제. 실제 응답 구조(`steps[].content[].text`)
+  기준으로 파싱하도록 수정 (#501)
+- **점검모드가 Prometheus 스크레이핑까지 차단하던 문제** — 점검모드 허용 경로에 `/actuator/prometheus`
+  누락, 점검모드 켜면 Grafana 모니터링 전체가 같이 멈추던 버그 수정 (#501)
+- 점검모드 필터의 URI prefix 매칭 취약점(`/auth/login-history` 등 유사 경로로 우회 가능) 수정 —
+  정확한 경로 일치 + 하위 경로 일치로 강화
+
+## 2026-07-14
+
+### Fixed
+- Prometheus 쿼리 URI 빌더가 PromQL의 `{`, `}`를 URI 템플릿 변수로 오인해 `URISyntaxException`을
+  일으키던 문제 — `UriUtils.encodeQueryParam()` + `build(true)`로 근본 수정 (#477)
+- 로그인 로그가 배포된 운영 환경에서 오류를 일으키던 문제 수정
+
+### Added
+- 관리자 로그인 수 통계 API `GET /admin/stats/logins?period=hourly|daily` — 기존 Prometheus
+  카운터(`auth_login_success_total`)를 조회하는 방식으로 구현 (신규 DB 테이블/마이그레이션 없음)
+
+---
+
+*이전 히스토리는 `git log`를 참고하세요.*

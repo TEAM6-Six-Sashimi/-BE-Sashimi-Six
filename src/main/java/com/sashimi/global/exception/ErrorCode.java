@@ -13,6 +13,7 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(405, "COMMON_005", "지원하지 않는 HTTP 메서드입니다."),
 
     RESOURCE_NOT_FOUND(404, "COMMON_404", "요청한 대상을 찾을 수 없습니다."),
+    SERVICE_UNDER_MAINTENANCE(503, "COMMON_900", "현재 서비스 점검 중입니다."),
     INTERNAL_SERVER_ERROR(500, "COMMON_999", "서버 오류가 발생했습니다."),
 
     UNAUTHORIZED(401, "AUTH_001", "인증이 필요합니다."),
@@ -23,6 +24,7 @@ public enum ErrorCode {
     LOGIN_FAILED(401, "AUTH_006", "아이디 또는 비밀번호가 올바르지 않습니다."),
     TOO_MANY_REQUESTS(429, "AUTH_007", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요."),
     CONCURRENT_SESSION_DETECTED(401, "AUTH_008", "다른 기기에서 로그인되어 자동 로그아웃되었습니다."),
+    IP_BLOCKED(429, "AUTH_009", "일시적으로 접근이 제한되었습니다. 잠시 후 다시 시도해주세요."),
 
     DUPLICATE_LOGIN_ID(409, "USER_001", "이미 사용 중인 아이디입니다."),
     DUPLICATE_EMAIL(409, "USER_002", "이미 사용 중인 이메일입니다."),
@@ -118,6 +120,11 @@ public enum ErrorCode {
     RESUME_INVALID_FORMAT(400, "MEMBER_008", "이력서 파일은 .docx 형식만 업로드 가능합니다."),
     ALREADY_INSTRUCTOR(400, "MEMBER_010", "이미 승인된 강사는 재신청할 수 없습니다."),
 
+    COFFEE_CHAT_INVALID_STATUS(400, "COFFEECHAT_001", "처리할 수 없는 커피챗 상태입니다."),
+    COFFEE_CHAT_MESSAGE_FORBIDDEN(403, "COFFEECHAT_002", "채팅방 참여자만 메시지를 보낼 수 있습니다."),
+    COFFEE_CHAT_NOT_FOUND(404, "COFFEECHAT_003", "커피챗을 찾을 수 없습니다."),
+    COFFEE_CHAT_FORBIDDEN(403, "COFFEECHAT_004", "채팅방 참여자만 접근할 수 있습니다."),
+
     REVIEW_ALREADY_EXISTS(409, "REVIEW_001", "이미 해당 강의에 리뷰를 작성하셨습니다."),
     REVIEW_NOT_ENROLLED(403, "REVIEW_002", "수강 중인 강의에만 리뷰를 작성할 수 있습니다."),
     REVIEW_PROGRESS_REQUIRED(400, "REVIEW_003", "수강 후 리뷰를 작성할 수 있습니다."),
@@ -134,6 +141,7 @@ public enum ErrorCode {
     AI_RESPONSE_PARSE_FAILED(502, "AI_005", "AI 응답 결과를 파싱할 수 없습니다."),
     AI_PROMPT_NOT_FOUND(404, "AI_006", "활성화된 AI 프롬프트를 찾을 수 없습니다."),
     AI_CONSENT_REQUIRED(403, "AI_007", "AI 기능을 사용하려면 개인정보 AI 활용 동의가 필요합니다."),
+    AI_RATE_LIMIT_EXCEEDED(429, "AI_008", "AI 기능 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
 
     RESUME_NOT_FOUND(404, "RESUME_404", "이력서를 찾을 수 없습니다."),
     RESUME_ALREADY_EXISTS(409, "RESUME_005", "이미 작성된 이력서가 있습니다."),
@@ -142,7 +150,14 @@ public enum ErrorCode {
     RESUME_INVALID_REVIEW_SCORE(400, "RESUME_003", "이력서 평가 점수가 올바르지 않습니다."),
     RESUME_INVALID_REVIEW_FEEDBACK(400, "RESUME_004", "이력서 평가 피드백이 올바르지 않습니다."),
 
+    COVER_LETTER_INVALID_QUESTION(400, "COVER_LETTER_001", "잘못된 자기소개서 문항입니다."),
+    COVER_LETTER_CONTENT_TOO_LONG(400, "COVER_LETTER_002", "자기소개서 문항 글자 수를 초과했습니다."),
+    COVER_LETTER_EMPTY(400, "COVER_LETTER_003", "AI 첨삭을 위해 최소 1개 이상의 자기소개서 문항을 작성해 주세요."),
+    COVER_LETTER_REVIEW_NOT_FOUND(404, "COVER_LETTER_404", "자기소개서 첨삭 결과를 찾을 수 없습니다."),
+
     JOB_POSTING_RECOMMENDATION_NOT_FOUND(404, "RECOMMENDATION_404", "채용공고 추천 결과를 찾을 수 없습니다."),
+    JOB_POSTING_URL_FETCH_FAILED(400, "RECOMMENDATION_001", "입력하신 URL에 접속할 수 없습니다. URL을 다시 확인해주세요."),
+    JOB_POSTING_CONTENT_EXTRACT_FAILED(400, "RECOMMENDATION_002", "해당 사이트의 페이지 구조상 채용공고 본문을 자동으로 불러오지 못했습니다. 공고 내용을 복사해 텍스트 직접 입력을 이용해주세요."),
 
     FILE_EMPTY(400, "FILE_001", "업로드할 파일이 없습니다."),
     FILE_INVALID_TYPE(400, "FILE_002", "지원하지 않는 파일 형식입니다. (jpg, png, gif, webp만 허용)"),
@@ -153,7 +168,10 @@ public enum ErrorCode {
     NOTICE_NOT_FOUND(404, "NOTICE_001", "공지사항을 찾을 수 없습니다."),
     NOTICE_TITLE_REQUIRED(400, "NOTICE_002", "공지사항 제목을 입력해 주세요."),
     NOTICE_CONTENT_REQUIRED(400, "NOTICE_003", "공지사항 내용을 입력해 주세요."),
-    NOTICE_PAGE_SIZE_INVALID(400, "NOTICE_004", "공지사항 조회 조건이 올바르지 않습니다.");
+    NOTICE_PAGE_SIZE_INVALID(400, "NOTICE_004", "공지사항 조회 조건이 올바르지 않습니다."),
+
+    STATS_INVALID_PERIOD(400, "STATS_001", "period는 hourly 또는 daily만 가능합니다."),
+    STATS_SOURCE_UNAVAILABLE(503, "STATS_002", "통계 데이터를 조회할 수 없습니다.");
 
 
     private final int status;

@@ -8,7 +8,10 @@ import com.sashimi.auth.dto.LoginRequestDto;
 import com.sashimi.auth.dto.LogoutRequestDto;
 import com.sashimi.auth.dto.ReissueRequestDto;
 import com.sashimi.auth.dto.TokenResponseDto;
+import com.sashimi.auth.dto.WsTicketResponseDto;
 import com.sashimi.auth.service.AuthService;
+import com.sashimi.global.web.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
 import com.sashimi.user.dto.LoginIdCheckResponseDto;
 import com.sashimi.user.dto.ReferralCodeCheckResponseDto;
 import com.sashimi.user.dto.SignupRequestDto;
@@ -77,8 +80,12 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "서버 오류")
     })
     @PostMapping("/login")
-    public ResponseEntity<TokenResponseDto> login(@RequestBody @Valid LoginRequestDto request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<TokenResponseDto> login(
+            @RequestBody @Valid LoginRequestDto request,
+            HttpServletRequest httpRequest
+    ) {
+        String clientIp = ClientIpResolver.resolve(httpRequest);
+        return ResponseEntity.ok(authService.login(request, clientIp));
     }
 
     @Operation(summary = "재로그인", description = "로그인 상태에서 refresh토큰을 사용하여 재로그인 합니다")
@@ -92,6 +99,21 @@ public class AuthController {
     })
     public ResponseEntity<TokenResponseDto> reissue(@RequestBody @Valid ReissueRequestDto request) {
         return ResponseEntity.ok(authService.reissue(request.getRefreshToken()));
+    }
+
+    @Operation(
+            summary = "웹소켓 인증 티켓 발급",
+            description = "기존 accessToken을 검증한 뒤, 웹소켓 연결 전용으로만 쓸 수 있는 짧은 만료의 티켓을 발급합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "웹소켓 티켓 발급 성공"),
+            @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 accessToken")
+    })
+    @PostMapping("/ws-ticket")
+    public ResponseEntity<WsTicketResponseDto> issueWsTicket(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+        return ResponseEntity.ok(authService.issueWsTicket(authHeader));
     }
 
     @Operation(summary = "로그아웃", description = "로그아웃을 진행하면서 refresh token을 삭제합니다")

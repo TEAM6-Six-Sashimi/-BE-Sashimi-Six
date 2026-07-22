@@ -1,6 +1,9 @@
 package com.sashimi.recommendation.application.service;
 
 import com.sashimi.ai.application.policy.AiFeatureAccessPolicy;
+import com.sashimi.ai.domain.model.AiFeatureType;
+import com.sashimi.ai.infrastructure.persistence.AiRequestHistoryJpaEntity;
+import com.sashimi.ai.infrastructure.persistence.SpringDataAiRequestHistoryRepository;
 import com.sashimi.ai.metric.AiMetrics;
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
@@ -14,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 public class JobPostingRecommendationService implements
@@ -25,19 +30,22 @@ public class JobPostingRecommendationService implements
     private final JobPostingRecommendationAsyncService asyncService;
     private final JobPostingResumeSummaryBuilder resumeSummaryBuilder;
     private final AiFeatureAccessPolicy aiFeatureAccessPolicy;
+    private final SpringDataAiRequestHistoryRepository aiRequestHistoryRepository;
 
     public JobPostingRecommendationService(
             JobPostingRecommendationRepository recommendationRepository,
             JobPostingRecommendationPolicy recommendationPolicy,
             JobPostingRecommendationAsyncService asyncService,
             JobPostingResumeSummaryBuilder resumeSummaryBuilder,
-            AiFeatureAccessPolicy aiFeatureAccessPolicy
+            AiFeatureAccessPolicy aiFeatureAccessPolicy,
+            SpringDataAiRequestHistoryRepository aiRequestHistoryRepository
     ) {
         this.recommendationRepository = recommendationRepository;
         this.recommendationPolicy = recommendationPolicy;
         this.asyncService = asyncService;
         this.resumeSummaryBuilder = resumeSummaryBuilder;
         this.aiFeatureAccessPolicy = aiFeatureAccessPolicy;
+        this.aiRequestHistoryRepository = aiRequestHistoryRepository;
     }
 
     @Override
@@ -46,6 +54,14 @@ public class JobPostingRecommendationService implements
         aiFeatureAccessPolicy.validate(
                 command.userId(),
                 AiMetrics.FEATURE_JOB_POSTING_RECOMMENDATION
+        );
+
+        AiRequestHistoryJpaEntity history = aiRequestHistoryRepository.save(
+                AiRequestHistoryJpaEntity.started(
+                        command.userId(),
+                        AiFeatureType.JOB_POSTING_ANALYSIS,
+                        null
+                )
         );
 
         log.info("채용공고 추천 요청 접수: userId={}, resumeId={}, inputType={}, hasSourceUrl={}, rawContentLength={}",
@@ -79,20 +95,23 @@ public class JobPostingRecommendationService implements
         JobPostingRecommendation savedRecommendation =
                 recommendationRepository.save(recommendation);
 
-        log.info("채용공고 추천 분석 대기 상태 저장: userId={}, recommendationId={}, resumeBased={}, analysisStatus={}",
+        log.info("채용공고 추천 분석 대기 상태 저장: userId={}, recommendationId={}, resumeBased={}, analysisStatus={}, historyId={}",
                 savedRecommendation.userId(),
                 savedRecommendation.recommendationId(),
                 savedRecommendation.resumeBased(),
-                savedRecommendation.analysisStatus());
+                savedRecommendation.analysisStatus(),
+                history.getId());
 
         asyncService.analyze(
                 savedRecommendation.recommendationId(),
-                savedRecommendation.userId()
+                savedRecommendation.userId(),
+                history.getId()
         );
 
-        log.debug("채용공고 추천 비동기 분석 요청 발행: userId={}, recommendationId={}",
+        log.debug("채용공고 추천 비동기 분석 요청 발행: userId={}, recommendationId={}, historyId={}",
                 savedRecommendation.userId(),
-                savedRecommendation.recommendationId());
+                savedRecommendation.recommendationId(),
+                history.getId());
 
         return savedRecommendation;
     }
@@ -121,5 +140,13 @@ public class JobPostingRecommendationService implements
                 recommendation.analysisStatus());
 
         return recommendation;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<JobPostingRecommendation> getLatest(Long userId) {
+        log.debug("최근 채용공고 추천 결과 조회 요청: userId={}", userId);
+
+        return recommendationRepository.findLatestByUserId(userId);
     }
 }

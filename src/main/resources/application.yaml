@@ -6,8 +6,9 @@ spring:
     group:
       prod:
         - s3
-        - openai
+        - gemini
         - mailgun
+        - fastapi
 
   servlet:
     multipart:
@@ -60,15 +61,16 @@ management:
 jwt:
   access-token-validity-in-milliseconds: 10800000
   refresh-token-validity-in-milliseconds: 1209600000
+  ws-ticket-validity-in-milliseconds: 60000
 
 swagger:
   username: ${SWAGGER_USERNAME:swagger}
   password: ${SWAGGER_PASSWORD:changeme}
 
-openai:
-  api-key: ${OPENAI_API_KEY:}
-  model: ${OPENAI_MODEL:gpt-4o-mini}
-  base-url: https://api.openai.com/v1
+gemini:
+  base-url: https://generativelanguage.googleapis.com/v1beta
+  api-key: ${GEMINI_API_KEY}
+  model: ${GEMINI_MODEL:gemini-3.5-flash}
   timeout-seconds: 30
 
 toss:
@@ -93,6 +95,11 @@ external:
     base-url: http://openapi.q-net.or.kr/api/service/rest/InquiryListNationalQualifcationSVC
     service-key: ${QUALIFICATION_CODE_SERVICE_KEY}
 
+  ai-server:
+    base-url: http://172.31.33.226:8001
+    # 챗봇은 분류 → RAG 검색 → 답변 3단계라 20~30초가 걸린다. 30초는 여유가 없어 60초로 둔다.
+    timeout-seconds: 60
+    
 subscription:
   renewal:
     cron: "0 0 * * * *"

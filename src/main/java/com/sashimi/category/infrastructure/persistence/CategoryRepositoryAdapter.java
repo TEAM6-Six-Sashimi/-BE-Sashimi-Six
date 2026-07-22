@@ -96,4 +96,25 @@ public class CategoryRepositoryAdapter implements CategoryRepository {
     public int findMaxSortOrder() {
         return springDataCategoryRepository.findMaxSortOrder();
     }
+
+    @Override
+    public List<Category> findAllByIdIn(List<Long> ids) {
+        return springDataCategoryRepository.findAllById(ids)
+                .stream()
+                .map(CategoryJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
+    public boolean existsByMainCategoryId(Long mainCategoryId) {
+        return springDataCategoryRepository.existsByMainCategoryId(mainCategoryId);
+    }
+
+    @Override
+    public List<Category> findAllByMainCategoryIdIn(List<Long> mainCategoryIds) {
+        return springDataCategoryRepository.findAllByMainCategoryIdIn(mainCategoryIds)
+                .stream()
+                .map(CategoryJpaEntity::toDomain)
+                .toList();
+    }
 }

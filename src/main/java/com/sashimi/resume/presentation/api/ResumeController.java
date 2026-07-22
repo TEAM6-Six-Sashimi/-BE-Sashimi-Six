@@ -4,12 +4,14 @@ import com.sashimi.resume.application.command.CreateResumeCommand;
 import com.sashimi.resume.application.command.DeleteResumeCommand;
 import com.sashimi.resume.application.command.UpdateResumeCommand;
 import com.sashimi.resume.application.result.ReviewResumeResult;
+import com.sashimi.resume.application.service.ResumeReviewService;
 import com.sashimi.resume.application.usecase.ResumeCommandUseCase;
 import com.sashimi.resume.application.usecase.ResumeQueryUseCase;
 import com.sashimi.resume.application.usecase.ReviewResumeUseCase;
 import com.sashimi.resume.domain.model.Resume;
 import com.sashimi.resume.presentation.api.request.CreateResumeRequest;
 import com.sashimi.resume.presentation.api.request.UpdateResumeRequest;
+import com.sashimi.resume.presentation.api.response.LatestResumeReviewResponse;
 import com.sashimi.resume.presentation.api.response.ResumeResponse;
 import com.sashimi.resume.presentation.api.response.ReviewResumeResponse;
 import com.sashimi.security.principal.CustomUserPrincipal;
@@ -31,17 +33,20 @@ import org.springframework.web.bind.annotation.*;
 public class ResumeController {
 
     private final ReviewResumeUseCase reviewResumeUseCase;
+    private final ResumeReviewService resumeReviewService;
     private final ResumeCommandUseCase resumeCommandUseCase;
     private final ResumeQueryUseCase resumeQueryUseCase;
 
     public ResumeController(
             ResumeCommandUseCase resumeCommandUseCase,
             ResumeQueryUseCase resumeQueryUseCase,
-            ReviewResumeUseCase reviewResumeUseCase
+            ReviewResumeUseCase reviewResumeUseCase,
+            ResumeReviewService resumeReviewService
     ) {
         this.resumeCommandUseCase = resumeCommandUseCase;
         this.resumeQueryUseCase = resumeQueryUseCase;
         this.reviewResumeUseCase = reviewResumeUseCase;
+        this.resumeReviewService = resumeReviewService;
     }
 
     @Operation(
@@ -73,6 +78,36 @@ public class ResumeController {
         );
 
         return ReviewResumeResponse.from(result);
+    }
+
+    @Operation(
+            summary = "최근 이력서 AI 평가 결과 조회",
+            description = "사용자의 특정 이력서에 대한 최근 AI 평가 결과 1개를 조회합니다. 최근 기록이 없으면 review를 null로 반환합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "최근 이력서 AI 평가 결과 조회 성공",
+                    content = @Content(schema = @Schema(implementation = LatestResumeReviewResponse.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "이력서를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/{resumeId}/ai-review/latest")
+    public LatestResumeReviewResponse getLatestReview(
+            @AuthenticationPrincipal CustomUserPrincipal principal,
+            @PathVariable Long resumeId
+    ) {
+        return resumeReviewService.getLatestReview(
+                        resumeId,
+                        principal.getId()
+                )
+                .map(result -> LatestResumeReviewResponse.of(
+                        resumeId,
+                        result
+                ))
+                .orElseGet(() -> LatestResumeReviewResponse.empty(
+                        resumeId
+                ));
     }
 
     @Operation(
@@ -192,5 +227,4 @@ public class ResumeController {
                 new DeleteResumeCommand(principal.getId(), resumeId)
         );
     }
-
 }

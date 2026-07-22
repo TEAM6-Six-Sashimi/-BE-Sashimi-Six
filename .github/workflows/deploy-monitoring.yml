@@ -11,36 +11,40 @@ on:
 
 concurrency:
   group: deploy-monitoring
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Deploy to EC2
+  # Prometheus + Loki + Grafana: AI 박스(별도 EC2)로 배포
+  # 앱 박스는 RAM이 빠듯해서 무거운 모니터링 스택을 여유 있는 AI 박스로 분리함
+  deploy-central:
+    name: Deploy central stack to AI EC2
     runs-on: ubuntu-latest
 
     env:
-      EC2_HOST: ${{ secrets.EC2_HOST }}
+      AI_EC2_HOST: ${{ secrets.AI_EC2_HOST }}
       EC2_USER: ${{ secrets.EC2_USER }}
-      EC2_APP_DIR: /home/ubuntu/Sashimi-Six
-      DOCKER_NETWORK: sashimi-net
+      AI_APP_DIR: /home/ubuntu/Sashimi-Six-monitoring
 
     steps:
       - name: Configure SSH key
         env:
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          test -n "$EC2_HOST"
+          test -n "$AI_EC2_HOST"
           test -n "$EC2_USER"
           test -n "$EC2_SSH_KEY"
           mkdir -p ~/.ssh
           printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/sashimi-ec2.pem
           chmod 600 ~/.ssh/sashimi-ec2.pem
-          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$AI_EC2_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy monitoring stack
+      - name: Deploy central monitoring stack
         env:
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          GRAFANA_MYSQL_HOST: ${{ secrets.GRAFANA_MYSQL_HOST }}
+          GRAFANA_MYSQL_USER: ${{ secrets.GRAFANA_MYSQL_USER }}
+          GRAFANA_MYSQL_PASSWORD: ${{ secrets.GRAFANA_MYSQL_PASSWORD }}
         run: |
           if [ -z "$GRAFANA_ADMIN_PASSWORD" ]; then
             echo "Missing GitHub secret: GRAFANA_ADMIN_PASSWORD" >&2
@@ -50,34 +54,43 @@ jobs:
             echo "Missing GitHub secret: SLACK_WEBHOOK_URL" >&2
             exit 1
           fi
+          if [ -z "$GRAFANA_MYSQL_HOST" ] || [ -z "$GRAFANA_MYSQL_USER" ] || [ -z "$GRAFANA_MYSQL_PASSWORD" ]; then
+            echo "Missing GitHub secret: GRAFANA_MYSQL_HOST/USER/PASSWORD" >&2
+            exit 1
+          fi
 
           GRAFANA_PASSWORD_B64="$(printf '%s' "$GRAFANA_ADMIN_PASSWORD" | base64 -w 0)"
           SLACK_WEBHOOK_URL_B64="$(printf '%s' "$SLACK_WEBHOOK_URL" | base64 -w 0)"
+          GRAFANA_MYSQL_HOST_B64="$(printf '%s' "$GRAFANA_MYSQL_HOST" | base64 -w 0)"
+          GRAFANA_MYSQL_USER_B64="$(printf '%s' "$GRAFANA_MYSQL_USER" | base64 -w 0)"
+          GRAFANA_MYSQL_PASSWORD_B64="$(printf '%s' "$GRAFANA_MYSQL_PASSWORD" | base64 -w 0)"
 
-          ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$EC2_HOST" \
-            "APP_DIR='$EC2_APP_DIR' DOCKER_NETWORK='$DOCKER_NETWORK' GRAFANA_PASSWORD_B64='$GRAFANA_PASSWORD_B64' SLACK_WEBHOOK_URL_B64='$SLACK_WEBHOOK_URL_B64' bash -s" <<'REMOTE'
+          ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$AI_EC2_HOST" \
+            "APP_DIR='$AI_APP_DIR' GRAFANA_PASSWORD_B64='$GRAFANA_PASSWORD_B64' SLACK_WEBHOOK_URL_B64='$SLACK_WEBHOOK_URL_B64' GRAFANA_MYSQL_HOST_B64='$GRAFANA_MYSQL_HOST_B64' GRAFANA_MYSQL_USER_B64='$GRAFANA_MYSQL_USER_B64' GRAFANA_MYSQL_PASSWORD_B64='$GRAFANA_MYSQL_PASSWORD_B64' bash -s" <<'REMOTE'
           set -euo pipefail
 
           GRAFANA_PASSWORD="$(printf '%s' "$GRAFANA_PASSWORD_B64" | base64 -d)"
           SLACK_WEBHOOK_URL="$(printf '%s' "$SLACK_WEBHOOK_URL_B64" | base64 -d)"
+          GRAFANA_MYSQL_HOST="$(printf '%s' "$GRAFANA_MYSQL_HOST_B64" | base64 -d)"
+          GRAFANA_MYSQL_USER="$(printf '%s' "$GRAFANA_MYSQL_USER_B64" | base64 -d)"
+          GRAFANA_MYSQL_PASSWORD="$(printf '%s' "$GRAFANA_MYSQL_PASSWORD_B64" | base64 -d)"
+
+          if [ ! -d "$APP_DIR/.git" ]; then
+            echo "Missing repo checkout at $APP_DIR — clone it once manually first (git clone <repo-url> $APP_DIR)." >&2
+            exit 1
+          fi
 
           cd "$APP_DIR"
           git fetch origin develop
           git checkout -B develop origin/develop
 
-          # sashimi-net 없으면 생성
-          sudo docker network inspect "$DOCKER_NETWORK" >/dev/null 2>&1 \
-            || sudo docker network create "$DOCKER_NETWORK"
+          {
+            printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_PASSWORD"
+            printf 'GRAFANA_MYSQL_HOST=%s\n' "$GRAFANA_MYSQL_HOST"
+            printf 'GRAFANA_MYSQL_USER=%s\n' "$GRAFANA_MYSQL_USER"
+            printf 'GRAFANA_MYSQL_PASSWORD=%s\n' "$GRAFANA_MYSQL_PASSWORD"
+          } > monitoring/.env
 
-          # 앱 로그 공유 볼륨 없으면 생성
-          sudo docker volume inspect sashimi-logs >/dev/null 2>&1 \
-            || sudo docker volume create sashimi-logs
-
-          # Grafana 비밀번호 환경파일 기록
-          printf 'GRAFANA_ADMIN_PASSWORD=%s\n' "$GRAFANA_PASSWORD" \
-            > monitoring/.env
-
-          # Slack Webhook URL을 alerting 프로비저닝 파일에 주입 (템플릿 → 실제 파일, git에는 템플릿만 커밋됨)
           SLACK_WEBHOOK_URL_ESCAPED=$(printf '%s' "$SLACK_WEBHOOK_URL" | sed -e 's/[\/&]/\\&/g')
           sed "s/__SLACK_WEBHOOK_URL__/${SLACK_WEBHOOK_URL_ESCAPED}/" \
             monitoring/grafana/provisioning/alerting/contactpoints.yml.template \
@@ -92,21 +105,71 @@ jobs:
             exit 1
           fi
 
-          echo "Docker Compose version:"
-          compose version
-
           cd monitoring
-          compose -f docker-compose.yml config >/tmp/sashimi-monitoring-compose.yml
+          compose -f docker-compose.yml config >/tmp/sashimi-monitoring-central-compose.yml
 
-          sudo docker rm -f sashimi-grafana sashimi-prometheus sashimi-loki sashimi-promtail >/dev/null 2>&1 || true
-
-          if sudo ss -ltnp '( sport = :3000 )' 2>/dev/null | grep -q ':3000'; then
-            echo "Port 3000 is already in use before starting Grafana:" >&2
-            sudo ss -ltnp '( sport = :3000 )' >&2 || true
-          fi
+          sudo docker rm -f sashimi-grafana sashimi-prometheus sashimi-loki >/dev/null 2>&1 || true
 
           compose -f docker-compose.yml pull
           compose -f docker-compose.yml up -d --force-recreate --remove-orphans
 
-          echo "Monitoring stack deployed."
+          echo "Central monitoring stack deployed to AI EC2."
+          REMOTE
+
+  # node-exporter + promtail: 앱 박스(sashimi가 떠있는 그 EC2)에 유지
+  # (node-exporter는 이 박스 자체의 CPU/메모리를 감시해야 하고, promtail은 이 박스의
+  #  로그 파일 볼륨을 직접 읽어야 해서 앱과 같은 박스에 있어야 함)
+  deploy-agent:
+    name: Deploy agent stack to app EC2
+    runs-on: ubuntu-latest
+
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      EC2_APP_DIR: /home/ubuntu/-BE-Sashimi-Six
+
+    steps:
+      - name: Configure SSH key
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          test -n "$EC2_HOST"
+          test -n "$EC2_USER"
+          test -n "$EC2_SSH_KEY"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/sashimi-ec2.pem
+          chmod 600 ~/.ssh/sashimi-ec2.pem
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy agent stack
+        run: |
+          ssh -i ~/.ssh/sashimi-ec2.pem "$EC2_USER@$EC2_HOST" \
+            "APP_DIR='$EC2_APP_DIR' bash -s" <<'REMOTE'
+          set -euo pipefail
+
+          cd "$APP_DIR"
+          git fetch origin develop
+          git checkout -B develop origin/develop
+
+          sudo docker volume inspect sashimi-logs >/dev/null 2>&1 \
+            || sudo docker volume create sashimi-logs
+
+          if sudo docker compose version >/dev/null 2>&1; then
+            compose() { sudo docker compose "$@"; }
+          elif command -v docker-compose >/dev/null 2>&1; then
+            compose() { sudo docker-compose "$@"; }
+          else
+            echo "Docker Compose is not installed. Install docker compose v2 or docker-compose v1." >&2
+            exit 1
+          fi
+
+          cd monitoring
+          compose -f docker-compose.agent.yml config >/tmp/sashimi-monitoring-agent-compose.yml
+
+          sudo docker rm -f sashimi-node-exporter sashimi-promtail >/dev/null 2>&1 || true
+
+          compose -f docker-compose.agent.yml pull
+          compose -f docker-compose.agent.yml up -d --force-recreate --remove-orphans
+
+          echo "Agent stack (node-exporter + promtail) deployed to app EC2."
           REMOTE

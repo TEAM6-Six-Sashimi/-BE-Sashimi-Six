@@ -18,4 +18,7 @@ public interface CategoryRepository {
     Optional<Long> findMainCategoryIdByName(String name);
     Long findMaxMainCategoryId();
     int findMaxSortOrder();
+    List<Category> findAllByIdIn(List<Long> ids);
+    boolean existsByMainCategoryId(Long mainCategoryId);
+    List<Category> findAllByMainCategoryIdIn(List<Long> mainCategoryIds);
 }

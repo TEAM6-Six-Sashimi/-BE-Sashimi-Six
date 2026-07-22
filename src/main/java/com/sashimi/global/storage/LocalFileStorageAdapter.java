@@ -69,6 +69,27 @@ public class LocalFileStorageAdapter implements FileStoragePort {
     }
 
     @Override
+    public String storePrivateStream(MultipartFile file, String folder) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException(ErrorCode.FILE_EMPTY);
+        }
+
+        try {
+            Path uploadPath = Paths.get(uploadDir, folder).toAbsolutePath().normalize();
+            Files.createDirectories(uploadPath);
+
+            String fileName = UUID.randomUUID() + getExtension(file.getOriginalFilename());
+            file.transferTo(uploadPath.resolve(fileName));
+
+            return folder + "/" + fileName;
+        } catch (Exception e) {
+            log.error("[Local] private 파일 업로드 실패 - folder: {}, file: {}, cause: {}",
+                    folder, file.getOriginalFilename(), e.getMessage(), e);
+            throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    @Override
     public String generatePresignedDownloadUrl(String s3Key, int expiryMinutes) {
         return baseUrl + "/uploads/" + s3Key;
     }

@@ -53,7 +53,7 @@ public class InstructorApplicationJpaEntity {
     @Column(name = "main_careers", columnDefinition = "JSON")
     private List<String> mainCareers;
 
-    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<InstructorCertificationJpaEntity> certifications = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
@@ -127,6 +127,8 @@ public class InstructorApplicationJpaEntity {
                             .certificationName(cert.getCertificationName())
                             .issuedBy(cert.getIssuedBy())
                             .filePath(cert.getFilePath())
+                            .certificationNumber(cert.getCertificationNumber())
+                            .verificationStatus(cert.getVerificationStatus())
                             .application(entity)
                             .build())
             );
@@ -138,7 +140,15 @@ public class InstructorApplicationJpaEntity {
         List<InstructorCertification> certDomains = certifications.stream()
                 .map(InstructorCertificationJpaEntity::toDomain)
                 .collect(Collectors.toList());
+        return toDomain(certDomains);
+    }
 
+    // 목록 조회용 - certifications는 응답에 안 쓰이는데 LAZY 컬렉션을 건드리면 그 순간 N+1이 재발하므로 접근하지 않음
+    public InstructorApplication toDomainWithoutCertifications() {
+        return toDomain(null);
+    }
+
+    private InstructorApplication toDomain(List<InstructorCertification> certDomains) {
         return InstructorApplication.builder()
                 .id(id)
                 .userId(userId)

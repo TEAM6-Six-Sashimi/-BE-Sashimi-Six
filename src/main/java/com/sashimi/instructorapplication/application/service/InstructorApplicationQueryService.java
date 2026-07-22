@@ -9,6 +9,7 @@ import com.sashimi.instructorapplication.application.usecase.InstructorApplicati
 import com.sashimi.instructorapplication.domain.model.ApprovalStatus;
 import com.sashimi.instructorapplication.domain.model.InstructorApplication;
 import com.sashimi.instructorapplication.domain.model.InstructorCertification;
+import com.sashimi.instructorapplication.domain.model.VerificationStatus;
 import com.sashimi.instructorapplication.domain.repository.InstructorApplicationRepository;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationDetailResponse;
 import com.sashimi.instructorapplication.presentation.api.response.InstructorApplicationListResponse;
@@ -23,6 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -38,15 +42,34 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
 
     @Override
     public List<InstructorApplicationListResponse> getPendingInstructorApplications() {
-        return instructorApplicationRepository.findAllByStatus(ApprovalStatus.PENDING)
+        List<InstructorApplication> applications =
+                instructorApplicationRepository.findAllByStatus(ApprovalStatus.PENDING);
+
+        Map<Long, User> userById = userRepository.findAllByIdIn(
+                        applications.stream().map(InstructorApplication::getUserId).distinct().toList())
                 .stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        // 강사 지원의 categoryId는 세부 카테고리가 아닌 대분류(mainCategoryId) 값이라 그 기준으로 이름 조회
+        Map<Long, String> categoryNameByMainCategoryId = categoryRepository.findAllByMainCategoryIdIn(
+                        applications.stream().map(InstructorApplication::getCategoryId).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(Category::getMainCategoryId, Category::getName, (a, b) -> a));
+
+        Map<Long, VerificationStatus> verificationStatusByApplicationId =
+                instructorApplicationRepository.findVerificationStatusesByApplicationIds(
+                        applications.stream().map(InstructorApplication::getId).toList());
+
+        return applications.stream()
                 .map(application -> {
-                    User user = userRepository.findById(application.getUserId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-                    String categoryName = categoryRepository.findById(application.getCategoryId())
-                            .map(Category::getName)
-                            .orElse(null);
-                    return InstructorApplicationListResponse.of(application, user, categoryName);
+                    User user = userById.get(application.getUserId());
+                    if (user == null) {
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+                    }
+                    String categoryName = categoryNameByMainCategoryId.get(application.getCategoryId());
+                    VerificationStatus verificationStatus = verificationStatusByApplicationId
+                            .getOrDefault(application.getId(), VerificationStatus.SUBMITTED);
+                    return InstructorApplicationListResponse.of(application, user, categoryName, verificationStatus);
                 })
                 .toList();
     }
@@ -109,11 +132,20 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
 
     @Override
     public List<RejectedApplicationListResponse> getRejectedInstructorApplications() {
-        return instructorApplicationRepository.findAllByStatus(ApprovalStatus.REJECTED)
+        List<InstructorApplication> applications =
+                instructorApplicationRepository.findAllByStatus(ApprovalStatus.REJECTED);
+
+        Map<Long, User> userById = userRepository.findAllByIdIn(
+                        applications.stream().map(InstructorApplication::getUserId).distinct().toList())
                 .stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return applications.stream()
                 .map(application -> {
-                    User user = userRepository.findById(application.getUserId())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                    User user = userById.get(application.getUserId());
+                    if (user == null) {
+                        throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+                    }
                     return RejectedApplicationListResponse.of(application, user);
                 })
                 .toList();

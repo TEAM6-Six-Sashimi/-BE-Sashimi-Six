@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface SpringDataEmailOutboxRepository extends JpaRepository<EmailOutboxJpaEntity, Long> {
 
-    List<EmailOutboxJpaEntity> findByStatus(OutboxStatus status);
+    List<EmailOutboxJpaEntity> findFirst100ByStatusOrderByIdAsc(OutboxStatus status);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE EmailOutboxJpaEntity e SET e.status = 'PROCESSING' WHERE e.id = :id AND e.status = 'PENDING'")

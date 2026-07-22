@@ -4,6 +4,7 @@ import com.sashimi.course.domain.model.Course;
 import com.sashimi.course.domain.model.CourseSession;
 import com.sashimi.course.domain.model.CourseStatus;
 import com.sashimi.course.domain.repository.CourseRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ public class CourseRepositoryAdapter implements CourseRepository {
 
     private Course saveNew(Course course) {
         CourseJpaEntity entity = new CourseJpaEntity(
-                course.getInstructorId(), course.getCategoryId(),course.getTitle(),
+                course.getInstructorId(), course.getCategoryId(), course.getTitle(),
                 course.getDescription(), course.getPrice(), course.getDifficulty(),
                 course.getThumbnail(), course.getTotalDuration(), course.getStatus(),
                 course.getRejectReason(), course.getRatingAvg(), course.getReviewCount(),
@@ -50,9 +51,9 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 course.getPrice(), course.getDifficulty(), course.getThumbnail(),
                 course.getTotalDuration(), course.getStatus(), course.getUpdatedAt());
 
-        if (course.getStatus() == com.sashimi.course.domain.model.CourseStatus.APPROVED) {
+        if (course.getStatus() == CourseStatus.APPROVED) {
             entity.approve(course.getApprovedAt(), course.getUpdatedAt());
-        } else if (course.getStatus() == com.sashimi.course.domain.model.CourseStatus.REJECTED) {
+        } else if (course.getStatus() == CourseStatus.REJECTED) {
             entity.reject(course.getRejectReason(), course.getRejectReasonCategory(),
                     course.getRejectDetail(), course.getUpdatedAt());
         }
@@ -135,6 +136,20 @@ public class CourseRepositoryAdapter implements CourseRepository {
     }
 
     @Override
+    public List<Course> searchApprovedByKeyword(
+            String keyword,
+            int limit
+    ) {
+        return springDataCourseRepository.searchApprovedByKeyword(
+                        keyword,
+                        PageRequest.of(0, limit)
+                )
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public void deleteById(Long id) {
         springDataCourseRepository.deleteById(id);
     }
@@ -146,7 +161,14 @@ public class CourseRepositoryAdapter implements CourseRepository {
                         s.isPreview(), s.getAttachmentName(), s.getAttachmentUrl(),
                         s.getAttachmentType(), s.getAttachmentSize(), s.getCreatedAt(), s.getUpdatedAt()))
                 .toList();
+        return toDomain(entity, sessions);
+    }
 
+    private Course toDomainWithoutSessions(CourseJpaEntity entity) {
+        return toDomain(entity, List.of());
+    }
+
+    private Course toDomain(CourseJpaEntity entity, List<CourseSession> sessions) {
         return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(),
                 entity.getTitle(), entity.getDescription(), entity.getPrice(), entity.getDifficulty(),
                 entity.getThumbnail(), entity.getTotalDuration(), entity.getStatus(),
@@ -154,23 +176,5 @@ public class CourseRepositoryAdapter implements CourseRepository {
                 entity.getRatingAvg(), entity.getReviewCount(),
                 entity.getStudentCount(), entity.getCreatedAt(), entity.getUpdatedAt(),
                 entity.getApprovedAt(), entity.isArchived(), sessions);
-    }
-
-    private Course toDomainWithoutSessions(
-            CourseJpaEntity entity
-    ) {
-        return Course.restore(entity.getId(), entity.getInstructorId(), entity.getCategoryId(), entity.getTitle(), entity.getDescription(), entity.getPrice(), entity.getDifficulty(), entity.getThumbnail(),
-                entity.getTotalDuration(), entity.getStatus(), entity.getRejectReason(), entity.getRejectReasonCategory(),
-                entity.getRejectDetail(), entity.getRatingAvg(), entity.getReviewCount(), entity.getStudentCount(),
-                entity.getCreatedAt(), entity.getUpdatedAt(), entity.getApprovedAt(), entity.isArchived(), List.of()
-        );
-    }
-
-    private CourseSessionJpaEntity toSessionEntity(CourseSession session) {
-        return new CourseSessionJpaEntity(session.getSessionUid(), session.getTitle(),
-                session.getVideoUrl(), session.getDurationSeconds(), session.getSessionOrder(),
-                session.isPreview(), session.getAttachmentName(), session.getAttachmentUrl(),
-                session.getAttachmentType(), session.getAttachmentSize(),
-                session.getCreatedAt(), session.getUpdatedAt());
     }
 }

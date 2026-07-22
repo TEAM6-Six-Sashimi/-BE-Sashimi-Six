@@ -12,11 +12,13 @@ public class AiMetrics {
 
     public static final String FEATURE_JOB_POSTING_RECOMMENDATION = "JOB_POSTING_RECOMMENDATION";
     public static final String FEATURE_RESUME_REVIEW = "RESUME_REVIEW";
+    public static final String FEATURE_COVER_LETTER_REVIEW = "COVER_LETTER_REVIEW";
 
     public static final String REASON_SUBSCRIPTION_REQUIRED = "SUBSCRIPTION_REQUIRED";
     public static final String REASON_AI_CONSENT_REQUIRED = "AI_CONSENT_REQUIRED";
+    public static final String REASON_RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED";
 
-    public static final String PROVIDER_OPENAI = "OPENAI";
+    public static final String PROVIDER_GEMINI = "GEMINI";
 
     private final MeterRegistry meterRegistry;
 
