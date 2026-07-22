@@ -79,6 +79,21 @@ public class CartItemRepositoryAdapter implements CartItemRepository {
     }
 
     @Override
+    public List<Long> findOwnedIds(Long userId, List<Long> cartItemIds) {
+        return repository.findOwnedIds(userId, cartItemIds);
+    }
+
+    @Override
+    public void updateSelectedByIds(Long userId, List<Long> cartItemIds, boolean selected) {
+        repository.updateSelectedByIds(userId,cartItemIds, selected);
+    }
+
+    @Override
+    public void deleteAllByIds(Long userId, List<Long> cartItemIds) {
+        repository.deleteAllByIds(userId, cartItemIds);
+    }
+
+    @Override
     public void delete(CartItem cartItem) {
         repository.deleteById(cartItem.getId());
     }

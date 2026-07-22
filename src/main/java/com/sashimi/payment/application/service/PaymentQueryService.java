@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class PaymentQueryService implements PaymentQueryUseCase {
 
+    private static final int PAYMENT_HISTORY_LIMIT = 100;
+
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
     private final CartItemRepository cartItemRepository;
@@ -51,7 +53,8 @@ public class PaymentQueryService implements PaymentQueryUseCase {
 
     @Override
     public PaymentHistory getPaymentHistory(Long userId) {
-        List<Payment> payments = paymentRepository.findAllByUserId(userId);
+        List<Payment> payments = paymentRepository
+                        .findRecentCoursePaymentsByUserId(userId, PAYMENT_HISTORY_LIMIT);
 
         if (payments.isEmpty()) {
             return new PaymentHistory(List.of());
@@ -84,7 +87,6 @@ public class PaymentQueryService implements PaymentQueryUseCase {
                         orderMap,
                         orderItemMap
                 ))
-                .filter(item -> !item.courses().isEmpty())
                 .toList();
 
         return new PaymentHistory(items);
@@ -165,13 +167,20 @@ public class PaymentQueryService implements PaymentQueryUseCase {
             );
         }
 
-        List<PaymentPreviewCourse> courses = items.stream()
-                .map(item -> coursePurchasePolicy.validatePurchasable(
-                        userId,
-                        item.getCourseId()
-                ))
-                .map(this::toPreviewCourse)
+        List<Long> courseIds = items.stream()
+                .map(CartItem::getCourseId)
+                .distinct()
                 .toList();
+
+        List<PaymentPreviewCourse> courses =
+                coursePurchasePolicy
+                        .validatePurchasableCourses(
+                                userId,
+                                courseIds
+                        )
+                        .stream()
+                        .map(this::toPreviewCourse)
+                        .toList();
 
         return createPreview(
                 "CART",

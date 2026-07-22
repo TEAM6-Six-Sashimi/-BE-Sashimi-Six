@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.sashimi.cart.application.command.UpdateCartItemSelectionCommand;
 import com.sashimi.cart.application.command.UpdateCartItemsSelectionCommand;
 import org.springframework.dao.DataIntegrityViolationException;
+import java.util.List;
 
 @Service
 @Transactional
@@ -55,25 +56,19 @@ public class    CartCommandService implements CartCommandUseCase {
     }
 
     @Override
-    public void deleteCartItem(DeleteCartItemCommand command) {
-        if (command.userId() == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
-        }
+    public void deleteCartItem(
+            DeleteCartItemCommand command
+    ) {
+        List<Long> cartItemIds =
+                validateAndGetDistinctIds(
+                        command.userId(),
+                        command.cartItemIds()
+                );
 
-        if (command.cartItemIds() == null || command.cartItemIds().isEmpty()) {
-            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
-        }
-
-        for (Long cartItemId : command.cartItemIds()) {
-            if (cartItemId == null) {
-                throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
-            }
-
-            CartItem cartItem = cartItemRepository.findByIdAndUserId(cartItemId, command.userId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.CART_ITEM_NOT_FOUND));
-
-            cartItemRepository.delete(cartItem);
-        }
+        cartItemRepository.deleteAllByIds(
+                command.userId(),
+                cartItemIds
+        );
     }
 
     @Override
@@ -93,25 +88,58 @@ public class    CartCommandService implements CartCommandUseCase {
     }
 
     @Override
-    public void updateCartItemsSelection(UpdateCartItemsSelectionCommand command) {
-        if (command.userId() == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+    public void updateCartItemsSelection(
+            UpdateCartItemsSelectionCommand command
+    ) {
+        List<Long> cartItemIds =
+                validateAndGetDistinctIds(
+                        command.userId(),
+                        command.cartItemIds()
+                );
+
+        cartItemRepository.updateSelectedByIds(
+                command.userId(),
+                cartItemIds,
+                command.selected()
+        );
+    }
+
+    private List<Long> validateAndGetDistinctIds(Long userId, List<Long> cartItemIds) {
+        if (userId == null) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT_VALUE
+            );
         }
 
-        if (command.cartItemIds() == null || command.cartItemIds().isEmpty()) {
-            throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
+        if (cartItemIds == null || cartItemIds.isEmpty()) {
+            throw new BusinessException(
+                    ErrorCode.CART_INVALID_SELECTION
+            );
         }
 
-        for (Long cartItemId : command.cartItemIds()) {
-            if (cartItemId == null) {
-                throw new BusinessException(ErrorCode.CART_INVALID_SELECTION);
-            }
-
-            CartItem cartItem = cartItemRepository.findByIdAndUserId(cartItemId, command.userId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.CART_ITEM_NOT_FOUND));
-
-            cartItemRepository.save(cartItem.changeSelected(command.selected()));
+        if (cartItemIds.stream().anyMatch(
+                cartItemId -> cartItemId == null
+                        || cartItemId <= 0
+        )) {
+            throw new BusinessException(
+                    ErrorCode.CART_INVALID_SELECTION
+            );
         }
+
+        List<Long> distinctIds = cartItemIds.stream()
+                .distinct()
+                .toList();
+
+        List<Long> ownedIds =
+                cartItemRepository.findOwnedIds(userId, distinctIds);
+
+        if (ownedIds.size() != distinctIds.size()) {
+            throw new BusinessException(
+                    ErrorCode.CART_ITEM_NOT_FOUND
+            );
+        }
+
+        return distinctIds;
     }
 
 }
