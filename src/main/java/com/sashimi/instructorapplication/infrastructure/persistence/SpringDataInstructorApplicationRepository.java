@@ -18,6 +18,8 @@ public interface SpringDataInstructorApplicationRepository
 
     List<InstructorApplicationJpaEntity> findAllByApprovalStatus(ApprovalStatus approvalStatus);
 
+    List<InstructorApplicationJpaEntity> findTop500ByApprovalStatusOrderByCreatedAtDesc(ApprovalStatus approvalStatus);
+
     boolean existsByUserIdAndApprovalStatus(Long userId, ApprovalStatus approvalStatus);
 
     @Query("SELECT DISTINCT e.userId FROM InstructorApplicationJpaEntity e LEFT JOIN e.certifications c " +

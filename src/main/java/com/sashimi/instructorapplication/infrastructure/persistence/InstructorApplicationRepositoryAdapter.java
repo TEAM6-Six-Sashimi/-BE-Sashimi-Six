@@ -55,6 +55,14 @@ public class InstructorApplicationRepositoryAdapter implements InstructorApplica
     }
 
     @Override
+    public List<InstructorApplication> findRecentByStatus(ApprovalStatus status) {
+        return springDataRepository.findTop500ByApprovalStatusOrderByCreatedAtDesc(status)
+                .stream()
+                .map(InstructorApplicationJpaEntity::toDomainWithoutCertifications)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public boolean existsByUserIdAndApprovalStatus(Long userId, ApprovalStatus status) {
         return springDataRepository.existsByUserIdAndApprovalStatus(userId, status);
     }
