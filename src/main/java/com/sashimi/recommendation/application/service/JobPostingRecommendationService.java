@@ -16,6 +16,8 @@ import com.sashimi.recommendation.domain.repository.JobPostingRecommendationRepo
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Optional;
 
@@ -102,13 +104,24 @@ public class JobPostingRecommendationService implements
                 savedRecommendation.analysisStatus(),
                 history.getId());
 
-        asyncService.analyze(
-                savedRecommendation.recommendationId(),
-                savedRecommendation.userId(),
-                history.getId()
+        Long recommendationId = savedRecommendation.recommendationId();
+        Long userId = savedRecommendation.userId();
+        Long historyId = history.getId();
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        asyncService.analyze(
+                                recommendationId,
+                                userId,
+                                historyId
+                        );
+                    }
+                }
         );
 
-        log.debug("채용공고 추천 비동기 분석 요청 발행: userId={}, recommendationId={}, historyId={}",
+        log.debug("채용공고 추천 비동기 분석 요청 예약: userId={}, recommendationId={}, historyId={}",
                 savedRecommendation.userId(),
                 savedRecommendation.recommendationId(),
                 history.getId());
