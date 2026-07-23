@@ -24,5 +24,9 @@ public interface CourseRepository {
             String keyword,
             int limit
     );
+
+    List<Course> findPopularApprovedCourses(
+            int limit
+    );
     void deleteById(Long id);
 }
