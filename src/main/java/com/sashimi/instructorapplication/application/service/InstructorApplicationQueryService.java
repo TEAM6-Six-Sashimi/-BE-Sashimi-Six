@@ -132,7 +132,7 @@ public class InstructorApplicationQueryService implements InstructorApplicationQ
     @Override
     public List<RejectedApplicationListResponse> getRejectedInstructorApplications() {
         List<InstructorApplication> applications =
-                instructorApplicationRepository.findAllByStatus(ApprovalStatus.REJECTED);
+                instructorApplicationRepository.findRecentByStatus(ApprovalStatus.REJECTED);
 
         Map<Long, User> userById = userRepository.findAllByIdIn(
                         applications.stream().map(InstructorApplication::getUserId).distinct().toList())
