@@ -68,33 +68,6 @@ jobs:
           chmod 600 ~/.ssh/sashimi-ec2.pem
           ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
 
-      - name: Enable maintenance mode before deploy
-        continue-on-error: true
-        env:
-          MAINTENANCE_ADMIN_LOGIN_ID: ${{ secrets.MAINTENANCE_ADMIN_LOGIN_ID }}
-          MAINTENANCE_ADMIN_PASSWORD: ${{ secrets.MAINTENANCE_ADMIN_PASSWORD }}
-        run: |
-          if [ -z "$MAINTENANCE_ADMIN_LOGIN_ID" ] || [ -z "$MAINTENANCE_ADMIN_PASSWORD" ]; then
-            echo "MAINTENANCE_ADMIN_LOGIN_ID/PASSWORD secret이 없어 점검모드 자동 전환을 건너뜁니다."
-            exit 0
-          fi
-
-          TOKEN=$(curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/auth/login \
-            -H "Content-Type: application/json" \
-            -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
-            | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
-
-          if [ -z "$TOKEN" ]; then
-            echo "점검모드용 관리자 로그인 실패 — 점검모드 없이 배포를 계속 진행합니다."
-            exit 0
-          fi
-
-          echo "::add-mask::$TOKEN"
-          curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/enable \
-            -H "Authorization: Bearer $TOKEN" \
-            -H "Content-Type: application/json" \
-            -d '{"message":"새 버전을 배포하고 있습니다. 잠시 후 다시 이용해주세요."}'
-
       - name: Deploy application
         env:
           IMAGE_SHA: ${{ github.sha }}
