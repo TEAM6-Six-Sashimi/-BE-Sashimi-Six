@@ -2,6 +2,7 @@ package com.sashimi.verification.application.service;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.ratelimit.RateLimiterService;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
 import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
 import com.sashimi.verification.presentation.api.response.EmailVerificationConfirmResult;
@@ -28,7 +29,8 @@ import java.util.Locale;
 public class EmailVerificationService implements EmailVerificationUseCase {
 
     private static final long EXPIRE_MINUTES = 10;
-
+    private static final int HOURLY_REQUEST_LIMIT = 3;
+    private static final int HOURLY_REQUEST_WINDOW_SECONDS = 3600;
 
     private static final String OUTBOX_QUEUE_KEY = "email_outbox_queue";
 
@@ -37,11 +39,22 @@ public class EmailVerificationService implements EmailVerificationUseCase {
     private final SpringDataEmailOutboxRepository emailOutboxRepository;
     private final EmailVerificationPolicy emailVerificationPolicy;
     private final StringRedisTemplate redisTemplate;
+    private final RateLimiterService rateLimiterService;
 
     @Override
     public EmailVerificationRequestResult requestEmailVerification(RequestEmailVerificationCommand command) {
         String targetEmail = normalizeEmail(command.getTargetEmail());
         LocalDateTime now = LocalDateTime.now();
+
+        // 회원가입 인증 이메일은 60초 재발송 간격만으로는 시간당 총 발송량이 제한되지 않아
+        // (비밀번호 재설정/아이디 찾기와 동일하게) 이메일당 시간당 3회로 제한한다.
+        if (!rateLimiterService.isAllowed(
+                "email-verification:" + command.getPurpose() + ":" + targetEmail,
+                HOURLY_REQUEST_LIMIT,
+                HOURLY_REQUEST_WINDOW_SECONDS
+        )) {
+            throw new BusinessException(ErrorCode.TOO_MANY_REQUESTS);
+        }
 
         emailVerificationRepository.findLatestByTargetEmailAndPurpose(
                 targetEmail,

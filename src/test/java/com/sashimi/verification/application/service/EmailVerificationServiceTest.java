@@ -2,6 +2,7 @@ package com.sashimi.verification.application.service;
 
 import com.sashimi.global.exception.BusinessException;
 import com.sashimi.global.exception.ErrorCode;
+import com.sashimi.global.ratelimit.RateLimiterService;
 import com.sashimi.verification.application.command.ConfirmEmailVerificationCommand;
 import com.sashimi.verification.application.command.RequestEmailVerificationCommand;
 import com.sashimi.verification.application.policy.EmailVerificationPolicy;
@@ -26,6 +27,7 @@ class EmailVerificationServiceTest {
     private VerificationCodeGenerator verificationCodeGenerator;
     private SpringDataEmailOutboxRepository outboxRepository;
     private StringRedisTemplate redisTemplate;
+    private RateLimiterService rateLimiterService;
     private EmailVerificationService emailVerificationService;
 
     @BeforeEach
@@ -34,6 +36,8 @@ class EmailVerificationServiceTest {
         verificationCodeGenerator = mock(VerificationCodeGenerator.class);
         outboxRepository = mock(SpringDataEmailOutboxRepository.class);
         redisTemplate = mock(StringRedisTemplate.class);
+        rateLimiterService = mock(RateLimiterService.class);
+        when(rateLimiterService.isAllowed(anyString(), anyInt(), anyInt())).thenReturn(true);
 
         EmailVerificationPolicy emailVerificationPolicy = new EmailVerificationPolicy();
 
@@ -42,7 +46,8 @@ class EmailVerificationServiceTest {
                 verificationCodeGenerator,
                 outboxRepository,
                 emailVerificationPolicy,
-                redisTemplate
+                redisTemplate,
+                rateLimiterService
         );
     }
 

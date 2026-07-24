@@ -179,31 +179,6 @@ jobs:
           exit 1
           REMOTE
 
-      - name: Disable maintenance mode after deploy
-        if: always()
-        continue-on-error: true
-        env:
-          MAINTENANCE_ADMIN_LOGIN_ID: ${{ secrets.MAINTENANCE_ADMIN_LOGIN_ID }}
-          MAINTENANCE_ADMIN_PASSWORD: ${{ secrets.MAINTENANCE_ADMIN_PASSWORD }}
-        run: |
-          if [ -z "$MAINTENANCE_ADMIN_LOGIN_ID" ] || [ -z "$MAINTENANCE_ADMIN_PASSWORD" ]; then
-            exit 0
-          fi
-
-          TOKEN=$(curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/auth/login \
-            -H "Content-Type: application/json" \
-            -d "{\"loginId\":\"$MAINTENANCE_ADMIN_LOGIN_ID\",\"password\":\"$MAINTENANCE_ADMIN_PASSWORD\"}" \
-            | grep -o '"accessToken":"[^"]*' | cut -d'"' -f4)
-
-          if [ -z "$TOKEN" ]; then
-            echo "::error::점검모드 해제용 관리자 로그인 실패 — 점검모드가 켜진 채로 남아있을 수 있습니다. 수동으로 /admin/maintenance/disable 호출 필요."
-            exit 1
-          fi
-
-          echo "::add-mask::$TOKEN"
-          curl -s --max-time 10 -X POST https://api.sixsashimi.com.market-app.org/admin/maintenance/disable \
-            -H "Authorization: Bearer $TOKEN"
-
       - name: Create Grafana deploy annotation
         if: success()
         env:

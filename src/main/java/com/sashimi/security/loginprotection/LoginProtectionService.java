@@ -25,7 +25,10 @@ public class LoginProtectionService {
     private static final String ACCOUNT_LOCK_PREFIX = "login-protect:account-lock:";
 
     private static final int IP_ATTEMPTS_WINDOW_SECONDS = 300;
-    private static final int IP_DISTINCT_ACCOUNT_THRESHOLD = 3;
+    // 강의실 등 공용 네트워크(NAT)에서는 여러 명이 같은 공인 IP를 공유해 정상 사용자끼리도
+    // 실패가 겹칠 수 있어, 3에서 8로 완화. 실제 크리덴셜 스프레이는 보통 수십~수백 개
+    // 계정을 시도하므로 8로도 충분히 탐지 가능하다고 판단.
+    private static final int IP_DISTINCT_ACCOUNT_THRESHOLD = 8;
     private static final int IP_BLOCK_SECONDS = 1800;
 
     private static final int ACCOUNT_FAIL_LIMIT = 5;
