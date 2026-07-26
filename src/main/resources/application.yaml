@@ -83,7 +83,7 @@ toss:
 # 챗봇(핏봇) 사용량 제한 — 무료 남용 방지. IP 단위 주간 호출 횟수.
 chatbot:
   rate-limit:
-    weekly: 10
+    weekly: 100
 
 external:
   ncs:
