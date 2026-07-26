@@ -80,6 +80,11 @@ toss:
     connect-timeout: 3s
     read-timeout: 5s
 
+# 챗봇(핏봇) 사용량 제한 — 무료 남용 방지. IP 단위 주간 호출 횟수.
+chatbot:
+  rate-limit:
+    weekly: 10
+
 external:
   ncs:
     base-url: https://apis.data.go.kr/B490007/ncsInfo

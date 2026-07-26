@@ -3,8 +3,10 @@ package com.sashimi.chatbot.presentation.api;
 import com.sashimi.chatbot.application.usecase.ChatbotUseCase;
 import com.sashimi.chatbot.presentation.api.request.ChatMessageRequest;
 import com.sashimi.chatbot.presentation.api.response.ChatReplyResponse;
+import com.sashimi.global.web.ClientIpResolver;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,8 +33,12 @@ public class ChatbotController {
             description = "현재 질문과 이전 대화(history)를 보내면 AI가 답변을 생성해 반환합니다. 대화는 서버에 저장되지 않습니다."
     )
     @PostMapping("/messages")
-    public ResponseEntity<ChatReplyResponse> sendMessage(@RequestBody ChatMessageRequest request) {
-        String reply = chatbotUseCase.sendMessage(request.message(), request.toHistory());
+    public ResponseEntity<ChatReplyResponse> sendMessage(
+            @RequestBody ChatMessageRequest request,
+            HttpServletRequest httpRequest
+    ) {
+        String clientIp = ClientIpResolver.resolve(httpRequest);
+        String reply = chatbotUseCase.sendMessage(request.message(), request.toHistory(), clientIp);
         return ResponseEntity.ok(new ChatReplyResponse(reply));
     }
 }
