@@ -11,6 +11,8 @@ public interface ChatbotUseCase {
 
     /**
      * 현재 질문과 이전 대화를 받아 AI 답변을 반환한다.
+     *
+     * @param clientIp 사용량 제한(주간 호출 횟수)을 IP 단위로 적용하기 위한 요청자 IP
      */
-    String sendMessage(String message, List<ChatMessage> history);
+    String sendMessage(String message, List<ChatMessage> history, String clientIp);
 }
